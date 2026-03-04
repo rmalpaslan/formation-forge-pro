@@ -1,14 +1,74 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { ClipboardList, UserPlus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-const Index = () => {
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ analyses: 0, players: 0 });
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchStats = async () => {
+      const [{ count: a }, { count: p }] = await Promise.all([
+        supabase.from('match_analyses').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('players').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+      ]);
+      setStats({ analyses: a ?? 0, players: p ?? 0 });
+    };
+    fetchStats();
+  }, [user]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">Welcome back, Coach.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card
+          className="cursor-pointer hover:border-primary transition-colors group"
+          onClick={() => navigate('/analyses/new')}
+        >
+          <CardContent className="flex flex-col items-center justify-center p-10 gap-4">
+            <ClipboardList className="h-12 w-12 text-primary" />
+            <span className="text-xl font-semibold">New Match Analysis</span>
+            <span className="text-sm text-muted-foreground">Start analyzing a new match</span>
+          </CardContent>
+        </Card>
+
+        <Card
+          className="cursor-pointer hover:border-primary transition-colors group"
+          onClick={() => navigate('/players/new')}
+        >
+          <CardContent className="flex flex-col items-center justify-center p-10 gap-4">
+            <UserPlus className="h-12 w-12 text-primary" />
+            <span className="text-xl font-semibold">Add New Player</span>
+            <span className="text-sm text-muted-foreground">Scout and add a new player</span>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 max-w-md">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-3xl font-bold text-primary">{stats.analyses}</div>
+            <div className="text-sm text-muted-foreground mt-1">Total Analyses</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <div className="text-3xl font-bold text-primary">{stats.players}</div>
+            <div className="text-sm text-muted-foreground mt-1">Total Players</div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
 
-export default Index;
+export default Dashboard;
