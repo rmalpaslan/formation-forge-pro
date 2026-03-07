@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 
@@ -25,6 +26,7 @@ const PlayerNew = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (isEdit) {
@@ -43,7 +45,7 @@ const PlayerNew = () => {
   }, [id]);
 
   const handleSubmit = async () => {
-    if (!name) { toast.error('Name is required'); return; }
+    if (!name) { toast.error(t('nameRequired')); return; }
     setLoading(true);
     const payload = {
       name, current_team: currentTeam, birth_date: birthDate || null,
@@ -56,22 +58,22 @@ const PlayerNew = () => {
       : await supabase.from('players').insert(payload);
     setLoading(false);
     if (error) toast.error(error.message);
-    else { toast.success(isEdit ? 'Player updated' : 'Player added'); navigate('/players'); }
+    else { toast.success(isEdit ? t('playerUpdated') : t('playerAdded')); navigate('/players'); }
   };
 
   return (
     <div className="max-w-lg mx-auto">
       <Card>
-        <CardHeader><CardTitle>{isEdit ? 'Edit Player' : 'Add New Player'}</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{isEdit ? t('editPlayer') : t('addNewPlayer')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <Input placeholder="Player Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input placeholder="Current Team" value={currentTeam} onChange={(e) => setCurrentTeam(e.target.value)} />
+          <Input placeholder={t('playerName')} value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder={t('currentTeam')} value={currentTeam} onChange={(e) => setCurrentTeam(e.target.value)} />
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Birth Date</label>
+            <label className="text-sm text-muted-foreground">{t('birthDate')}</label>
             <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">Preferred Foot</label>
+            <label className="text-sm text-muted-foreground">{t('preferredFoot')}</label>
             <Select value={preferredFoot} onValueChange={setPreferredFoot}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{feet.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
@@ -79,26 +81,26 @@ const PlayerNew = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Primary Position</label>
+              <label className="text-sm text-muted-foreground">{t('primaryPosition')}</label>
               <Select value={primaryPosition} onValueChange={setPrimaryPosition}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{positions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Secondary Position</label>
+              <label className="text-sm text-muted-foreground">{t('secondaryPosition')}</label>
               <Select value={secondaryPosition} onValueChange={setSecondaryPosition}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">{t('none')}</SelectItem>
                   {positions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <Input placeholder="Transfermarkt Link (optional)" value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />
+          <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />
           <Button className="w-full" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Saving...' : isEdit ? 'Update Player' : 'Add Player'}
+            {loading ? t('saving') : isEdit ? t('updatePlayer') : t('addPlayer')}
           </Button>
         </CardContent>
       </Card>
