@@ -2,30 +2,30 @@ import {
   LayoutDashboard, Library, Users, Grid3X3, Settings, UserCircle, LogOut,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
-import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
 
-const mainItems = [
-  { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Analysis Library', url: '/analyses', icon: Library },
-  { title: 'Player Library', url: '/players', icon: Users },
-  { title: 'Squad Builder', url: '/squad-builder', icon: Grid3X3 },
-];
-
-const bottomItems = [
-  { title: 'Settings', url: '/settings', icon: Settings },
-  { title: 'Account', url: '/account', icon: UserCircle },
-];
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const location = useLocation();
   const { signOut } = useAuth();
+  const { t } = useLanguage();
+
+  const mainItems = [
+    { title: t('dashboard'), url: '/', icon: LayoutDashboard },
+    { title: t('analysisLibrary'), url: '/analyses', icon: Library },
+    { title: t('playerLibrary'), url: '/players', icon: Users },
+    { title: t('squadBuilder'), url: '/squad-builder', icon: Grid3X3 },
+  ];
+
+  const bottomItems = [
+    { title: t('settings'), url: '/settings', icon: Settings },
+    { title: t('account'), url: '/account', icon: UserCircle },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border">
@@ -37,7 +37,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
@@ -58,7 +58,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           {bottomItems.map((item) => (
-            <SidebarMenuItem key={item.title}>
+            <SidebarMenuItem key={item.url}>
               <SidebarMenuButton asChild>
                 <NavLink
                   to={item.url}
@@ -74,7 +74,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton onClick={signOut} className="hover:bg-secondary cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
-              {!collapsed && <span>Logout</span>}
+              {!collapsed && <span>{t('logout')}</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

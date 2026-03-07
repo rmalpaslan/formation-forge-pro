@@ -1,0 +1,258 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+type Lang = 'tr' | 'en';
+
+const translations = {
+  tr: {
+    // Sidebar
+    dashboard: 'Ana Sayfa',
+    analysisLibrary: 'Analiz Kütüphanesi',
+    playerLibrary: 'Oyuncu İzleme',
+    squadBuilder: 'Kadro Oluştur',
+    settings: 'Ayarlar',
+    account: 'Hesap',
+    logout: 'Çıkış',
+    // Dashboard
+    welcomeBack: 'Hoş geldiniz, Koç.',
+    newMatchAnalysis: 'Yeni Maç Analizi',
+    startAnalyzing: 'Yeni bir maç analiz etmeye başlayın',
+    addNewPlayer: 'Yeni Oyuncu Ekle',
+    scoutPlayer: 'Yeni bir oyuncu izleyin ve ekleyin',
+    totalAnalyses: 'Toplam Analiz',
+    totalPlayers: 'Toplam Oyuncu',
+    // Analysis
+    newAnalysis: 'Yeni Analiz',
+    searchAnalyses: 'Analiz ara...',
+    noAnalysesFound: 'Analiz bulunamadı.',
+    homeTeam: 'Ev Sahibi Takım',
+    awayTeam: 'Deplasman Takımı',
+    matchDate: 'Maç Tarihi',
+    analysisTarget: 'Analiz Hedefi',
+    home: 'Ev Sahibi',
+    away: 'Deplasman',
+    both: 'İkisi de',
+    continueToAnalysis: 'Analize Devam',
+    creating: 'Oluşturuluyor...',
+    target: 'Hedef',
+    save: 'Kaydet',
+    saving: 'Kaydediliyor...',
+    analysisSaved: 'Analiz kaydedildi!',
+    defense: 'Savunma',
+    attack: 'Hücum',
+    setPieces: 'Duran Toplar',
+    corner: 'Korner',
+    freeKick: 'Serbest Vuruş',
+    throwIn: 'Taç Atışı',
+    formation: 'Formasyon',
+    generalNotes: 'Genel Notlar',
+    pros: 'Olumlu Yönler',
+    cons: 'Olumsuz Yönler',
+    images: 'Görseller',
+    addImage: 'Görsel Ekle',
+    uploading: 'Yükleniyor...',
+    uploadFailed: 'Yükleme başarısız: ',
+    imageUploaded: 'Görsel yüklendi',
+    selectPlayer: 'Oyuncu Seç',
+    noPlayersInLibrary: 'Kütüphanenizde oyuncu yok.',
+    typeBullet: 'Yazın ve yeni madde için Enter\'a basın...',
+    // Attack sub-tabs
+    autBaslangici: 'Aut Başlangıcı',
+    geridenOyunKurma: 'Geriden Oyun Kurma',
+    // Defense sub-tabs
+    autKarsilama: 'Aut Karşılama',
+    onAlanBaskisi: 'Ön Alan Baskısı',
+    ortaBlokKarsilama: 'Orta Blok Karşılama',
+    derinBlokKarsilama: 'Derin Blok Karşılama',
+    // Analysis flow
+    step1of2: 'Adım 1/2',
+    step2of2: 'Adım 2/2',
+    saveAndContinue: 'Kaydet ve Devam Et',
+    // Players
+    addPlayer: 'Oyuncu Ekle',
+    searchPlayers: 'Oyuncu ara...',
+    noPlayersFound: 'Oyuncu bulunamadı.',
+    playerName: 'Oyuncu Adı',
+    currentTeam: 'Mevcut Takım',
+    birthDate: 'Doğum Tarihi',
+    preferredFoot: 'Tercih Edilen Ayak',
+    primaryPosition: 'Birincil Pozisyon',
+    secondaryPosition: 'İkincil Pozisyon',
+    transfermarktLink: 'Transfermarkt Linki (opsiyonel)',
+    editPlayer: 'Oyuncu Düzenle',
+    updatePlayer: 'Oyuncuyu Güncelle',
+    playerUpdated: 'Oyuncu güncellendi',
+    playerAdded: 'Oyuncu eklendi',
+    playerDeleted: 'Oyuncu silindi',
+    nameRequired: 'İsim gereklidir',
+    viewDetails: 'Detayları Görüntüle',
+    close: 'Kapat',
+    edit: 'Düzenle',
+    delete: 'Sil',
+    none: 'Yok',
+    // Squad Builder
+    addSquad: 'Kadro Ekle',
+    squadName: 'Kadro Adı',
+    savedSquads: 'Kayıtlı Kadrolar',
+    noSquadsFound: 'Kayıtlı kadro bulunamadı.',
+    squadSaved: 'Kadro kaydedildi!',
+    squadUpdated: 'Kadro güncellendi!',
+    squadDeleted: 'Kadro silindi',
+    enterSquadName: 'Kadro adı girin',
+    update: 'Güncelle',
+    new: 'Yeni',
+    // Settings
+    language: 'Dil',
+    languageDesc: 'Uygulama dilini seçin',
+    turkish: 'Türkçe',
+    english: 'İngilizce',
+    settingsTitle: 'Ayarlar',
+    // Account
+    email: 'E-posta',
+    firstName: 'Ad',
+    lastName: 'Soyad',
+    saveChanges: 'Değişiklikleri Kaydet',
+    profileUpdated: 'Profil güncellendi',
+    // General
+    loading: 'Yükleniyor...',
+    fillAllFields: 'Lütfen tüm alanları doldurun',
+    analysisDeleted: 'Analiz silindi',
+  },
+  en: {
+    dashboard: 'Dashboard',
+    analysisLibrary: 'Analysis Library',
+    playerLibrary: 'Player Library',
+    squadBuilder: 'Squad Builder',
+    settings: 'Settings',
+    account: 'Account',
+    logout: 'Logout',
+    welcomeBack: 'Welcome back, Coach.',
+    newMatchAnalysis: 'New Match Analysis',
+    startAnalyzing: 'Start analyzing a new match',
+    addNewPlayer: 'Add New Player',
+    scoutPlayer: 'Scout and add a new player',
+    totalAnalyses: 'Total Analyses',
+    totalPlayers: 'Total Players',
+    newAnalysis: 'New Analysis',
+    searchAnalyses: 'Search analyses...',
+    noAnalysesFound: 'No analyses found.',
+    homeTeam: 'Home Team',
+    awayTeam: 'Away Team',
+    matchDate: 'Match Date',
+    analysisTarget: 'Analysis Target',
+    home: 'Home',
+    away: 'Away',
+    both: 'Both',
+    continueToAnalysis: 'Continue to Analysis',
+    creating: 'Creating...',
+    target: 'Target',
+    save: 'Save',
+    saving: 'Saving...',
+    analysisSaved: 'Analysis saved!',
+    defense: 'Defense',
+    attack: 'Attack',
+    setPieces: 'Set Pieces',
+    corner: 'Corner',
+    freeKick: 'Free Kick',
+    throwIn: 'Throw-in',
+    formation: 'Formation',
+    generalNotes: 'General Notes',
+    pros: 'Pros (Positive)',
+    cons: 'Cons (Negative)',
+    images: 'Images',
+    addImage: 'Add Image',
+    uploading: 'Uploading...',
+    uploadFailed: 'Upload failed: ',
+    imageUploaded: 'Image uploaded',
+    selectPlayer: 'Select Player',
+    noPlayersInLibrary: 'No players in your library.',
+    typeBullet: 'Type and press Enter for new bullet...',
+    autBaslangici: 'Goal Kick Build-Up',
+    geridenOyunKurma: 'Build-Up from Back',
+    autKarsilama: 'Goal Kick Press',
+    onAlanBaskisi: 'High Press',
+    ortaBlokKarsilama: 'Mid Block',
+    derinBlokKarsilama: 'Deep Block',
+    step1of2: 'Step 1/2',
+    step2of2: 'Step 2/2',
+    saveAndContinue: 'Save & Continue',
+    addPlayer: 'Add Player',
+    searchPlayers: 'Search players...',
+    noPlayersFound: 'No players found.',
+    playerName: 'Player Name',
+    currentTeam: 'Current Team',
+    birthDate: 'Birth Date',
+    preferredFoot: 'Preferred Foot',
+    primaryPosition: 'Primary Position',
+    secondaryPosition: 'Secondary Position',
+    transfermarktLink: 'Transfermarkt Link (optional)',
+    editPlayer: 'Edit Player',
+    updatePlayer: 'Update Player',
+    playerUpdated: 'Player updated',
+    playerAdded: 'Player added',
+    playerDeleted: 'Player deleted',
+    nameRequired: 'Name is required',
+    viewDetails: 'View Details',
+    close: 'Close',
+    edit: 'Edit',
+    delete: 'Delete',
+    none: 'None',
+    addSquad: 'Add Squad',
+    squadName: 'Squad Name',
+    savedSquads: 'Saved Squads',
+    noSquadsFound: 'No saved squads found.',
+    squadSaved: 'Squad saved!',
+    squadUpdated: 'Squad updated!',
+    squadDeleted: 'Squad deleted',
+    enterSquadName: 'Enter a squad name',
+    update: 'Update',
+    new: 'New',
+    language: 'Language',
+    languageDesc: 'Select application language',
+    turkish: 'Turkish',
+    english: 'English',
+    settingsTitle: 'Settings',
+    email: 'Email',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    saveChanges: 'Save Changes',
+    profileUpdated: 'Profile updated',
+    loading: 'Loading...',
+    fillAllFields: 'Please fill all fields',
+    analysisDeleted: 'Analysis deleted',
+  },
+} as const;
+
+type TranslationKey = keyof typeof translations.tr;
+
+interface LanguageContextType {
+  lang: Lang;
+  setLang: (lang: Lang) => void;
+  t: (key: TranslationKey) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLang] = useState<Lang>(() => {
+    const saved = localStorage.getItem('app-lang');
+    return (saved === 'en' || saved === 'tr') ? saved : 'tr';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('app-lang', lang);
+  }, [lang]);
+
+  const t = (key: TranslationKey): string => translations[lang][key] || key;
+
+  return (
+    <LanguageContext.Provider value={{ lang, setLang, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error('useLanguage must be used within LanguageProvider');
+  return ctx;
+}
