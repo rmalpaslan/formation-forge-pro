@@ -15,6 +15,7 @@ import { Save, CheckCircle } from 'lucide-react';
 import { leagues } from '@/data/leaguesAndTeams';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { positionMapTR } from '@/lib/positionMap';
 
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'CF', 'ST'];
 const feet = ['Right', 'Left', 'Both'];
@@ -47,7 +48,7 @@ const PlayerNew = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const staticLeagues = leagues.map(l => l.name);
 
@@ -125,7 +126,7 @@ const PlayerNew = () => {
     [t('physical' as any), physicalRating, setPhysicalRating],
     [t('mental' as any), mentalRating, setMentalRating],
     [t('tacticalIQ' as any), tacticalIQRating, setTacticalIQRating],
-    [t('contractStatus' as any), contractStatus, setContractStatus],
+    [t('potentialAbility' as any), contractStatus, setContractStatus],
   ];
 
   return (
@@ -158,7 +159,7 @@ const PlayerNew = () => {
               <label className="text-sm text-muted-foreground">{t('primaryPosition')}</label>
               <Select value={primaryPosition} onValueChange={setPrimaryPosition}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{positions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                <SelectContent>{positions.map((p) => <SelectItem key={p} value={p}>{lang === 'tr' ? (positionMapTR[p] || p) : p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
@@ -167,7 +168,7 @@ const PlayerNew = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{t('none')}</SelectItem>
-                  {positions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  {positions.map((p) => <SelectItem key={p} value={p}>{lang === 'tr' ? (positionMapTR[p] || p) : p}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

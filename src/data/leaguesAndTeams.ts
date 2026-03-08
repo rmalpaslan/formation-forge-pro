@@ -26,6 +26,15 @@ export const leagues: League[] = [
     ],
   },
   {
+    name: '2. Lig (TR)', country: 'Türkiye', countryCode: 'TR', favorite: false,
+    teams: [
+      'Afjet Afyonspor', 'Bandırmaspor', 'Bucaspor 1928', 'Denizlispor', 'Düzcespor',
+      'Etimesgut Belediyespor', 'Fethiyespor', 'Giresunspor', 'Iğdır FK',
+      'Kastamonuspor', 'Kırklarelispor', 'Kocaelispor', 'Nazilli Belediyespor',
+      'Somaspor', 'Tarsus İdman Yurdu', 'Van Spor', 'Zonguldak Kömürspor',
+    ],
+  },
+  {
     name: 'Premier League (ENG)', country: 'England', countryCode: 'ENG', favorite: true,
     teams: [
       'Arsenal', 'Aston Villa', 'Bournemouth', 'Brentford', 'Brighton',
@@ -33,6 +42,16 @@ export const leagues: League[] = [
       'Leicester City', 'Liverpool', 'Manchester City', 'Manchester United',
       'Newcastle United', 'Nottingham Forest', 'Southampton', 'Tottenham Hotspur',
       'West Ham United', 'Wolverhampton',
+    ],
+  },
+  {
+    name: 'Championship (ENG)', country: 'England', countryCode: 'ENG', favorite: false,
+    teams: [
+      'Blackburn Rovers', 'Bristol City', 'Burnley', 'Cardiff City', 'Coventry City',
+      'Derby County', 'Hull City', 'Leeds United', 'Luton Town', 'Middlesbrough',
+      'Millwall', 'Norwich City', 'Plymouth Argyle', 'Portsmouth', 'Preston North End',
+      'QPR', 'Sheffield United', 'Sheffield Wednesday', 'Stoke City', 'Sunderland',
+      'Swansea City', 'Watford', 'West Brom',
     ],
   },
   {
@@ -67,6 +86,39 @@ export const leagues: League[] = [
       'Angers', 'Auxerre', 'Brest', 'Le Havre', 'Lens', 'Lille', 'Lyon',
       'Marseille', 'Monaco', 'Montpellier', 'Nantes', 'Nice', 'PSG',
       'Reims', 'Rennes', 'Saint-Étienne', 'Strasbourg', 'Toulouse',
+    ],
+  },
+  {
+    name: 'Eredivisie (NED)', country: 'Netherlands', countryCode: 'NED', favorite: false,
+    teams: [
+      'Ajax', 'AZ Alkmaar', 'Feyenoord', 'PSV Eindhoven', 'FC Twente',
+      'FC Utrecht', 'Vitesse', 'SC Heerenveen', 'Sparta Rotterdam', 'Go Ahead Eagles',
+    ],
+  },
+  {
+    name: 'Primeira Liga (POR)', country: 'Portugal', countryCode: 'POR', favorite: false,
+    teams: [
+      'Benfica', 'FC Porto', 'Sporting CP', 'Braga', 'Vitória Guimarães',
+      'Gil Vicente', 'Famalicão', 'Casa Pia', 'Rio Ave', 'Boavista',
+    ],
+  },
+  {
+    name: 'Süper Lig (GRE)', country: 'Greece', countryCode: 'GRE', favorite: false,
+    teams: [
+      'Olympiacos', 'Panathinaikos', 'AEK Athens', 'PAOK', 'Aris Thessaloniki',
+    ],
+  },
+  {
+    name: 'Saudi Pro League (KSA)', country: 'Saudi Arabia', countryCode: 'KSA', favorite: false,
+    teams: [
+      'Al Hilal', 'Al Nassr', 'Al Ahli', 'Al Ittihad', 'Al Shabab', 'Al Ettifaq',
+    ],
+  },
+  {
+    name: 'MLS (USA)', country: 'USA', countryCode: 'USA', favorite: false,
+    teams: [
+      'Inter Miami', 'LA Galaxy', 'LAFC', 'Atlanta United', 'New York City FC',
+      'NY Red Bulls', 'Seattle Sounders', 'Portland Timbers',
     ],
   },
 ];
