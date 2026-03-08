@@ -84,13 +84,11 @@ function formatDate(dateStr: string | null | undefined, locale: string): string 
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    if (locale === 'tr') {
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}.${mm}.${yyyy}`;
-    }
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    if (locale === 'tr') return `${dd}.${mm}.${yyyy}`;
+    return `${dd}.${mm}.${yyyy}`;
   } catch { return dateStr; }
 }
 
@@ -126,19 +124,18 @@ function addPageHeader(doc: jsPDF, fontLoaded: boolean, pw: number, margin: numb
   doc.setFontSize(8);
   doc.setTextColor(...LIGHT_GRAY);
   doc.text(BRAND, margin, 12);
-  // thin green line
   doc.setDrawColor(...GREEN);
   doc.setLineWidth(0.4);
   doc.line(margin, 15, pw - margin, 15);
-  // reset
   doc.setTextColor(...DARK_GRAY);
 }
 
-function addPageFooter(doc: jsPDF, fontLoaded: boolean) {
+function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr') {
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
   const totalPages = (doc as any).internal.getNumberOfPages();
+  const pageLabel = locale === 'tr' ? 'Sayfa' : 'Page';
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFont(fn, 'normal');
@@ -148,8 +145,66 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean) {
     doc.setLineWidth(0.2);
     doc.line(15, ph - 14, pw - 15, ph - 14);
     doc.text(BRAND, 15, ph - 8);
-    doc.text(`${i} / ${totalPages}`, pw - 15, ph - 8, { align: 'right' });
+    doc.text(`${pageLabel} ${i} / ${totalPages}`, pw - 15, ph - 8, { align: 'right' });
   }
+}
+
+function renderCoverPage(
+  doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
+  title: string, subtitle: string, metaLines: string[],
+) {
+  h.setY(50);
+  doc.setFontSize(14);
+  h.setFont('bold');
+  doc.setTextColor(...GREEN);
+  const brandW = doc.getTextWidth(BRAND);
+  doc.text(BRAND, (h.pw - brandW) / 2, h.getY());
+  h.addY(6);
+
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(1.5);
+  const lineW = 60;
+  doc.line((h.pw - lineW) / 2, h.getY(), (h.pw + lineW) / 2, h.getY());
+  h.addY(20);
+
+  // Subtitle
+  doc.setFontSize(11);
+  h.setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const stw = doc.getTextWidth(subtitle);
+  doc.text(subtitle, (h.pw - stw) / 2, h.getY());
+  h.addY(14);
+
+  // Title
+  doc.setFontSize(28);
+  h.setFont('bold');
+  doc.setTextColor(...NEAR_BLACK);
+  const titleLines: string[] = doc.splitTextToSize(title, h.cw - 20);
+  for (const line of titleLines) {
+    const tw = doc.getTextWidth(line);
+    doc.text(line, (h.pw - tw) / 2, h.getY());
+    h.addY(14);
+  }
+  h.addY(8);
+
+  // Meta lines
+  doc.setFontSize(12);
+  h.setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  for (const ml of metaLines) {
+    const mw = doc.getTextWidth(ml);
+    doc.text(ml, (h.pw - mw) / 2, h.getY());
+    h.addY(8);
+  }
+
+  // Bottom green bar
+  doc.setFillColor(...GREEN);
+  doc.rect(h.margin, h.ph - 30, h.cw, 3, 'F');
+  doc.setFontSize(8);
+  h.setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const ftw = doc.getTextWidth(BRAND);
+  doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
 }
 
 // ── Types ──
@@ -207,70 +262,20 @@ export async function exportAnalysisPdf(
     set_pieces: groupLabels?.setPieces || 'DURAN TOPLAR',
   };
 
-  // ══════════════════════════════════════════
   // ── COVER PAGE ──
-  // ══════════════════════════════════════════
-
-  // Brand name at top
-  h.setY(50);
-  doc.setFontSize(14);
-  h.setFont('bold');
-  doc.setTextColor(...GREEN);
-  const brandW = doc.getTextWidth(BRAND);
-  doc.text(BRAND, (h.pw - brandW) / 2, h.getY());
-  h.addY(6);
-
-  // Decorative green line
-  doc.setDrawColor(...GREEN);
-  doc.setLineWidth(1.5);
-  const lineW = 60;
-  doc.line((h.pw - lineW) / 2, h.getY(), (h.pw + lineW) / 2, h.getY());
-  h.addY(30);
-
-  // Match title
-  doc.setFontSize(28);
-  h.setFont('bold');
-  doc.setTextColor(...NEAR_BLACK);
-  const titleText = `${analysis.home_team} vs ${analysis.away_team}`;
-  const titleLines: string[] = doc.splitTextToSize(titleText, h.cw - 20);
-  for (const line of titleLines) {
-    const tw = doc.getTextWidth(line);
-    doc.text(line, (h.pw - tw) / 2, h.getY());
-    h.addY(14);
-  }
-  h.addY(10);
-
-  // Target and date
-  doc.setFontSize(12);
-  h.setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
   const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
   const dateFormatted = formatDate(analysis.match_date, locale);
-  const metaLine1 = `${tTarget}: ${targetName}`;
-  const metaLine2 = dateFormatted;
-  let mw = doc.getTextWidth(metaLine1);
-  doc.text(metaLine1, (h.pw - mw) / 2, h.getY());
-  h.addY(8);
-  mw = doc.getTextWidth(metaLine2);
-  doc.text(metaLine2, (h.pw - mw) / 2, h.getY());
-  h.addY(20);
+  renderCoverPage(doc, h, fontLoaded,
+    `${analysis.home_team} vs ${analysis.away_team}`,
+    locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
+    [`${tTarget}: ${targetName}`, dateFormatted],
+  );
 
-  // Bottom green bar
-  doc.setFillColor(...GREEN);
-  doc.rect(h.margin, h.ph - 30, h.cw, 3, 'F');
-  doc.setFontSize(8);
-  h.setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
-  const footerText = BRAND;
-  const ftw = doc.getTextWidth(footerText);
-  doc.text(footerText, (h.pw - ftw) / 2, h.ph - 18);
-
-  // ── START CONTENT PAGES ──
+  // ── START CONTENT ──
   doc.addPage();
   h.setY(25);
   addPageHeader(doc, fontLoaded, h.pw, h.margin);
 
-  // Build lookup
   const tabMap = new Map<string, TabData>();
   for (const td of tabsData) {
     const key = td.sub_tab || td.tab_type;
@@ -286,7 +291,6 @@ export async function exportAnalysisPdf(
     return notes.length > 0 || pros.length > 0 || cons.length > 0 || imgs.length > 0;
   };
 
-  // ── Render bullets ──
   const renderBullets = (title: string, items: string[] | null, bulletColor: [number, number, number]) => {
     const cleaned = (items || []).filter(s => s.trim() !== '');
     if (cleaned.length === 0) return;
@@ -300,7 +304,7 @@ export async function exportAnalysisPdf(
 
     doc.setFontSize(11);
     h.setFont('normal');
-    const lineHeight = 6.5;
+    const lineHeight = 7;
     for (const item of cleaned) {
       h.checkPage(16);
       doc.setFillColor(...bulletColor);
@@ -313,14 +317,13 @@ export async function exportAnalysisPdf(
     h.addY(5);
   };
 
-  // ── Render images ──
   const renderImages = async (images: string[] | null) => {
     const urls = (images || []).filter(s => s.trim());
     for (const imgUrl of urls) {
       const image = await loadImageAsset(imgUrl);
       if (!image) continue;
 
-      let imgWidth = h.cw * 0.88;
+      let imgWidth = h.cw * 0.90;
       let imgHeight = (image.height / image.width) * imgWidth;
       const maxH = h.ph * 0.45;
       if (imgHeight > maxH) {
@@ -346,7 +349,6 @@ export async function exportAnalysisPdf(
     const categoryTabs = category.subTabs.map(st => tabMap.get(st)).filter(Boolean) as TabData[];
     if (!categoryTabs.some(hasContent)) continue;
 
-    // Category Header: green background bar
     h.checkPage(32);
     doc.setFillColor(...GREEN);
     doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
@@ -357,12 +359,10 @@ export async function exportAnalysisPdf(
     doc.setTextColor(...DARK_GRAY);
     h.addY(18);
 
-    // Sub-tabs
     for (const subKey of category.subTabs) {
       const tab = tabMap.get(subKey);
       if (!tab || !hasContent(tab)) continue;
 
-      // Sub-header
       h.checkPage(22);
       doc.setFontSize(16);
       h.setFont('bold');
@@ -376,7 +376,6 @@ export async function exportAnalysisPdf(
       doc.setTextColor(...DARK_GRAY);
       h.addY(10);
 
-      // Diziliş
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
@@ -387,15 +386,11 @@ export async function exportAnalysisPdf(
         h.addY(10);
       }
 
-      // Text sections: General with Tactical Blue, Pros green, Cons red
       renderBullets(tGeneralNotes, tab.general_notes, TACTICAL_BLUE);
       renderBullets(tPros, tab.pros, GREEN);
       renderBullets(tCons, tab.cons, RED_ACCENT);
-
-      // Images after text
       await renderImages(tab.images);
 
-      // Spacing between blocks (~25px)
       h.addY(9);
       h.checkPage(4);
       doc.setDrawColor(220, 220, 220);
@@ -407,9 +402,7 @@ export async function exportAnalysisPdf(
     h.addY(10);
   }
 
-  // Add footers to all pages
-  addPageFooter(doc, fontLoaded);
-
+  addPageFooter(doc, fontLoaded, locale);
   doc.save(`${analysis.home_team}_vs_${analysis.away_team}.pdf`);
 }
 
@@ -435,121 +428,226 @@ export async function exportPlayerPdf(
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
-  const pw = doc.internal.pageSize.getWidth();
-  const ph = doc.internal.pageSize.getHeight();
-  const margin = 15;
-  const cw = pw - margin * 2;
-
-  const setFont = (style: 'normal' | 'bold') => {
-    doc.setFont(fontLoaded ? 'NotoSans' : 'helvetica', style);
-  };
+  const h = createHelpers(doc, fontLoaded);
 
   // ── COVER PAGE ──
-  let y = 50;
-
-  // Brand
-  doc.setFontSize(14);
-  setFont('bold');
-  doc.setTextColor(...GREEN);
-  const brandW = doc.getTextWidth(BRAND);
-  doc.text(BRAND, (pw - brandW) / 2, y);
-  y += 6;
-
-  doc.setDrawColor(...GREEN);
-  doc.setLineWidth(1.5);
-  const lineW = 60;
-  doc.line((pw - lineW) / 2, y, (pw + lineW) / 2, y);
-  y += 25;
-
-  // Scouting Report subtitle
-  doc.setFontSize(11);
-  setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
-  const subtitle = locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT';
-  const stw = doc.getTextWidth(subtitle);
-  doc.text(subtitle, (pw - stw) / 2, y);
-  y += 14;
-
-  // Player name
-  doc.setFontSize(28);
-  setFont('bold');
-  doc.setTextColor(...NEAR_BLACK);
-  const nameW = doc.getTextWidth(player.name);
-  doc.text(player.name, (pw - nameW) / 2, y);
-  y += 14;
-
-  // Team and position below name
-  doc.setFontSize(12);
-  setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
   const teamPos = [player.current_team, player.primary_position].filter(Boolean).join(' · ');
-  if (teamPos) {
-    const tpw = doc.getTextWidth(teamPos);
-    doc.text(teamPos, (pw - tpw) / 2, y);
-  }
-  y += 20;
-
-  // Bottom green bar on cover
-  doc.setFillColor(...GREEN);
-  doc.rect(margin, ph - 30, cw, 3, 'F');
-  doc.setFontSize(8);
-  setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
-  const ftw = doc.getTextWidth(BRAND);
-  doc.text(BRAND, (pw - ftw) / 2, ph - 18);
+  renderCoverPage(doc, h, fontLoaded,
+    player.name,
+    locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
+    [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
+  );
 
   // ── DATA PAGE ──
   doc.addPage();
-  addPageHeader(doc, fontLoaded, pw, margin);
-  y = 30;
+  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  h.setY(30);
 
-  // Green header bar with player name
+  // Green header bar
   doc.setFillColor(...GREEN);
-  doc.rect(margin, y - 7, cw, 14, 'F');
+  doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
   doc.setFontSize(18);
-  setFont('bold');
+  h.setFont('bold');
   doc.setTextColor(255, 255, 255);
-  doc.text(player.name, margin + 6, y + 1);
+  doc.text(player.name, h.margin + 6, h.getY() + 1);
   doc.setTextColor(...DARK_GRAY);
-  y += 18;
+  h.addY(18);
 
-  // Thin divider
+  // Divider
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
-  doc.line(margin, y, pw - margin, y);
-  y += 14;
+  doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+  h.addY(14);
 
-  // Data rows with proper line height (no overlap)
-  const rowHeight = 11; // ~1.6 line height at 11pt
+  // 2-column grid for player attributes
+  const attrs: { label: string; value: string }[] = [];
+  if (player.current_team) attrs.push({ label: labels.currentTeam, value: player.current_team });
+  if (player.league) attrs.push({ label: labels.league, value: player.league });
+  if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: player.primary_position });
+  if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: player.secondary_position });
+  if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: player.preferred_foot });
+  if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
 
-  const addRow = (label: string, value: string | null | undefined) => {
-    if (!value) return;
-    if (y + rowHeight > ph - 25) {
-      doc.addPage();
-      addPageHeader(doc, fontLoaded, pw, margin);
-      y = 30;
+  const colWidth = h.cw / 2;
+  const rowH = 14;
+  for (let i = 0; i < attrs.length; i += 2) {
+    h.checkPage(rowH + 4);
+    // Alternating row background
+    if (i % 4 === 0) {
+      doc.setFillColor(245, 245, 245);
+      doc.rect(h.margin, h.getY() - 5, h.cw, rowH, 'F');
     }
-    doc.setFontSize(11);
-    setFont('bold');
+
+    // Left column
+    doc.setFontSize(10);
+    h.setFont('bold');
+    doc.setTextColor(...LIGHT_GRAY);
+    doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
+    h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
-    const labelText = `${label}: `;
-    doc.text(labelText, margin, y);
-    setFont('normal');
-    doc.setTextColor(...DARK_GRAY);
-    doc.text(value, margin + doc.getTextWidth(labelText), y);
-    y += rowHeight;
-  };
+    doc.text(attrs[i].value, h.margin + 4, h.getY() + 5);
 
-  addRow(labels.currentTeam, player.current_team);
-  addRow(labels.league, player.league);
-  addRow(labels.primaryPosition, player.primary_position);
-  addRow(labels.secondaryPosition, player.secondary_position);
-  addRow(labels.preferredFoot, player.preferred_foot);
-  addRow(labels.birthDate, formatDate(player.birth_date, locale));
-  if (player.transfermarkt_link) addRow('Transfermarkt', player.transfermarkt_link);
+    // Right column
+    if (i + 1 < attrs.length) {
+      h.setFont('bold');
+      doc.setTextColor(...LIGHT_GRAY);
+      doc.text(attrs[i + 1].label + ':', h.margin + colWidth + 4, h.getY());
+      h.setFont('normal');
+      doc.setTextColor(...NEAR_BLACK);
+      doc.text(attrs[i + 1].value, h.margin + colWidth + 4, h.getY() + 5);
+    }
 
-  // Add footers
-  addPageFooter(doc, fontLoaded);
+    h.addY(rowH);
+  }
 
+  // Transfermarkt link
+  if (player.transfermarkt_link) {
+    h.addY(6);
+    h.checkPage(14);
+    doc.setFontSize(10);
+    h.setFont('bold');
+    doc.setTextColor(...LIGHT_GRAY);
+    doc.text('Transfermarkt:', h.margin + 4, h.getY());
+    h.setFont('normal');
+    doc.setTextColor(...TACTICAL_BLUE);
+    const linkLines = doc.splitTextToSize(player.transfermarkt_link, h.cw - 10);
+    doc.text(linkLines, h.margin + 4, h.getY() + 5);
+    h.addY(linkLines.length * 6 + 8);
+  }
+
+  addPageFooter(doc, fontLoaded, locale);
   doc.save(`${player.name}.pdf`);
+}
+
+// ══════════════════════════════════════════
+// ── Squad PDF Export ──
+// ══════════════════════════════════════════
+
+interface SquadExportData {
+  name: string;
+  formation: string;
+  playerNames: Record<number, string>; // idx -> name
+}
+
+const FORMATION_POSITIONS: Record<string, { label: string; x: number; y: number }[]> = {
+  '4-3-3': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 50 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 50 },
+    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
+  ],
+  '4-4-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
+  ],
+  '3-5-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'LWB', x: 10, y: 50 }, { label: 'CM', x: 35, y: 52 }, { label: 'CDM', x: 50, y: 56 }, { label: 'CM', x: 65, y: 52 }, { label: 'RWB', x: 90, y: 50 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
+  ],
+  '4-2-3-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CDM', x: 37, y: 55 }, { label: 'CDM', x: 63, y: 55 },
+    { label: 'LW', x: 20, y: 38 }, { label: 'CAM', x: 50, y: 35 }, { label: 'RW', x: 80, y: 38 },
+    { label: 'ST', x: 50, y: 18 },
+  ],
+};
+
+export async function exportSquadPdf(
+  squad: SquadExportData,
+  locale: string = 'tr',
+) {
+  const doc = new jsPDF({ putOnlyUsedFonts: true });
+  const fontLoaded = await setupFonts(doc);
+  const h = createHelpers(doc, fontLoaded);
+
+  // ── COVER ──
+  renderCoverPage(doc, h, fontLoaded,
+    squad.name,
+    locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
+    [`${locale === 'tr' ? 'Diziliş' : 'Formation'}: ${squad.formation}`, formatDate(new Date().toISOString(), locale)],
+  );
+
+  // ── PITCH PAGE ──
+  doc.addPage();
+  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  h.setY(25);
+
+  // Title
+  doc.setFontSize(18);
+  h.setFont('bold');
+  doc.setTextColor(...NEAR_BLACK);
+  doc.text(`${squad.name} — ${squad.formation}`, h.margin, h.getY());
+  h.addY(12);
+
+  // Draw pitch
+  const pitchX = h.margin + 5;
+  const pitchW = h.cw - 10;
+  const pitchH = pitchW * (105 / 68);
+  const maxPitchH = h.ph - h.getY() - 30;
+  const finalPitchH = Math.min(pitchH, maxPitchH);
+  const finalPitchW = finalPitchH * (68 / 105);
+  const pX = h.margin + (h.cw - finalPitchW) / 2;
+  const pY = h.getY();
+
+  // Pitch background
+  doc.setFillColor(34, 120, 34);
+  doc.roundedRect(pX, pY, finalPitchW, finalPitchH, 3, 3, 'F');
+
+  // Pitch lines
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.rect(pX + 2, pY + 2, finalPitchW - 4, finalPitchH - 4, 'S'); // outer
+  doc.line(pX + 2, pY + finalPitchH / 2, pX + finalPitchW - 2, pY + finalPitchH / 2); // halfway
+  doc.circle(pX + finalPitchW / 2, pY + finalPitchH / 2, finalPitchW * 0.12, 'S'); // center circle
+
+  // Penalty areas
+  const penW = finalPitchW * 0.44;
+  const penH = finalPitchH * 0.17;
+  doc.rect(pX + (finalPitchW - penW) / 2, pY + 2, penW, penH, 'S');
+  doc.rect(pX + (finalPitchW - penW) / 2, pY + finalPitchH - penH - 2, penW, penH, 'S');
+
+  // Player positions
+  const positions = FORMATION_POSITIONS[squad.formation] || FORMATION_POSITIONS['4-3-3'];
+  for (let idx = 0; idx < positions.length; idx++) {
+    const pos = positions[idx];
+    const cx = pX + (pos.x / 100) * finalPitchW;
+    const cy = pY + (pos.y / 100) * finalPitchH;
+
+    // Circle
+    doc.setFillColor(255, 255, 255);
+    doc.circle(cx, cy, 5, 'F');
+    doc.setFillColor(...GREEN);
+    doc.circle(cx, cy, 4.5, 'F');
+
+    // Position label
+    doc.setFontSize(7);
+    h.setFont('bold');
+    doc.setTextColor(255, 255, 255);
+    const lbl = pos.label;
+    const lblW = doc.getTextWidth(lbl);
+    doc.text(lbl, cx - lblW / 2, cy + 2.5);
+
+    // Player name below
+    const name = squad.playerNames[idx];
+    if (name) {
+      doc.setFontSize(7);
+      h.setFont('bold');
+      doc.setTextColor(255, 255, 255);
+      // Background pill for name
+      const nameW = doc.getTextWidth(name);
+      doc.setFillColor(0, 0, 0);
+      doc.setGState(new (doc as any).GState({ opacity: 0.5 }));
+      doc.roundedRect(cx - nameW / 2 - 2, cy + 5, nameW + 4, 6, 1, 1, 'F');
+      doc.setGState(new (doc as any).GState({ opacity: 1 }));
+      doc.text(name, cx - nameW / 2, cy + 9.5);
+    }
+  }
+
+  addPageFooter(doc, fontLoaded, locale);
+  doc.save(`${squad.name}.pdf`);
 }
