@@ -12,29 +12,62 @@ async function loadFontBase64(url: string): Promise<string> {
   return btoa(binary);
 }
 
-async function loadImageAsBase64(url: string): Promise<string | null> {
+interface LoadedImageAsset {
+  dataUrl: string;
+  format: 'PNG' | 'JPEG';
+  width: number;
+  height: number;
+}
+
+function getImageFormat(mimeType: string): 'PNG' | 'JPEG' {
+  if (mimeType.toLowerCase().includes('png') || mimeType.toLowerCase().includes('webp')) return 'PNG';
+  return 'JPEG';
+}
+
+async function loadImageAsset(url: string): Promise<LoadedImageAsset | null> {
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
+
     const blob = await res.blob();
-    return new Promise((resolve) => {
+    const dataUrl = await new Promise<string | null>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = () => resolve(null);
       reader.readAsDataURL(blob);
     });
+
+    if (!dataUrl) return null;
+
+    const size = await new Promise<{ width: number; height: number } | null>((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+
+    if (!size) return null;
+
+    return {
+      dataUrl,
+      format: getImageFormat(blob.type),
+      width: size.width,
+      height: size.height,
+    };
   } catch {
     return null;
   }
 }
 
-// Use multiple CDN sources for Turkish-compatible Noto Sans
+// Use local first, then CDN fallback for Turkish-compatible Noto Sans
 const FONT_URLS = {
   regular: [
+    '/fonts/NotoSans-Regular.ttf',
     'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-ext-400-normal.ttf',
     'https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNr5TRA.ttf',
   ],
   bold: [
+    '/fonts/NotoSans-Bold.ttf',
     'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-ext-700-normal.ttf',
     'https://fonts.gstatic.com/s/notosans/v36/o-0NIpQlx3QUlC5A4PNjXhFVZNyB.ttf',
   ],
@@ -197,20 +230,28 @@ export async function exportAnalysisPdf(
     renderBullets(tPros, tab.pros);
     renderBullets(tCons, tab.cons);
 
-    // ── Images AFTER text ──
+    // ── Images AFTER text (never on top of text) ──
     const allImages = tab.images || [];
     for (const imgUrl of allImages) {
-      const dataUrl = await loadImageAsBase64(imgUrl);
-      if (!dataUrl) continue;
+      const image = await loadImageAsset(imgUrl);
+      if (!image) continue;
 
-      // Calculate dimensions maintaining aspect ratio at 85% width
-      const imgWidth = h.contentWidth * 0.85;
-      const imgHeight = imgWidth * 0.6; // 5:3 default aspect
-      h.checkPage(imgHeight + 10);
+      let imgWidth = h.contentWidth * 0.85;
+      let imgHeight = (image.height / image.width) * imgWidth;
+      const maxHeight = h.pageHeight * 0.42;
+
+      if (imgHeight > maxHeight) {
+        const ratio = maxHeight / imgHeight;
+        imgWidth *= ratio;
+        imgHeight = maxHeight;
+      }
+
+      const imgX = h.margin + (h.contentWidth - imgWidth) / 2;
+      h.checkPage(imgHeight + 12);
 
       try {
-        doc.addImage(dataUrl, 'JPEG', h.margin, h.getY(), imgWidth, imgHeight);
-        h.addY(imgHeight + 6);
+        doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
+        h.addY(imgHeight + 8);
       } catch {
         // skip broken images silently
       }
