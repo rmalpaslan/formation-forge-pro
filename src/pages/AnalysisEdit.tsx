@@ -267,7 +267,7 @@ const AnalysisEdit = () => {
         <div>
           <h1 className="text-2xl font-bold">{analysis.home_team} vs {analysis.away_team}</h1>
           <p className="text-sm text-muted-foreground">
-            {analysis.match_date} · {t('target')}: {targetName}
+            {analysis.match_date} · {t('target')}:{'\u00A0\u00A0'}{targetName}
             {isBothFlow && <span className="ml-2 text-primary font-medium">({currentStep === 1 ? t('step1of2') : t('step2of2')})</span>}
           </p>
         </div>
