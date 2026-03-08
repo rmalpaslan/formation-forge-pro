@@ -30,7 +30,7 @@ const translations = {
     both: 'İkisi de',
     continueToAnalysis: 'Analize Devam',
     creating: 'Oluşturuluyor...',
-    target: 'Hedef',
+    target: 'Odak Takım',
     save: 'Kaydet',
     saveAndClose: 'Kaydet ve Kapat',
     saving: 'Kaydediliyor...',
