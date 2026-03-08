@@ -6,6 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const SettingsPage = () => {
   const { t, lang, setLang } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = () => {
+    setSaved(true);
+    toast.success(lang === 'tr' ? 'Kaydedildi' : 'Saved');
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -44,6 +51,9 @@ const SettingsPage = () => {
           </Select>
         </CardContent>
       </Card>
+      <Button onClick={handleSave} className="w-full" variant={saved ? 'secondary' : 'default'}>
+        {saved ? (lang === 'tr' ? '✓ Kaydedildi' : '✓ Saved') : (lang === 'tr' ? 'Değişiklikleri Kaydet' : 'Save Changes')}
+      </Button>
     </div>
   );
 };
