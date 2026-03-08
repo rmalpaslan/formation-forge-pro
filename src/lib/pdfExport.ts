@@ -538,7 +538,7 @@ export async function exportPlayerPdf(
     h.addY(linkLines.length * 6 + 8);
   }
 
-  addPageFooter(doc, fontLoaded, locale);
+  addPageFooter(doc, fontLoaded, locale, analystName);
   doc.save(`${cleanVal(player.name)}.pdf`);
 }
 
