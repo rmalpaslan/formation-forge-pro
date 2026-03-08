@@ -48,6 +48,7 @@ const AnalysisList = () => {
       analysis, tabsData || [], tabLabels,
       t('target'), t('formation'), t('generalNotes'), t('pros'), t('cons'),
       { defense: t('defense').toUpperCase(), attack: t('attack').toUpperCase(), setPieces: t('setPieces').toUpperCase() },
+      lang,
     );
   };
 
