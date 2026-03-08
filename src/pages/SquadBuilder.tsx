@@ -251,21 +251,12 @@ const SquadBuilder = () => {
         </div>
 
         <Dialog open={!!viewSquad} onOpenChange={(open) => !open && setViewSquad(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+          <DialogContent className="max-w-2xl p-4">
             <DialogHeader>
               <DialogTitle>{viewSquad?.name} — {viewSquad?.formation}</DialogTitle>
             </DialogHeader>
-            {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => viewSquad && handleExportPdf(viewSquad)}>
-                <FileDown className="mr-2 h-4 w-4" />{t('exportPdf')}
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={() => viewSquad && handleEdit(viewSquad)}>
-                <Pencil className="mr-2 h-4 w-4" />{t('edit')}
-              </Button>
-              <Button variant="destructive" className="flex-1" onClick={() => viewSquad && handleDelete(viewSquad.id)}>
-                <Trash2 className="mr-2 h-4 w-4" />{t('delete')}
-              </Button>
+            <div className="w-full" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
+              {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
             </div>
           </DialogContent>
         </Dialog>
