@@ -119,6 +119,14 @@ const AnalysisEdit = () => {
   // Clean empty bullets before saving
   const cleanBullets = (arr: string[]) => arr.filter(s => s.trim() !== '');
 
+  const resetAllTabs = () => {
+    const m: Record<string, SectionData> = {};
+    attackSubTabs.forEach(k => m[k] = emptySection('3-2-5'));
+    defenseSubTabs.forEach(k => m[k] = emptySection('5-4-1'));
+    setPieceSubTabs.forEach(k => m[k] = emptySection());
+    setTabs(m);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await supabase.from('analysis_tabs').delete().eq('match_analysis_id', id!);
