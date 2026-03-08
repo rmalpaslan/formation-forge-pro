@@ -148,7 +148,7 @@ const PlayerList = () => {
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
                 <span className="text-muted-foreground text-xs mt-1">
-                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}:{'\u00A0\u00A0'}{formatDateDDMMYYYY(p.updated_at || p.created_at)}
+                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}: {formatDateDDMMYYYY(p.updated_at || p.created_at)}
                 </span>
               </div>
               <div className="flex gap-1">
@@ -174,7 +174,7 @@ const PlayerList = () => {
             <DialogTitle className="text-xl font-bold">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
-            <div className="space-y-3">
+            <div style={{ padding: '20px' }}>
               <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
               <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
               <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
@@ -210,9 +210,9 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex items-baseline py-2 border-b border-border/50 last:border-0">
-      <span className="text-sm text-muted-foreground shrink-0" style={{ width: '160px', fontWeight: 700, whiteSpace: 'nowrap' }}>{label}</span>
-      <span className="text-sm font-medium" style={{ overflowWrap: 'break-word', minWidth: 0 }}>{value || '—'}</span>
+    <div className="grid gap-3 py-2.5 border-b border-border/50 last:border-0" style={{ gridTemplateColumns: '140px 1fr', padding: '10px 0' }}>
+      <span className="text-sm text-muted-foreground font-bold whitespace-nowrap">{label}</span>
+      <span className="text-sm font-medium" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>{value || '—'}</span>
     </div>
   );
 }

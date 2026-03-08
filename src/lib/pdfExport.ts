@@ -9,8 +9,8 @@ const NEAR_BLACK: [number, number, number] = [26, 26, 26];
 const RED_ACCENT: [number, number, number] = [180, 40, 40];
 const LIGHT_GRAY: [number, number, number] = [107, 114, 128];
 
-// Double non-breaking space for after colons
-const NBSP2 = '\u00A0\u00A0';
+// Single space after colons (standard)
+const SPC = ' ';
 
 /** Sanitize a value: strip quotes, \n, trim */
 function cleanVal(v: string | null | undefined): string {
@@ -160,11 +160,30 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
   }
 }
 
-function renderCoverPage(
+async function renderCoverPage(
   doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
   title: string, subtitle: string, metaLines: string[], analystName?: string,
 ) {
-  h.setY(50);
+  // ── Load and place logo at top-center ──
+  const logoImage = await loadImageAsset('/images/logo.png');
+  if (logoImage) {
+    const logoSize = 30;
+    const logoX = (h.pw - logoSize) / 2;
+    doc.addImage(logoImage.dataUrl, logoImage.format, logoX, 20, logoSize, logoSize, undefined, 'FAST');
+    h.setY(58);
+  } else {
+    h.setY(50);
+  }
+
+  // ── Analyst name at top-right ──
+  if (analystName) {
+    doc.setFontSize(9);
+    h.setFont('normal');
+    doc.setTextColor(...LIGHT_GRAY);
+    const prepLabel = `Hazırlayan:${SPC}${analystName}`;
+    doc.text(prepLabel, h.pw - h.margin, 18, { align: 'right' });
+  }
+
   doc.setFontSize(14);
   h.setFont('bold');
   doc.setTextColor(...GREEN);
@@ -212,17 +231,6 @@ function renderCoverPage(
   doc.setTextColor(...LIGHT_GRAY);
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
-
-  // Analyst attribution on cover page — centered below meta lines
-  if (analystName) {
-    h.addY(12);
-    doc.setFontSize(10);
-    h.setFont('normal');
-    doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Hazırlayan:${NBSP2}${analystName}`;
-    const prepW = doc.getTextWidth(prepLabel);
-    doc.text(prepLabel, (h.pw - prepW) / 2, h.getY());
-  }
 }
 
 // ── Types ──
@@ -284,10 +292,10 @@ export async function exportAnalysisPdf(
   // ── COVER PAGE ──
   const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
   const dateFormatted = formatDate(analysis.match_date, locale);
-  renderCoverPage(doc, h, fontLoaded,
+  await renderCoverPage(doc, h, fontLoaded,
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
-    [`${tTarget}:${NBSP2}${targetName}`, dateFormatted],
+    [`${tTarget}:${SPC}${targetName}`, dateFormatted],
     analystName,
   );
 
@@ -410,8 +418,8 @@ export async function exportAnalysisPdf(
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
-        doc.text(`${tDizilis}:${NBSP2}`, h.margin + 2, h.getY());
-        const labelW = doc.getTextWidth(`${tDizilis}:${NBSP2}`);
+        doc.text(`${tDizilis}:${SPC}`, h.margin + 2, h.getY());
+        const labelW = doc.getTextWidth(`${tDizilis}:${SPC}`);
         h.setFont('normal');
         doc.text(cleanVal(tab.formation), h.margin + 2 + labelW, h.getY());
         h.addY(12);
@@ -464,7 +472,7 @@ export async function exportPlayerPdf(
 
   // ── COVER PAGE ──
   const teamPos = [cleanVal(player.current_team), cleanVal(player.primary_position)].filter(Boolean).join(' · ');
-  renderCoverPage(doc, h, fontLoaded,
+  await renderCoverPage(doc, h, fontLoaded,
     cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
     [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
@@ -515,7 +523,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    const leftLabel = attrs[i].label + ':' + NBSP2;
+    const leftLabel = attrs[i].label + ':' + SPC;
     doc.text(leftLabel, h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
@@ -525,7 +533,7 @@ export async function exportPlayerPdf(
     if (i + 1 < attrs.length) {
       h.setFont('bold');
       doc.setTextColor(...LIGHT_GRAY);
-      const rightLabel = attrs[i + 1].label + ':' + NBSP2;
+      const rightLabel = attrs[i + 1].label + ':' + SPC;
       doc.text(rightLabel, h.margin + colWidth + 4, h.getY());
       h.setFont('normal');
       doc.setTextColor(...NEAR_BLACK);
@@ -542,7 +550,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    const tmLabel = 'Transfermarkt:' + NBSP2;
+    const tmLabel = 'Transfermarkt:' + SPC;
     doc.text(tmLabel, h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
@@ -664,10 +672,10 @@ export async function exportSquadPdf(
   const h = createHelpers(doc, fontLoaded);
 
   // ── COVER ──
-  renderCoverPage(doc, h, fontLoaded,
+  await renderCoverPage(doc, h, fontLoaded,
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
-    [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${NBSP2}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
+    [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${SPC}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
     analystName,
   );
 
