@@ -175,14 +175,7 @@ async function renderCoverPage(
     h.setY(50);
   }
 
-  // ── Analyst name at top-right ──
-  if (analystName) {
-    doc.setFontSize(9);
-    h.setFont('normal');
-    doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Hazırlayan:${SPC}${analystName}`;
-    doc.text(prepLabel, h.pw - h.margin, 18, { align: 'right' });
-  }
+  // ── Analyst name centered below meta ── (will be placed after meta lines)
 
   doc.setFontSize(14);
   h.setFont('bold');
@@ -221,6 +214,18 @@ async function renderCoverPage(
   for (const ml of metaLines) {
     const mw = doc.getTextWidth(ml);
     doc.text(ml, (h.pw - mw) / 2, h.getY());
+    h.addY(8);
+  }
+
+  // ── Analyst name centered below meta lines ──
+  if (analystName) {
+    h.addY(6);
+    doc.setFontSize(10);
+    h.setFont('normal');
+    doc.setTextColor(...LIGHT_GRAY);
+    const prepLabel = `Hazırlayan: ${analystName}`;
+    const pw2 = doc.getTextWidth(prepLabel);
+    doc.text(prepLabel, (h.pw - pw2) / 2, h.getY());
     h.addY(8);
   }
 
@@ -509,55 +514,56 @@ export async function exportPlayerPdf(
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: cleanVal(player.preferred_foot) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
 
-  const colWidth = h.cw / 2;
-  const rowH = 14;
-  for (let i = 0; i < attrs.length; i += 2) {
+  // Single-column table layout for player attributes
+  const labelColW = 55; // fixed label column width in mm
+  const rowH = 16; // minimum row height with spacing
+
+  for (let i = 0; i < attrs.length; i++) {
     h.checkPage(rowH + 4);
+
     // Alternating row background
-    if (i % 4 === 0) {
+    if (i % 2 === 0) {
       doc.setFillColor(245, 245, 245);
-      doc.rect(h.margin, h.getY() - 5, h.cw, rowH, 'F');
+      doc.rect(h.margin, h.getY() - 5, h.cw, rowH - 4, 'F');
     }
 
-    // Left column — label:  value (double nbsp after colon)
+    // Label
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    const leftLabel = attrs[i].label + ':' + SPC;
-    doc.text(leftLabel, h.margin + 4, h.getY());
+    doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
+
+    // Value
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
-    doc.text(attrs[i].value, h.margin + 4 + doc.getTextWidth(leftLabel), h.getY());
+    const valueLines = doc.splitTextToSize(attrs[i].value, h.cw - labelColW - 8);
+    doc.text(valueLines, h.margin + labelColW, h.getY());
 
-    // Right column
-    if (i + 1 < attrs.length) {
-      h.setFont('bold');
-      doc.setTextColor(...LIGHT_GRAY);
-      const rightLabel = attrs[i + 1].label + ':' + SPC;
-      doc.text(rightLabel, h.margin + colWidth + 4, h.getY());
-      h.setFont('normal');
-      doc.setTextColor(...NEAR_BLACK);
-      doc.text(attrs[i + 1].value, h.margin + colWidth + 4 + doc.getTextWidth(rightLabel), h.getY());
-    }
-
-    h.addY(rowH);
+    h.addY(Math.max(rowH, valueLines.length * 7 + 5));
   }
 
   // Transfermarkt link
   if (player.transfermarkt_link) {
-    h.addY(6);
-    h.checkPage(14);
+    h.addY(4);
+    h.checkPage(rowH + 4);
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    const tmLabel = 'Transfermarkt:' + SPC;
-    doc.text(tmLabel, h.margin + 4, h.getY());
+    doc.text('Transfermarkt:', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
     const linkText = cleanVal(player.transfermarkt_link);
-    const linkLines = doc.splitTextToSize(linkText, h.cw - 10);
-    doc.text(linkLines, h.margin + 4 + doc.getTextWidth(tmLabel), h.getY());
-    h.addY(linkLines.length * 6 + 8);
+    // Truncate long URLs with ellipsis
+    const maxLinkW = h.cw - labelColW - 8;
+    let displayLink = linkText;
+    if (doc.getTextWidth(displayLink) > maxLinkW) {
+      while (doc.getTextWidth(displayLink + '…') > maxLinkW && displayLink.length > 10) {
+        displayLink = displayLink.slice(0, -1);
+      }
+      displayLink += '…';
+    }
+    doc.text(displayLink, h.margin + labelColW, h.getY());
+    h.addY(rowH);
   }
 
   addPageFooter(doc, fontLoaded, locale, analystName);

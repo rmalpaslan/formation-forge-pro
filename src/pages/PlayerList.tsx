@@ -174,7 +174,7 @@ const PlayerList = () => {
             <DialogTitle className="text-xl font-bold">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
-            <div style={{ padding: '20px' }}>
+            <div className="rounded-lg bg-background border border-border" style={{ padding: '24px' }}>
               <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
               <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
               <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
@@ -182,8 +182,8 @@ const PlayerList = () => {
               <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
               <InfoRow label={t('birthDate')} value={viewPlayer.birth_date || '—'} />
               {viewPlayer.transfermarkt_link && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Transfermarkt: </span>
+                <div className="flex items-baseline py-2.5">
+                  <span className="text-sm text-muted-foreground font-bold shrink-0" style={{ width: '140px', whiteSpace: 'nowrap' }}>Transfermarkt</span>
                   <a href={viewPlayer.transfermarkt_link} target="_blank" rel="noopener noreferrer" className="text-primary text-sm inline-flex items-center gap-1 hover:underline">
                     {t('viewDetails')} <ExternalLink className="h-3 w-3" />
                   </a>
@@ -210,8 +210,8 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="grid gap-3 py-2.5 border-b border-border/50 last:border-0" style={{ gridTemplateColumns: '140px 1fr', padding: '10px 0' }}>
-      <span className="text-sm text-muted-foreground font-bold whitespace-nowrap">{label}</span>
+    <div className="flex items-baseline border-b border-border/50 last:border-0" style={{ padding: '10px 0' }}>
+      <span className="text-sm text-muted-foreground font-bold shrink-0" style={{ width: '140px', whiteSpace: 'nowrap' }}>{label}</span>
       <span className="text-sm font-medium" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>{value || '—'}</span>
     </div>
   );
