@@ -175,14 +175,7 @@ async function renderCoverPage(
     h.setY(50);
   }
 
-  // ── Analyst name at top-right ──
-  if (analystName) {
-    doc.setFontSize(9);
-    h.setFont('normal');
-    doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Hazırlayan:${SPC}${analystName}`;
-    doc.text(prepLabel, h.pw - h.margin, 18, { align: 'right' });
-  }
+  // ── Analyst name centered below meta ── (will be placed after meta lines)
 
   doc.setFontSize(14);
   h.setFont('bold');
