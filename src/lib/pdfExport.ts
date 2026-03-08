@@ -507,7 +507,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text('Transfermarkt:', h.margin + 4, h.getY());
+    doc.text('Transfermarkt: ', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
     const linkLines = doc.splitTextToSize(player.transfermarkt_link, h.cw - 10);
