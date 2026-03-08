@@ -128,12 +128,15 @@ const AnalysisList = () => {
         {filtered.map((a) => (
           <Card key={a.id}>
             <CardContent className="flex items-center justify-between p-4">
-              <div>
+              <div className="flex flex-col">
                 <div className="font-medium">{a.home_team} vs {a.away_team}</div>
                 <div className="text-sm text-muted-foreground">
-                  {a.match_date} · {t('target')}: {getTargetName(a)}
+                  {formatDateDDMMYYYY(a.match_date)} · {t('target')}:{'\u00A0\u00A0'}{getTargetName(a)}
                   {(a as any).league && <span className="ml-2">· {(a as any).league}</span>}
                 </div>
+                <span className="text-muted-foreground text-xs mt-1">
+                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}:{'\u00A0\u00A0'}{formatDateDDMMYYYY(a.updated_at || a.created_at)}
+                </span>
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" onClick={() => handleExportPdf(a)} title={t('exportPdf')}>
