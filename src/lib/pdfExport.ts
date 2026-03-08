@@ -137,7 +137,7 @@ function addPageHeader(doc: jsPDF, fontLoaded: boolean, pw: number, margin: numb
   doc.setTextColor(...DARK_GRAY);
 }
 
-function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr') {
+function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', analystName?: string) {
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
@@ -152,13 +152,16 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr') {
     doc.setLineWidth(0.2);
     doc.line(15, ph - 14, pw - 15, ph - 14);
     doc.text(BRAND, 15, ph - 8);
-    doc.text(`${pageLabel} ${i} / ${totalPages}`, pw - 15, ph - 8, { align: 'right' });
+    const rightText = analystName
+      ? `${analystName}  |  ${pageLabel} ${i} / ${totalPages}`
+      : `${pageLabel} ${i} / ${totalPages}`;
+    doc.text(rightText, pw - 15, ph - 8, { align: 'right' });
   }
 }
 
 function renderCoverPage(
   doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
-  title: string, subtitle: string, metaLines: string[],
+  title: string, subtitle: string, metaLines: string[], analystName?: string,
 ) {
   h.setY(50);
   doc.setFontSize(14);
@@ -208,6 +211,15 @@ function renderCoverPage(
   doc.setTextColor(...LIGHT_GRAY);
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
+
+  // Analyst attribution on cover page
+  if (analystName) {
+    doc.setFontSize(9);
+    h.setFont('normal');
+    doc.setTextColor(...LIGHT_GRAY);
+    const prepLabel = `Prepared by:${NBSP2}${analystName}`;
+    doc.text(prepLabel, h.pw - h.margin, h.ph - 40, { align: 'right' });
+  }
 }
 
 // ── Types ──
@@ -254,6 +266,7 @@ export async function exportAnalysisPdf(
   tCons: string,
   groupLabels?: GroupLabels,
   locale: string = 'tr',
+  analystName?: string,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
@@ -272,6 +285,7 @@ export async function exportAnalysisPdf(
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
     [`${tTarget}:${NBSP2}${targetName}`, dateFormatted],
+    analystName,
   );
 
   // ── START CONTENT ──
@@ -342,6 +356,17 @@ export async function exportAnalysisPdf(
         doc.setLineWidth(0.3);
         doc.rect(imgX - 1, h.getY() - 1, imgWidth + 2, imgHeight + 2, 'S');
         doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
+        // Tactical Snapshot label
+        const snapLabel = 'Tactical Snapshot';
+        doc.setFontSize(7);
+        h.setFont('normal');
+        doc.setFillColor(0, 0, 0);
+        doc.setGState(new (doc as any).GState({ opacity: 0.5 }));
+        doc.roundedRect(imgX + 2, h.getY() + imgHeight - 8, doc.getTextWidth(snapLabel) + 6, 7, 1, 1, 'F');
+        doc.setGState(new (doc as any).GState({ opacity: 1 }));
+        doc.setTextColor(255, 255, 255);
+        doc.text(snapLabel, imgX + 5, h.getY() + imgHeight - 3);
+        doc.setTextColor(...DARK_GRAY);
         h.addY(imgHeight + 14);
       } catch { /* skip broken */ }
     }
@@ -405,7 +430,7 @@ export async function exportAnalysisPdf(
     h.addY(12);
   }
 
-  addPageFooter(doc, fontLoaded, locale);
+  addPageFooter(doc, fontLoaded, locale, analystName);
   doc.save(`${analysis.home_team}_vs_${analysis.away_team}.pdf`);
 }
 
@@ -428,6 +453,7 @@ export async function exportPlayerPdf(
   player: PlayerData,
   labels: Record<string, string>,
   locale: string = 'tr',
+  analystName?: string,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
@@ -439,6 +465,7 @@ export async function exportPlayerPdf(
     cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
     [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
+    analystName,
   );
 
   // ── DATA PAGE ──
@@ -522,7 +549,7 @@ export async function exportPlayerPdf(
     h.addY(linkLines.length * 6 + 8);
   }
 
-  addPageFooter(doc, fontLoaded, locale);
+  addPageFooter(doc, fontLoaded, locale, analystName);
   doc.save(`${cleanVal(player.name)}.pdf`);
 }
 
@@ -627,6 +654,7 @@ const FORMATION_POSITIONS: Record<string, { label: string; x: number; y: number 
 export async function exportSquadPdf(
   squad: SquadExportData,
   locale: string = 'tr',
+  analystName?: string,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
@@ -637,6 +665,7 @@ export async function exportSquadPdf(
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
     [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${NBSP2}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
+    analystName,
   );
 
   // ── PITCH PAGE ──
@@ -713,6 +742,6 @@ export async function exportSquadPdf(
     }
   }
 
-  addPageFooter(doc, fontLoaded, locale);
+  addPageFooter(doc, fontLoaded, locale, analystName);
   doc.save(`${squad.name}.pdf`);
 }

@@ -12,6 +12,16 @@ import { Trash2, Edit, Plus, Search, ExternalLink, FileDown } from 'lucide-react
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
 
+function formatDateDDMMYYYY(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  } catch { return dateStr; }
+}
+
 const PlayerList = () => {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
@@ -22,6 +32,7 @@ const PlayerList = () => {
   const [filterLeague, setFilterLeague] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [analystName, setAnalystName] = useState('');
 
   const load = async () => {
     if (!user) return;
@@ -29,7 +40,14 @@ const PlayerList = () => {
     setPlayers(data || []);
   };
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => {
+    load();
+    if (user) {
+      supabase.from('profiles').select('first_name, last_name').eq('user_id', user.id).single().then(({ data }) => {
+        if (data) setAnalystName([data.first_name, data.last_name].filter(Boolean).join(' '));
+      });
+    }
+  }, [user]);
 
   const handleDelete = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -48,7 +66,7 @@ const PlayerList = () => {
       secondaryPosition: t('secondaryPosition'),
       preferredFoot: t('preferredFoot'),
       birthDate: t('birthDate'),
-    }, lang);
+    }, lang, analystName || undefined);
     toast.success(t('exportPdf'));
   };
 
@@ -123,12 +141,15 @@ const PlayerList = () => {
         {filtered.map((p) => (
           <Card key={p.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewPlayer(p)}>
             <CardContent className="flex items-center justify-between p-4">
-              <div>
+              <div className="flex flex-col">
                 <div className="font-bold text-base">{p.name}</div>
                 <div className="text-sm text-muted-foreground">
                   {p.current_team} · {p.primary_position} · {p.preferred_foot}
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
+                <span className="text-muted-foreground text-xs mt-1">
+                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}:{'\u00A0\u00A0'}{formatDateDDMMYYYY(p.updated_at || p.created_at)}
+                </span>
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" onClick={(e) => handleExportPdf(p, e)} title={t('exportPlayerPdf')}>
@@ -189,9 +210,9 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">{value || '—'}</span>
+    <div className="grid grid-cols-2 gap-2 py-1.5 border-b border-border/50 last:border-0">
+      <span className="text-sm text-muted-foreground font-medium">{label}</span>
+      <span className="text-sm font-medium text-right">{value || '—'}</span>
     </div>
   );
 }

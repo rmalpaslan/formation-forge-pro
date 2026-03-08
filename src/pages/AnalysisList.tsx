@@ -11,6 +11,16 @@ import { Trash2, Edit, Plus, Search, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportAnalysisPdf } from '@/lib/pdfExport';
 
+function formatDateDDMMYYYY(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  } catch { return dateStr; }
+}
+
 const AnalysisList = () => {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
@@ -20,6 +30,7 @@ const AnalysisList = () => {
   const [filterLeague, setFilterLeague] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [analystName, setAnalystName] = useState('');
 
   const load = async () => {
     if (!user) return;
@@ -27,7 +38,14 @@ const AnalysisList = () => {
     setAnalyses(data || []);
   };
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => {
+    load();
+    if (user) {
+      supabase.from('profiles').select('first_name, last_name').eq('user_id', user.id).single().then(({ data }) => {
+        if (data) setAnalystName([data.first_name, data.last_name].filter(Boolean).join(' '));
+      });
+    }
+  }, [user]);
 
   const handleDelete = async (id: string) => {
     await supabase.from('analysis_tabs').delete().eq('match_analysis_id', id);
@@ -48,7 +66,7 @@ const AnalysisList = () => {
       analysis, tabsData || [], tabLabels,
       t('target'), t('formation'), t('generalNotes'), t('pros'), t('cons'),
       { defense: t('defense').toUpperCase(), attack: t('attack').toUpperCase(), setPieces: t('setPieces').toUpperCase() },
-      lang,
+      lang, analystName || undefined,
     );
   };
 
@@ -128,12 +146,15 @@ const AnalysisList = () => {
         {filtered.map((a) => (
           <Card key={a.id}>
             <CardContent className="flex items-center justify-between p-4">
-              <div>
+              <div className="flex flex-col">
                 <div className="font-medium">{a.home_team} vs {a.away_team}</div>
                 <div className="text-sm text-muted-foreground">
-                  {a.match_date} · {t('target')}: {getTargetName(a)}
+                  {formatDateDDMMYYYY(a.match_date)} · {t('target')}:{'\u00A0\u00A0'}{getTargetName(a)}
                   {(a as any).league && <span className="ml-2">· {(a as any).league}</span>}
                 </div>
+                <span className="text-muted-foreground text-xs mt-1">
+                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}:{'\u00A0\u00A0'}{formatDateDDMMYYYY(a.updated_at || a.created_at)}
+                </span>
               </div>
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" onClick={() => handleExportPdf(a)} title={t('exportPdf')}>
