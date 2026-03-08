@@ -9,11 +9,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { Save, ImagePlus, X } from 'lucide-react';
 
-// Master formation list
+// Master formation list – sorted numerically (3-x first, then 4-x, 5-x, 6-x)
 const allFormations = [
-  '4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '3-4-3',
-  '3-2-5', '3-1-6', '3-1-5-1', '2-1-7', '2-1-6-1', '2-2-5-1', '2-2-6',
-  '5-4-1', '6-3-1', '6-2-2', '5-3-2', '4-1-4-1', '4-5-1',
+  '2-1-6-1', '2-1-7', '2-2-5-1', '2-2-6',
+  '3-1-5-1', '3-1-6', '3-2-5', '3-4-3', '3-5-2',
+  '4-1-4-1', '4-2-3-1', '4-3-3', '4-4-2', '4-5-1',
+  '5-3-2', '5-4-1',
+  '6-2-2', '6-3-1',
 ];
 
 const setPieceSubTabs = ['corner', 'free_kick', 'throw_in'] as const;
