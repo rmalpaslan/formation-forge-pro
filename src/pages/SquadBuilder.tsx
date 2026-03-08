@@ -142,6 +142,7 @@ const SquadBuilder = () => {
   const [filterMode, setFilterMode] = useState<'mixed' | 'country' | 'league'>('mixed');
   const [filterCountry, setFilterCountry] = useState('TR');
   const [filterLeague, setFilterLeague] = useState('');
+  const [analystName, setAnalystName] = useState('');
 
   const loadSquads = async () => {
     if (!user) return;
@@ -152,6 +153,9 @@ const SquadBuilder = () => {
   useEffect(() => {
     if (!user) return;
     supabase.from('players').select('*').eq('user_id', user.id).then(({ data }) => setPlayers(data || []));
+    supabase.from('profiles').select('first_name, last_name').eq('user_id', user.id).single().then(({ data }) => {
+      if (data) setAnalystName([data.first_name, data.last_name].filter(Boolean).join(' '));
+    });
     loadSquads();
   }, [user]);
 
