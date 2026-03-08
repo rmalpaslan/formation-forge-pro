@@ -208,6 +208,15 @@ function renderCoverPage(
   doc.setTextColor(...LIGHT_GRAY);
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
+
+  // Analyst attribution on cover page
+  if (analystName) {
+    doc.setFontSize(9);
+    h.setFont('normal');
+    doc.setTextColor(...LIGHT_GRAY);
+    const prepLabel = `Prepared by:${NBSP2}${analystName}`;
+    doc.text(prepLabel, h.pw - h.margin, h.ph - 40, { align: 'right' });
+  }
 }
 
 // ── Types ──
