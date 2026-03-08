@@ -125,7 +125,7 @@ const PlayerNew = () => {
     [t('physical' as any), physicalRating, setPhysicalRating],
     [t('mental' as any), mentalRating, setMentalRating],
     [t('tacticalIQ' as any), tacticalIQRating, setTacticalIQRating],
-    [t('contractStatus' as any), contractStatus, setContractStatus],
+    [t('potentialAbility' as any), contractStatus, setContractStatus],
   ];
 
   return (
