@@ -213,13 +213,15 @@ function renderCoverPage(
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
 
-  // Analyst attribution on cover page
+  // Analyst attribution on cover page — centered below meta lines
   if (analystName) {
-    doc.setFontSize(9);
+    h.addY(12);
+    doc.setFontSize(10);
     h.setFont('normal');
     doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Prepared by:${NBSP2}${analystName}`;
-    doc.text(prepLabel, h.pw - h.margin, h.ph - 40, { align: 'right' });
+    const prepLabel = `Hazırlayan:${NBSP2}${analystName}`;
+    const prepW = doc.getTextWidth(prepLabel);
+    doc.text(prepLabel, (h.pw - prepW) / 2, h.getY());
   }
 }
 
