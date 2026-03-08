@@ -137,6 +137,7 @@ const translations = {
     mental: 'Zihinsel',
     tacticalIQ: 'Oyun Bilgisi',
     contractStatus: 'Sözleşme Durumu',
+    potentialAbility: 'Potansiyel Yetenek',
     skillRatings: 'Yetenek Puanları',
     keyTraits: 'Öne Çıkan Özellikler',
     fast: 'Hızlı',
