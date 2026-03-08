@@ -442,6 +442,7 @@ export async function exportPlayerPdf(
   player: PlayerData,
   labels: Record<string, string>,
   locale: string = 'tr',
+  analystName?: string,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
