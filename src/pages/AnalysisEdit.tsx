@@ -9,11 +9,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { Save, ImagePlus, X } from 'lucide-react';
 
-// Master formation list
+// Master formation list – sorted numerically (3-x first, then 4-x, 5-x, 6-x)
 const allFormations = [
-  '4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '3-4-3',
-  '3-2-5', '3-1-6', '3-1-5-1', '2-1-7', '2-1-6-1', '2-2-5-1', '2-2-6',
-  '5-4-1', '6-3-1', '6-2-2', '5-3-2', '4-1-4-1', '4-5-1',
+  '2-1-6-1', '2-1-7', '2-2-5-1', '2-2-6',
+  '3-1-5-1', '3-1-6', '3-2-5', '3-4-3', '3-5-2',
+  '4-1-4-1', '4-2-3-1', '4-3-3', '4-4-2', '4-5-1',
+  '5-3-2', '5-4-1',
+  '6-2-2', '6-3-1',
 ];
 
 const setPieceSubTabs = ['corner', 'free_kick', 'throw_in'] as const;
@@ -117,6 +119,14 @@ const AnalysisEdit = () => {
   // Clean empty bullets before saving
   const cleanBullets = (arr: string[]) => arr.filter(s => s.trim() !== '');
 
+  const resetAllTabs = () => {
+    const m: Record<string, SectionData> = {};
+    attackSubTabs.forEach(k => m[k] = emptySection('3-2-5'));
+    defenseSubTabs.forEach(k => m[k] = emptySection('5-4-1'));
+    setPieceSubTabs.forEach(k => m[k] = emptySection());
+    setTabs(m);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     await supabase.from('analysis_tabs').delete().eq('match_analysis_id', id!);
@@ -160,9 +170,16 @@ const AnalysisEdit = () => {
     if (error) { toast.error(error.message); return; }
     toast.success(t('analysisSaved'));
 
-    // If "both" flow, navigate to away analysis with clean state
+    // If "both" flow, reset state and navigate to away analysis
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
+      resetAllTabs();
+      setAnalysis(null);
       navigate(`/analyses/${navState.nextAnalysisId}/edit`, { state: { step: 2 }, replace: true });
+    } else if (currentStep === 2 || !isBothFlow) {
+      // After saving 2nd team (or single team), redirect to library
+      if (currentStep === 2) {
+        navigate('/analyses', { replace: true });
+      }
     }
   };
 
@@ -210,15 +227,15 @@ const AnalysisEdit = () => {
         </div>
       )}
       <div>
-        <BulletInput label={t('generalNotes')} value={tabs[tabKey].notes} onChange={(v) => updateTab(tabKey, 'notes', v)} />
+        <BulletInput label={t('generalNotes')} value={tabs[tabKey].notes} onChange={(v) => updateTab(tabKey, 'notes', v)} placeholder={t('typeBullet')} />
         {renderImageRow(tabKey, 'notes')}
       </div>
       <div>
-        <BulletInput label={t('pros')} value={tabs[tabKey].pros} onChange={(v) => updateTab(tabKey, 'pros', v)} />
+        <BulletInput label={t('pros')} value={tabs[tabKey].pros} onChange={(v) => updateTab(tabKey, 'pros', v)} placeholder={t('typeBullet')} />
         {renderImageRow(tabKey, 'pros')}
       </div>
       <div>
-        <BulletInput label={t('cons')} value={tabs[tabKey].cons} onChange={(v) => updateTab(tabKey, 'cons', v)} />
+        <BulletInput label={t('cons')} value={tabs[tabKey].cons} onChange={(v) => updateTab(tabKey, 'cons', v)} placeholder={t('typeBullet')} />
         {renderImageRow(tabKey, 'cons')}
       </div>
     </div>
