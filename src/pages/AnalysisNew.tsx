@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TeamSelector } from '@/components/TeamSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -27,7 +28,6 @@ const AnalysisNew = () => {
     setLoading(true);
 
     if (targetTeam === 'both') {
-      // Create two analyses: first for home, then for away
       const { data: homeData, error: homeError } = await supabase.from('match_analyses').insert({
         home_team: homeTeam, away_team: awayTeam, match_date: matchDate,
         target_team: 'home', user_id: user!.id,
@@ -50,7 +50,6 @@ const AnalysisNew = () => {
         return;
       }
 
-      // Navigate to home analysis first, pass away analysis id as state
       navigate(`/analyses/${homeData.id}/edit`, { state: { nextAnalysisId: awayData.id, step: 1 } });
     } else {
       const { data, error } = await supabase.from('match_analyses').insert({
@@ -73,8 +72,14 @@ const AnalysisNew = () => {
           <CardTitle>{t('newMatchAnalysis')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Input placeholder={t('homeTeam')} value={homeTeam} onChange={(e) => setHomeTeam(e.target.value)} />
-          <Input placeholder={t('awayTeam')} value={awayTeam} onChange={(e) => setAwayTeam(e.target.value)} />
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{t('homeTeam')}</label>
+            <TeamSelector value={homeTeam} onChange={setHomeTeam} placeholder={t('homeTeam')} />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{t('awayTeam')}</label>
+            <TeamSelector value={awayTeam} onChange={setAwayTeam} placeholder={t('awayTeam')} />
+          </div>
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('matchDate')}</label>
             <Input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} />

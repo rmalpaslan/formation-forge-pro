@@ -9,8 +9,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { Save, ImagePlus, X } from 'lucide-react';
 
-const attackFormations = ['3-2-5', '3-1-6', '3-1-5-1', '2-1-7', '2-1-6-1', '2-2-5-1', '2-2-6'];
-const defenseFormations = ['5-4-1', '6-3-1', '6-2-2'];
+// Master formation list
+const allFormations = [
+  '4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '3-4-3',
+  '3-2-5', '3-1-6', '3-1-5-1', '2-1-7', '2-1-6-1', '2-2-5-1', '2-2-6',
+  '5-4-1', '6-3-1', '6-2-2', '5-3-2', '4-1-4-1', '4-5-1',
+];
+
 const setPieceSubTabs = ['corner', 'free_kick', 'throw_in'] as const;
 const attackSubTabs = ['aut_baslangici', 'geriden_oyun_kurma'] as const;
 const defenseSubTabs = ['aut_karsilama', 'on_alan_baskisi', 'orta_blok_karsilama', 'derin_blok_karsilama'] as const;
@@ -25,16 +30,11 @@ interface SectionData {
   formation: string;
 }
 
-const emptySection = (defaultFormation: string = '5-4-1'): SectionData => ({
+const emptySection = (defaultFormation: string = '4-4-2'): SectionData => ({
   notes: [''], notes_images: [], pros: [''], pros_images: [], cons: [''], cons_images: [], formation: defaultFormation,
 });
 
-// All tab keys
 type TabKey = typeof attackSubTabs[number] | typeof defenseSubTabs[number] | typeof setPieceSubTabs[number];
-
-const allTabKeys: TabKey[] = [
-  ...attackSubTabs, ...defenseSubTabs, ...setPieceSubTabs,
-];
 
 const AnalysisEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +54,6 @@ const AnalysisEdit = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeUploadTarget, setActiveUploadTarget] = useState<{ tab: string; field: string }>({ tab: '', field: '' });
 
-  // "Both" teams flow
   const navState = location.state as { nextAnalysisId?: string; step?: number } | null;
   const isBothFlow = !!navState?.nextAnalysisId;
   const currentStep = navState?.step || 1;
@@ -71,19 +70,15 @@ const AnalysisEdit = () => {
           if (map[key] !== undefined) {
             map[key] = {
               formation: row.formation || map[key].formation,
-              notes: row.general_notes || [''],
-              notes_images: row.images?.filter((_: string, i: number) => (row as any).image_categories?.[i] === 'notes') || [],
-              pros: row.pros || [''],
-              pros_images: row.images?.filter((_: string, i: number) => (row as any).image_categories?.[i] === 'pros') || [],
-              cons: row.cons || [''],
-              cons_images: row.images?.filter((_: string, i: number) => (row as any).image_categories?.[i] === 'cons') || [],
+              notes: row.general_notes?.length ? row.general_notes : [''],
+              notes_images: [],
+              pros: row.pros?.length ? row.pros : [''],
+              pros_images: [],
+              cons: row.cons?.length ? row.cons : [''],
+              cons_images: [],
             };
-            // If no categories stored, put all images under notes
-            if (!((row as any).image_categories)) {
-              map[key].notes_images = row.images || [];
-              map[key].pros_images = [];
-              map[key].cons_images = [];
-            }
+            // Put all images under notes by default
+            map[key].notes_images = row.images || [];
           }
         });
         setTabs(map);
@@ -119,41 +114,43 @@ const AnalysisEdit = () => {
     updateTab(tabKey, imgField, newImages);
   };
 
+  // Clean empty bullets before saving
+  const cleanBullets = (arr: string[]) => arr.filter(s => s.trim() !== '');
+
   const handleSave = async () => {
     setSaving(true);
     await supabase.from('analysis_tabs').delete().eq('match_analysis_id', id!);
 
     const rows: any[] = [];
-    // Attack sub-tabs
     attackSubTabs.forEach(st => {
       const sec = tabs[st];
-      const allImages = [...sec.notes_images, ...sec.pros_images, ...sec.cons_images];
-      const cats = [
-        ...sec.notes_images.map(() => 'notes'),
-        ...sec.pros_images.map(() => 'pros'),
-        ...sec.cons_images.map(() => 'cons'),
-      ];
       rows.push({
         match_analysis_id: id, tab_type: 'attack', sub_tab: st,
-        formation: sec.formation, general_notes: sec.notes, pros: sec.pros, cons: sec.cons,
-        images: allImages,
+        formation: sec.formation,
+        general_notes: cleanBullets(sec.notes),
+        pros: cleanBullets(sec.pros),
+        cons: cleanBullets(sec.cons),
+        images: [...sec.notes_images, ...sec.pros_images, ...sec.cons_images],
       });
     });
-    // Defense sub-tabs
     defenseSubTabs.forEach(st => {
       const sec = tabs[st];
       rows.push({
         match_analysis_id: id, tab_type: 'defense', sub_tab: st,
-        formation: sec.formation, general_notes: sec.notes, pros: sec.pros, cons: sec.cons,
+        formation: sec.formation,
+        general_notes: cleanBullets(sec.notes),
+        pros: cleanBullets(sec.pros),
+        cons: cleanBullets(sec.cons),
         images: [...sec.notes_images, ...sec.pros_images, ...sec.cons_images],
       });
     });
-    // Set pieces
     setPieceSubTabs.forEach(st => {
       const sec = tabs[st];
       rows.push({
         match_analysis_id: id, tab_type: 'set_pieces', sub_tab: st,
-        general_notes: sec.notes, pros: sec.pros, cons: sec.cons,
+        general_notes: cleanBullets(sec.notes),
+        pros: cleanBullets(sec.pros),
+        cons: cleanBullets(sec.cons),
         images: [...sec.notes_images, ...sec.pros_images, ...sec.cons_images],
       });
     });
@@ -163,7 +160,7 @@ const AnalysisEdit = () => {
     if (error) { toast.error(error.message); return; }
     toast.success(t('analysisSaved'));
 
-    // If "both" flow, navigate to away analysis
+    // If "both" flow, navigate to away analysis with clean state
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
       navigate(`/analyses/${navState.nextAnalysisId}/edit`, { state: { step: 2 }, replace: true });
     }
@@ -199,15 +196,15 @@ const AnalysisEdit = () => {
     );
   };
 
-  const renderSection = (tabKey: string, formationList?: string[]) => (
+  const renderSection = (tabKey: string, showFormation: boolean = true) => (
     <div className="space-y-6 pt-4">
-      {formationList && (
+      {showFormation && (
         <div className="max-w-xs">
           <label className="text-sm text-muted-foreground">{t('formation')}</label>
           <Select value={tabs[tabKey].formation} onValueChange={(v) => updateTab(tabKey, 'formation', v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {formationList.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+              {allFormations.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -244,7 +241,7 @@ const AnalysisEdit = () => {
           e.target.value = '';
         }}
       />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">{analysis.home_team} vs {analysis.away_team}</h1>
           <p className="text-sm text-muted-foreground">
@@ -259,7 +256,7 @@ const AnalysisEdit = () => {
       </div>
 
       <Tabs defaultValue="defense">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="defense">{t('defense')}</TabsTrigger>
           <TabsTrigger value="attack">{t('attack')}</TabsTrigger>
           <TabsTrigger value="set_pieces">{t('setPieces')}</TabsTrigger>
@@ -267,39 +264,39 @@ const AnalysisEdit = () => {
 
         <TabsContent value="defense">
           <Tabs defaultValue="aut_karsilama" className="mt-4">
-            <TabsList>
+            <TabsList className="flex-wrap">
               <TabsTrigger value="aut_karsilama">{t('autKarsilama')}</TabsTrigger>
               <TabsTrigger value="on_alan_baskisi">{t('onAlanBaskisi')}</TabsTrigger>
               <TabsTrigger value="orta_blok_karsilama">{t('ortaBlokKarsilama')}</TabsTrigger>
               <TabsTrigger value="derin_blok_karsilama">{t('derinBlokKarsilama')}</TabsTrigger>
             </TabsList>
             {defenseSubTabs.map((st) => (
-              <TabsContent key={st} value={st}>{renderSection(st, defenseFormations)}</TabsContent>
+              <TabsContent key={st} value={st}>{renderSection(st, true)}</TabsContent>
             ))}
           </Tabs>
         </TabsContent>
 
         <TabsContent value="attack">
           <Tabs defaultValue="aut_baslangici" className="mt-4">
-            <TabsList>
+            <TabsList className="flex-wrap">
               <TabsTrigger value="aut_baslangici">{t('autBaslangici')}</TabsTrigger>
               <TabsTrigger value="geriden_oyun_kurma">{t('geridenOyunKurma')}</TabsTrigger>
             </TabsList>
             {attackSubTabs.map((st) => (
-              <TabsContent key={st} value={st}>{renderSection(st, attackFormations)}</TabsContent>
+              <TabsContent key={st} value={st}>{renderSection(st, true)}</TabsContent>
             ))}
           </Tabs>
         </TabsContent>
 
         <TabsContent value="set_pieces">
           <Tabs defaultValue="corner" className="mt-4">
-            <TabsList>
+            <TabsList className="flex-wrap">
               <TabsTrigger value="corner">{t('corner')}</TabsTrigger>
               <TabsTrigger value="free_kick">{t('freeKick')}</TabsTrigger>
               <TabsTrigger value="throw_in">{t('throwIn')}</TabsTrigger>
             </TabsList>
             {setPieceSubTabs.map((st) => (
-              <TabsContent key={st} value={st}>{renderSection(st)}</TabsContent>
+              <TabsContent key={st} value={st}>{renderSection(st, false)}</TabsContent>
             ))}
           </Tabs>
         </TabsContent>

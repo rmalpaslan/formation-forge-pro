@@ -4,7 +4,6 @@ type Lang = 'tr' | 'en';
 
 const translations = {
   tr: {
-    // Sidebar
     dashboard: 'Ana Sayfa',
     analysisLibrary: 'Analiz Kütüphanesi',
     playerLibrary: 'Oyuncu İzleme',
@@ -12,7 +11,6 @@ const translations = {
     settings: 'Ayarlar',
     account: 'Hesap',
     logout: 'Çıkış',
-    // Dashboard
     welcomeBack: 'Hoş geldiniz, Koç.',
     newMatchAnalysis: 'Yeni Maç Analizi',
     startAnalyzing: 'Yeni bir maç analiz etmeye başlayın',
@@ -20,7 +18,6 @@ const translations = {
     scoutPlayer: 'Yeni bir oyuncu izleyin ve ekleyin',
     totalAnalyses: 'Toplam Analiz',
     totalPlayers: 'Toplam Oyuncu',
-    // Analysis
     newAnalysis: 'Yeni Analiz',
     searchAnalyses: 'Analiz ara...',
     noAnalysesFound: 'Analiz bulunamadı.',
@@ -55,19 +52,15 @@ const translations = {
     selectPlayer: 'Oyuncu Seç',
     noPlayersInLibrary: 'Kütüphanenizde oyuncu yok.',
     typeBullet: 'Yazın ve yeni madde için Enter\'a basın...',
-    // Attack sub-tabs
     autBaslangici: 'Aut Başlangıcı',
     geridenOyunKurma: 'Geriden Oyun Kurma',
-    // Defense sub-tabs
     autKarsilama: 'Aut Karşılama',
     onAlanBaskisi: 'Ön Alan Baskısı',
     ortaBlokKarsilama: 'Orta Blok Karşılama',
     derinBlokKarsilama: 'Derin Blok Karşılama',
-    // Analysis flow
     step1of2: 'Adım 1/2',
     step2of2: 'Adım 2/2',
     saveAndContinue: 'Kaydet ve Devam Et',
-    // Players
     addPlayer: 'Oyuncu Ekle',
     searchPlayers: 'Oyuncu ara...',
     noPlayersFound: 'Oyuncu bulunamadı.',
@@ -89,7 +82,6 @@ const translations = {
     edit: 'Düzenle',
     delete: 'Sil',
     none: 'Yok',
-    // Squad Builder
     addSquad: 'Kadro Ekle',
     squadName: 'Kadro Adı',
     savedSquads: 'Kayıtlı Kadrolar',
@@ -100,22 +92,29 @@ const translations = {
     enterSquadName: 'Kadro adı girin',
     update: 'Güncelle',
     new: 'Yeni',
-    // Settings
     language: 'Dil',
     languageDesc: 'Uygulama dilini seçin',
     turkish: 'Türkçe',
     english: 'İngilizce',
     settingsTitle: 'Ayarlar',
-    // Account
     email: 'E-posta',
     firstName: 'Ad',
     lastName: 'Soyad',
     saveChanges: 'Değişiklikleri Kaydet',
     profileUpdated: 'Profil güncellendi',
-    // General
     loading: 'Yükleniyor...',
     fillAllFields: 'Lütfen tüm alanları doldurun',
     analysisDeleted: 'Analiz silindi',
+    searchTeam: 'Takım ara...',
+    exportPdf: 'PDF Olarak Dışa Aktar',
+    mixed: 'Karışık',
+    country: 'Ülke',
+    league: 'Lig',
+    filterBy: 'Filtrele',
+    allPlayers: 'Tüm Oyuncular',
+    right: 'Sağ',
+    left: 'Sol',
+    bothFeet: 'Her İkisi',
   },
   en: {
     dashboard: 'Dashboard',
@@ -219,6 +218,16 @@ const translations = {
     loading: 'Loading...',
     fillAllFields: 'Please fill all fields',
     analysisDeleted: 'Analysis deleted',
+    searchTeam: 'Search team...',
+    exportPdf: 'Export to PDF',
+    mixed: 'Mixed',
+    country: 'Country',
+    league: 'League',
+    filterBy: 'Filter by',
+    allPlayers: 'All Players',
+    right: 'Right',
+    left: 'Left',
+    bothFeet: 'Both',
   },
 } as const;
 
