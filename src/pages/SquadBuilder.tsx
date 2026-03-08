@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,8 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { leagues, getCountryCodes } from '@/data/leaguesAndTeams';
 import { toast } from 'sonner';
-import { Save, Trash2, Pencil, Plus, Eye } from 'lucide-react';
+import { Save, Trash2, Pencil, Plus } from 'lucide-react';
 
 const formationPositions: Record<string, { label: string; x: number; y: number }[]> = {
   '4-3-3': [
@@ -61,6 +62,11 @@ const SquadBuilder = () => {
   const [viewSquad, setViewSquad] = useState<Squad | null>(null);
   const [showEditor, setShowEditor] = useState(false);
 
+  // Filtering
+  const [filterMode, setFilterMode] = useState<'mixed' | 'country' | 'league'>('mixed');
+  const [filterCountry, setFilterCountry] = useState('TR');
+  const [filterLeague, setFilterLeague] = useState('');
+
   const loadSquads = async () => {
     if (!user) return;
     const { data } = await supabase.from('squads').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
@@ -72,6 +78,20 @@ const SquadBuilder = () => {
     supabase.from('players').select('*').eq('user_id', user.id).then(({ data }) => setPlayers(data || []));
     loadSquads();
   }, [user]);
+
+  const filteredPlayers = useMemo(() => {
+    if (filterMode === 'mixed') return players;
+    const leagueTeams = new Set<string>();
+    leagues.forEach(l => {
+      if (filterMode === 'country' && l.countryCode === filterCountry) {
+        l.teams.forEach(t => leagueTeams.add(t.toLowerCase()));
+      }
+      if (filterMode === 'league' && l.name === filterLeague) {
+        l.teams.forEach(t => leagueTeams.add(t.toLowerCase()));
+      }
+    });
+    return players.filter(p => p.current_team && leagueTeams.has(p.current_team.toLowerCase()));
+  }, [players, filterMode, filterCountry, filterLeague]);
 
   const positions = formationPositions[formation] || formationPositions['4-3-3'];
 
@@ -133,12 +153,6 @@ const SquadBuilder = () => {
     setShowEditor(true);
   };
 
-  const openViewSquad = (squad: Squad) => {
-    // Load assignments for view
-    const viewFormation = formationPositions[squad.formation] || formationPositions['4-3-3'];
-    setViewSquad(squad);
-  };
-
   const getViewAssignments = (squad: Squad) => {
     const result: Record<number, string> = {};
     if (squad.positions) {
@@ -150,7 +164,34 @@ const SquadBuilder = () => {
     return result;
   };
 
-  // Squad List View (default)
+  const renderPitch = (formationKey: string, assignMap: Record<number, string>, interactive: boolean = false) => {
+    const pos = formationPositions[formationKey] || formationPositions['4-3-3'];
+    return (
+      <div className="relative w-full max-w-full aspect-[68/105] rounded-lg border-2 border-primary bg-primary/20 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-t-0" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-b-0" />
+        </div>
+        {pos.map((p, idx) => (
+          interactive ? (
+            <button key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 group" style={{ left: `${p.x}%`, top: `${p.y}%` }} onClick={() => openPlayerModal(idx)}>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground group-hover:scale-110 transition-transform">{p.label}</div>
+              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignments[idx]?.name || '—'}</span>
+            </button>
+          ) : (
+            <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{p.label}</div>
+              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignMap[idx] || '—'}</span>
+            </div>
+          )
+        ))}
+      </div>
+    );
+  };
+
+  // Squad List View
   if (!showEditor) {
     return (
       <div className="space-y-6">
@@ -160,7 +201,7 @@ const SquadBuilder = () => {
         </div>
         <div className="space-y-3">
           {savedSquads.map((squad) => (
-            <Card key={squad.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => openViewSquad(squad)}>
+            <Card key={squad.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewSquad(squad)}>
               <CardContent className="flex items-center justify-between p-4">
                 <div>
                   <span className="font-bold">{squad.name}</span>
@@ -180,32 +221,12 @@ const SquadBuilder = () => {
           {savedSquads.length === 0 && <p className="text-muted-foreground text-center py-8">{t('noSquadsFound')}</p>}
         </div>
 
-        {/* View Squad Modal */}
         <Dialog open={!!viewSquad} onOpenChange={(open) => !open && setViewSquad(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>{viewSquad?.name} — {viewSquad?.formation}</DialogTitle>
             </DialogHeader>
-            {viewSquad && (() => {
-              const viewPositions = formationPositions[viewSquad.formation] || formationPositions['4-3-3'];
-              const viewAssigns = getViewAssignments(viewSquad);
-              return (
-                <div className="relative w-full aspect-[68/105] rounded-lg border-2 border-primary bg-primary/20 overflow-hidden">
-                  <div className="absolute inset-0">
-                    <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-t-0" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-b-0" />
-                  </div>
-                  {viewPositions.map((pos, idx) => (
-                    <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${pos.x}%`, top: `${pos.y}%` }}>
-                      <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">{pos.label}</div>
-                      <span className="text-[10px] text-foreground font-medium truncate max-w-[60px]">{viewAssigns[idx] || '—'}</span>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
+            {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
             <div className="flex gap-2 pt-2">
               <Button variant="outline" className="flex-1" onClick={() => viewSquad && handleEdit(viewSquad)}>
                 <Pencil className="mr-2 h-4 w-4" />{t('edit')}
@@ -228,7 +249,7 @@ const SquadBuilder = () => {
           <Button variant="outline" onClick={() => { setShowEditor(false); setEditingId(null); }}>← {t('savedSquads')}</Button>
           <h1 className="text-2xl font-bold">{editingId ? squadName : t('addSquad')}</h1>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Input placeholder={t('squadName')} value={squadName} onChange={(e) => setSquadName(e.target.value)} className="w-48" />
           <Select value={formation} onValueChange={(v) => { setFormation(v); setAssignments({}); }}>
             <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
@@ -242,32 +263,48 @@ const SquadBuilder = () => {
         </div>
       </div>
 
-      <div className="relative w-full max-w-2xl mx-auto aspect-[68/105] rounded-lg border-2 border-primary bg-primary/20 overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-t-0" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-b-0" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[20%] h-[6%] border border-primary/30 border-t-0" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[20%] h-[6%] border border-primary/30 border-b-0" />
-        </div>
-        {positions.map((pos, idx) => (
-          <button key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 group" style={{ left: `${pos.x}%`, top: `${pos.y}%` }} onClick={() => openPlayerModal(idx)}>
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground group-hover:scale-110 transition-transform">{pos.label}</div>
-            <span className="text-[10px] text-foreground font-medium truncate max-w-[60px]">{assignments[idx]?.name || '—'}</span>
-          </button>
-        ))}
+      {/* Filter options */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-sm text-muted-foreground">{t('filterBy')}:</span>
+        <Select value={filterMode} onValueChange={(v) => setFilterMode(v as any)}>
+          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mixed">{t('mixed')}</SelectItem>
+            <SelectItem value="country">{t('country')}</SelectItem>
+            <SelectItem value="league">{t('league')}</SelectItem>
+          </SelectContent>
+        </Select>
+        {filterMode === 'country' && (
+          <Select value={filterCountry} onValueChange={setFilterCountry}>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {getCountryCodes().map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+        {filterMode === 'league' && (
+          <Select value={filterLeague} onValueChange={setFilterLeague}>
+            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {leagues.map(l => <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      <div className="max-w-2xl mx-auto">
+        {renderPitch(formation, {}, true)}
       </div>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{t('selectPlayer')}</DialogTitle></DialogHeader>
           <div className="space-y-2 max-h-64 overflow-auto">
-            {players.length === 0 && <p className="text-muted-foreground text-sm">{t('noPlayersInLibrary')}</p>}
-            {players.map((p) => (
+            {filteredPlayers.length === 0 && <p className="text-muted-foreground text-sm">{t('noPlayersInLibrary')}</p>}
+            {filteredPlayers.map((p) => (
               <button key={p.id} className="w-full text-left px-3 py-2 rounded hover:bg-secondary transition-colors" onClick={() => assignPlayer(p)}>
                 <span className="font-medium">{p.name}</span>
-                <span className="text-muted-foreground text-sm ml-2">{p.primary_position}</span>
+                <span className="text-muted-foreground text-sm ml-2">{p.current_team} · {p.primary_position}</span>
               </button>
             ))}
           </div>

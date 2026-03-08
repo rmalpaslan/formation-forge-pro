@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TeamSelector } from '@/components/TeamSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
 
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'CF', 'ST'];
 const feet = ['Right', 'Left', 'Both'];
@@ -67,7 +67,10 @@ const PlayerNew = () => {
         <CardHeader><CardTitle>{isEdit ? t('editPlayer') : t('addNewPlayer')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Input placeholder={t('playerName')} value={name} onChange={(e) => setName(e.target.value)} />
-          <Input placeholder={t('currentTeam')} value={currentTeam} onChange={(e) => setCurrentTeam(e.target.value)} />
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{t('currentTeam')}</label>
+            <TeamSelector value={currentTeam} onChange={setCurrentTeam} placeholder={t('currentTeam')} />
+          </div>
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('birthDate')}</label>
             <Input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
