@@ -13,7 +13,7 @@ import { exportAnalysisPdf } from '@/lib/pdfExport';
 
 const AnalysisList = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [search, setSearch] = useState('');

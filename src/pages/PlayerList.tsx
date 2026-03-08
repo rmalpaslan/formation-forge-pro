@@ -48,7 +48,7 @@ const PlayerList = () => {
       secondaryPosition: t('secondaryPosition'),
       preferredFoot: t('preferredFoot'),
       birthDate: t('birthDate'),
-    });
+    }, lang);
     toast.success(t('exportPdf'));
   };
 
