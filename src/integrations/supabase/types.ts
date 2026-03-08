@@ -100,16 +100,20 @@ export type Database = {
       players: {
         Row: {
           birth_date: string | null
+          contract_status: number | null
           created_at: string
           current_team: string | null
           id: string
           key_traits: string[] | null
           league: string | null
+          mental_rating: number | null
           name: string
           physical_rating: number | null
           preferred_foot: string | null
           primary_position: string | null
+          scout_note: string | null
           secondary_position: string | null
+          tactical_iq_rating: number | null
           tactical_rating: number | null
           technical_rating: number | null
           transfermarkt_link: string | null
@@ -118,16 +122,20 @@ export type Database = {
         }
         Insert: {
           birth_date?: string | null
+          contract_status?: number | null
           created_at?: string
           current_team?: string | null
           id?: string
           key_traits?: string[] | null
           league?: string | null
+          mental_rating?: number | null
           name: string
           physical_rating?: number | null
           preferred_foot?: string | null
           primary_position?: string | null
+          scout_note?: string | null
           secondary_position?: string | null
+          tactical_iq_rating?: number | null
           tactical_rating?: number | null
           technical_rating?: number | null
           transfermarkt_link?: string | null
@@ -136,16 +144,20 @@ export type Database = {
         }
         Update: {
           birth_date?: string | null
+          contract_status?: number | null
           created_at?: string
           current_team?: string | null
           id?: string
           key_traits?: string[] | null
           league?: string | null
+          mental_rating?: number | null
           name?: string
           physical_rating?: number | null
           preferred_foot?: string | null
           primary_position?: string | null
+          scout_note?: string | null
           secondary_position?: string | null
+          tactical_iq_rating?: number | null
           tactical_rating?: number | null
           technical_rating?: number | null
           transfermarkt_link?: string | null
