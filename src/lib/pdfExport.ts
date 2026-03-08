@@ -1,5 +1,14 @@
 import jsPDF from 'jspdf';
 
+// ── Constants ──
+const BRAND = 'COACHING ENGINEERING';
+const GREEN: [number, number, number] = [34, 139, 34];
+const TACTICAL_BLUE: [number, number, number] = [30, 64, 175];
+const DARK_GRAY: [number, number, number] = [31, 41, 55];
+const NEAR_BLACK: [number, number, number] = [26, 26, 26];
+const RED_ACCENT: [number, number, number] = [180, 40, 40];
+const LIGHT_GRAY: [number, number, number] = [107, 114, 128];
+
 // ── Font Loading ──
 
 async function loadFontBase64(url: string): Promise<string> {
@@ -8,21 +17,13 @@ async function loadFontBase64(url: string): Promise<string> {
   const buf = await res.arrayBuffer();
   const bytes = new Uint8Array(buf);
   let binary = '';
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
 
 const FONT_URLS = {
-  regular: [
-    '/fonts/NotoSans-Regular.ttf',
-    'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-ext-400-normal.ttf',
-  ],
-  bold: [
-    '/fonts/NotoSans-Bold.ttf',
-    'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-ext-700-normal.ttf',
-  ],
+  regular: ['/fonts/NotoSans-Regular.ttf', 'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-ext-400-normal.ttf'],
+  bold: ['/fonts/NotoSans-Bold.ttf', 'https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@latest/latin-ext-700-normal.ttf'],
 };
 
 async function loadFontWithFallback(urls: string[]): Promise<string> {
@@ -76,6 +77,23 @@ async function loadImageAsset(url: string): Promise<{ dataUrl: string; format: '
   } catch { return null; }
 }
 
+// ── Date Formatting ──
+
+function formatDate(dateStr: string | null | undefined, locale: string): string {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    if (locale === 'tr') {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}.${mm}.${yyyy}`;
+    }
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch { return dateStr; }
+}
+
 // ── PDF Helpers ──
 
 function createHelpers(doc: jsPDF, fontLoaded: boolean) {
@@ -89,13 +107,49 @@ function createHelpers(doc: jsPDF, fontLoaded: boolean) {
     doc.setFont(fontLoaded ? 'NotoSans' : 'helvetica', style);
   };
   const checkPage = (needed: number) => {
-    if (y + needed > ph - 20) { doc.addPage(); y = 20; }
+    if (y + needed > ph - 25) {
+      doc.addPage();
+      y = 25;
+      addPageHeader(doc, fontLoaded, pw, margin);
+    }
   };
   const getY = () => y;
   const setY = (v: number) => { y = v; };
   const addY = (v: number) => { y += v; };
 
   return { pw, ph, margin, cw, setFont, checkPage, getY, setY, addY };
+}
+
+function addPageHeader(doc: jsPDF, fontLoaded: boolean, pw: number, margin: number) {
+  const fn = fontLoaded ? 'NotoSans' : 'helvetica';
+  doc.setFont(fn, 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...LIGHT_GRAY);
+  doc.text(BRAND, margin, 12);
+  // thin green line
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(0.4);
+  doc.line(margin, 15, pw - margin, 15);
+  // reset
+  doc.setTextColor(...DARK_GRAY);
+}
+
+function addPageFooter(doc: jsPDF, fontLoaded: boolean) {
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const fn = fontLoaded ? 'NotoSans' : 'helvetica';
+  const totalPages = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFont(fn, 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...LIGHT_GRAY);
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.2);
+    doc.line(15, ph - 14, pw - 15, ph - 14);
+    doc.text(BRAND, 15, ph - 8);
+    doc.text(`${i} / ${totalPages}`, pw - 15, ph - 8, { align: 'right' });
+  }
 }
 
 // ── Types ──
@@ -141,6 +195,7 @@ export async function exportAnalysisPdf(
   tPros: string,
   tCons: string,
   groupLabels?: GroupLabels,
+  locale: string = 'tr',
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
@@ -152,29 +207,68 @@ export async function exportAnalysisPdf(
     set_pieces: groupLabels?.setPieces || 'DURAN TOPLAR',
   };
 
-  // ── Cover / Title (centered, large, bold) ──
-  doc.setFontSize(24);
-  h.setFont('bold');
-  doc.setTextColor(31, 41, 55);
-  const titleText = `${analysis.home_team} vs ${analysis.away_team}`;
-  const titleWidth = doc.getTextWidth(titleText);
-  doc.text(titleText, (h.pw - titleWidth) / 2, h.getY());
-  h.addY(12);
+  // ══════════════════════════════════════════
+  // ── COVER PAGE ──
+  // ══════════════════════════════════════════
 
-  doc.setFontSize(11);
-  h.setFont('normal');
-  doc.setTextColor(107, 114, 128);
-  const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
-  const metaText = `${analysis.match_date}  ·  ${tTarget}: ${targetName}`;
-  const metaWidth = doc.getTextWidth(metaText);
-  doc.text(metaText, (h.pw - metaWidth) / 2, h.getY());
+  // Brand name at top
+  h.setY(50);
+  doc.setFontSize(14);
+  h.setFont('bold');
+  doc.setTextColor(...GREEN);
+  const brandW = doc.getTextWidth(BRAND);
+  doc.text(BRAND, (h.pw - brandW) / 2, h.getY());
+  h.addY(6);
+
+  // Decorative green line
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(1.5);
+  const lineW = 60;
+  doc.line((h.pw - lineW) / 2, h.getY(), (h.pw + lineW) / 2, h.getY());
+  h.addY(30);
+
+  // Match title
+  doc.setFontSize(28);
+  h.setFont('bold');
+  doc.setTextColor(...NEAR_BLACK);
+  const titleText = `${analysis.home_team} vs ${analysis.away_team}`;
+  const titleLines: string[] = doc.splitTextToSize(titleText, h.cw - 20);
+  for (const line of titleLines) {
+    const tw = doc.getTextWidth(line);
+    doc.text(line, (h.pw - tw) / 2, h.getY());
+    h.addY(14);
+  }
   h.addY(10);
 
-  // Thick green line under title
-  doc.setDrawColor(34, 139, 34);
-  doc.setLineWidth(1.2);
-  doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
-  h.addY(16);
+  // Target and date
+  doc.setFontSize(12);
+  h.setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
+  const dateFormatted = formatDate(analysis.match_date, locale);
+  const metaLine1 = `${tTarget}: ${targetName}`;
+  const metaLine2 = dateFormatted;
+  let mw = doc.getTextWidth(metaLine1);
+  doc.text(metaLine1, (h.pw - mw) / 2, h.getY());
+  h.addY(8);
+  mw = doc.getTextWidth(metaLine2);
+  doc.text(metaLine2, (h.pw - mw) / 2, h.getY());
+  h.addY(20);
+
+  // Bottom green bar
+  doc.setFillColor(...GREEN);
+  doc.rect(h.margin, h.ph - 30, h.cw, 3, 'F');
+  doc.setFontSize(8);
+  h.setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const footerText = BRAND;
+  const ftw = doc.getTextWidth(footerText);
+  doc.text(footerText, (h.pw - ftw) / 2, h.ph - 18);
+
+  // ── START CONTENT PAGES ──
+  doc.addPage();
+  h.setY(25);
+  addPageHeader(doc, fontLoaded, h.pw, h.margin);
 
   // Build lookup
   const tabMap = new Map<string, TabData>();
@@ -183,7 +277,6 @@ export async function exportAnalysisPdf(
     tabMap.set(key, td);
   }
 
-  // Check content
   const hasContent = (tab: TabData | undefined): boolean => {
     if (!tab) return false;
     const notes = (tab.general_notes || []).filter(s => s.trim());
@@ -193,27 +286,26 @@ export async function exportAnalysisPdf(
     return notes.length > 0 || pros.length > 0 || cons.length > 0 || imgs.length > 0;
   };
 
-  // ── Render bullets with clean circles ──
-  const renderBullets = (title: string, items: string[] | null, bulletColor: [number, number, number] = [34, 139, 34]) => {
+  // ── Render bullets ──
+  const renderBullets = (title: string, items: string[] | null, bulletColor: [number, number, number]) => {
     const cleaned = (items || []).filter(s => s.trim() !== '');
     if (cleaned.length === 0) return;
 
     h.checkPage(18);
     doc.setFontSize(11);
     h.setFont('bold');
-    doc.setTextColor(26, 26, 26);
+    doc.setTextColor(...NEAR_BLACK);
     doc.text(`${title}:`, h.margin + 4, h.getY());
     h.addY(8);
 
     doc.setFontSize(11);
     h.setFont('normal');
-    const lineHeight = 6.5; // ~1.5 line spacing at 11pt
+    const lineHeight = 6.5;
     for (const item of cleaned) {
       h.checkPage(16);
-      // Clean filled circle bullet
       doc.setFillColor(...bulletColor);
       doc.circle(h.margin + 8, h.getY() - 1.5, 1.2, 'F');
-      doc.setTextColor(31, 41, 55);
+      doc.setTextColor(...DARK_GRAY);
       const lines: string[] = doc.splitTextToSize(item, h.cw - 18);
       doc.text(lines, h.margin + 14, h.getY());
       h.addY(lines.length * lineHeight);
@@ -221,14 +313,14 @@ export async function exportAnalysisPdf(
     h.addY(5);
   };
 
-  // ── Render images (centered, 90% width, subtle border) ──
+  // ── Render images ──
   const renderImages = async (images: string[] | null) => {
     const urls = (images || []).filter(s => s.trim());
     for (const imgUrl of urls) {
       const image = await loadImageAsset(imgUrl);
       if (!image) continue;
 
-      let imgWidth = h.cw * 0.90;
+      let imgWidth = h.cw * 0.88;
       let imgHeight = (image.height / image.width) * imgWidth;
       const maxH = h.ph * 0.45;
       if (imgHeight > maxH) {
@@ -240,7 +332,6 @@ export async function exportAnalysisPdf(
       h.checkPage(imgHeight + 16);
 
       try {
-        // Subtle border
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.3);
         doc.rect(imgX - 1, h.getY() - 1, imgWidth + 2, imgHeight + 2, 'S');
@@ -253,41 +344,39 @@ export async function exportAnalysisPdf(
   // ── Iterate categories ──
   for (const category of CATEGORY_ORDER) {
     const categoryTabs = category.subTabs.map(st => tabMap.get(st)).filter(Boolean) as TabData[];
-    const categoryHasContent = categoryTabs.some(hasContent);
-    if (!categoryHasContent) continue;
+    if (!categoryTabs.some(hasContent)) continue;
 
-    // ── Category Header: green background bar ──
+    // Category Header: green background bar
     h.checkPage(32);
-    doc.setFillColor(34, 139, 34);
+    doc.setFillColor(...GREEN);
     doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
     doc.setFontSize(20);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
     doc.text(GROUP_NAMES[category.key] || category.key.toUpperCase(), h.margin + 6, h.getY() + 2);
-    doc.setTextColor(31, 41, 55);
+    doc.setTextColor(...DARK_GRAY);
     h.addY(18);
 
-    // ── Sub-tabs ──
+    // Sub-tabs
     for (const subKey of category.subTabs) {
       const tab = tabMap.get(subKey);
       if (!tab || !hasContent(tab)) continue;
 
-      // Sub-header: 16pt bold dark gray
+      // Sub-header
       h.checkPage(22);
       doc.setFontSize(16);
       h.setFont('bold');
-      doc.setTextColor(26, 26, 26);
+      doc.setTextColor(...NEAR_BLACK);
       const subLabel = subTabLabels[subKey] || subKey;
       doc.text(subLabel, h.margin, h.getY());
-      // Thin green underline
       h.addY(3);
-      doc.setDrawColor(34, 139, 34);
+      doc.setDrawColor(...GREEN);
       doc.setLineWidth(0.6);
       doc.line(h.margin, h.getY(), h.margin + doc.getTextWidth(subLabel) * 1.05, h.getY());
-      doc.setTextColor(31, 41, 55);
+      doc.setTextColor(...DARK_GRAY);
       h.addY(10);
 
-      // Diziliş (formation) with space after colon
+      // Diziliş
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
@@ -298,16 +387,16 @@ export async function exportAnalysisPdf(
         h.addY(10);
       }
 
-      // Text sections FIRST (always before images)
-      renderBullets(tGeneralNotes, tab.general_notes, [34, 139, 34]);
-      renderBullets(tPros, tab.pros, [34, 139, 34]);
-      renderBullets(tCons, tab.cons, [180, 40, 40]);
+      // Text sections: General with Tactical Blue, Pros green, Cons red
+      renderBullets(tGeneralNotes, tab.general_notes, TACTICAL_BLUE);
+      renderBullets(tPros, tab.pros, GREEN);
+      renderBullets(tCons, tab.cons, RED_ACCENT);
 
-      // Images AFTER all text
+      // Images after text
       await renderImages(tab.images);
 
-      // 25px spacing between analysis blocks
-      h.addY(9); // ~25px in PDF units
+      // Spacing between blocks (~25px)
+      h.addY(9);
       h.checkPage(4);
       doc.setDrawColor(220, 220, 220);
       doc.setLineWidth(0.15);
@@ -315,14 +404,18 @@ export async function exportAnalysisPdf(
       h.addY(9);
     }
 
-    // Extra space between categories
     h.addY(10);
   }
+
+  // Add footers to all pages
+  addPageFooter(doc, fontLoaded);
 
   doc.save(`${analysis.home_team}_vs_${analysis.away_team}.pdf`);
 }
 
+// ══════════════════════════════════════════
 // ── Player PDF Export ──
+// ══════════════════════════════════════════
 
 interface PlayerData {
   name: string;
@@ -338,43 +431,113 @@ interface PlayerData {
 export async function exportPlayerPdf(
   player: PlayerData,
   labels: Record<string, string>,
+  locale: string = 'tr',
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
   const margin = 15;
-  const pageWidth = doc.internal.pageSize.getWidth();
-  let y = 25;
+  const cw = pw - margin * 2;
 
   const setFont = (style: 'normal' | 'bold') => {
     doc.setFont(fontLoaded ? 'NotoSans' : 'helvetica', style);
   };
 
+  // ── COVER PAGE ──
+  let y = 50;
+
+  // Brand
+  doc.setFontSize(14);
+  setFont('bold');
+  doc.setTextColor(...GREEN);
+  const brandW = doc.getTextWidth(BRAND);
+  doc.text(BRAND, (pw - brandW) / 2, y);
+  y += 6;
+
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(1.5);
+  const lineW = 60;
+  doc.line((pw - lineW) / 2, y, (pw + lineW) / 2, y);
+  y += 25;
+
+  // Scouting Report subtitle
+  doc.setFontSize(11);
+  setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const subtitle = locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT';
+  const stw = doc.getTextWidth(subtitle);
+  doc.text(subtitle, (pw - stw) / 2, y);
+  y += 14;
+
+  // Player name
+  doc.setFontSize(28);
+  setFont('bold');
+  doc.setTextColor(...NEAR_BLACK);
+  const nameW = doc.getTextWidth(player.name);
+  doc.text(player.name, (pw - nameW) / 2, y);
+  y += 14;
+
+  // Team and position below name
+  doc.setFontSize(12);
+  setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const teamPos = [player.current_team, player.primary_position].filter(Boolean).join(' · ');
+  if (teamPos) {
+    const tpw = doc.getTextWidth(teamPos);
+    doc.text(teamPos, (pw - tpw) / 2, y);
+  }
+  y += 20;
+
+  // Bottom green bar on cover
+  doc.setFillColor(...GREEN);
+  doc.rect(margin, ph - 30, cw, 3, 'F');
+  doc.setFontSize(8);
+  setFont('normal');
+  doc.setTextColor(...LIGHT_GRAY);
+  const ftw = doc.getTextWidth(BRAND);
+  doc.text(BRAND, (pw - ftw) / 2, ph - 18);
+
+  // ── DATA PAGE ──
+  doc.addPage();
+  addPageHeader(doc, fontLoaded, pw, margin);
+  y = 30;
+
   // Green header bar with player name
-  doc.setFillColor(34, 139, 34);
-  doc.rect(margin, y - 7, pageWidth - margin * 2, 14, 'F');
+  doc.setFillColor(...GREEN);
+  doc.rect(margin, y - 7, cw, 14, 'F');
   doc.setFontSize(18);
   setFont('bold');
   doc.setTextColor(255, 255, 255);
   doc.text(player.name, margin + 6, y + 1);
-  doc.setTextColor(31, 41, 55);
-  y += 16;
+  doc.setTextColor(...DARK_GRAY);
+  y += 18;
 
+  // Thin divider
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
+  doc.line(margin, y, pw - margin, y);
+  y += 14;
+
+  // Data rows with proper line height (no overlap)
+  const rowHeight = 11; // ~1.6 line height at 11pt
 
   const addRow = (label: string, value: string | null | undefined) => {
     if (!value) return;
+    if (y + rowHeight > ph - 25) {
+      doc.addPage();
+      addPageHeader(doc, fontLoaded, pw, margin);
+      y = 30;
+    }
     doc.setFontSize(11);
     setFont('bold');
-    doc.setTextColor(26, 26, 26);
+    doc.setTextColor(...NEAR_BLACK);
     const labelText = `${label}: `;
     doc.text(labelText, margin, y);
     setFont('normal');
-    doc.setTextColor(31, 41, 55);
+    doc.setTextColor(...DARK_GRAY);
     doc.text(value, margin + doc.getTextWidth(labelText), y);
-    y += 9;
+    y += rowHeight;
   };
 
   addRow(labels.currentTeam, player.current_team);
@@ -382,8 +545,11 @@ export async function exportPlayerPdf(
   addRow(labels.primaryPosition, player.primary_position);
   addRow(labels.secondaryPosition, player.secondary_position);
   addRow(labels.preferredFoot, player.preferred_foot);
-  addRow(labels.birthDate, player.birth_date);
+  addRow(labels.birthDate, formatDate(player.birth_date, locale));
   if (player.transfermarkt_link) addRow('Transfermarkt', player.transfermarkt_link);
+
+  // Add footers
+  addPageFooter(doc, fontLoaded);
 
   doc.save(`${player.name}.pdf`);
 }
