@@ -255,7 +255,7 @@ const SquadBuilder = () => {
             <DialogHeader>
               <DialogTitle>{viewSquad?.name} — {viewSquad?.formation}</DialogTitle>
             </DialogHeader>
-            <div className="w-full" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
+            <div className="w-full" style={{ maxHeight: '80vh' }}>
               {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
             </div>
           </DialogContent>
