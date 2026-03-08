@@ -9,6 +9,15 @@ const NEAR_BLACK: [number, number, number] = [26, 26, 26];
 const RED_ACCENT: [number, number, number] = [180, 40, 40];
 const LIGHT_GRAY: [number, number, number] = [107, 114, 128];
 
+// Double non-breaking space for after colons
+const NBSP2 = '\u00A0\u00A0';
+
+/** Sanitize a value: strip quotes, \n, trim */
+function cleanVal(v: string | null | undefined): string {
+  if (!v) return '';
+  return v.replace(/\\n/g, ' ').replace(/"/g, '').replace(/\n/g, ' ').trim();
+}
+
 // ── Font Loading ──
 
 async function loadFontBase64(url: string): Promise<string> {
@@ -77,18 +86,16 @@ async function loadImageAsset(url: string): Promise<{ dataUrl: string; format: '
   } catch { return null; }
 }
 
-// ── Date Formatting ──
+// ── Date Formatting (DD.MM.YYYY) ──
 
-function formatDate(dateStr: string | null | undefined, locale: string): string {
+function formatDate(dateStr: string | null | undefined, _locale: string): string {
   if (!dateStr) return '';
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    if (locale === 'tr') return `${dd}.${mm}.${yyyy}`;
-    return `${dd}.${mm}.${yyyy}`;
+    return `${dd}.${mm}.${d.getFullYear()}`;
   } catch { return dateStr; }
 }
 
@@ -167,7 +174,6 @@ function renderCoverPage(
   doc.line((h.pw - lineW) / 2, h.getY(), (h.pw + lineW) / 2, h.getY());
   h.addY(20);
 
-  // Subtitle
   doc.setFontSize(11);
   h.setFont('normal');
   doc.setTextColor(...LIGHT_GRAY);
@@ -175,7 +181,6 @@ function renderCoverPage(
   doc.text(subtitle, (h.pw - stw) / 2, h.getY());
   h.addY(14);
 
-  // Title
   doc.setFontSize(28);
   h.setFont('bold');
   doc.setTextColor(...NEAR_BLACK);
@@ -187,7 +192,6 @@ function renderCoverPage(
   }
   h.addY(8);
 
-  // Meta lines
   doc.setFontSize(12);
   h.setFont('normal');
   doc.setTextColor(...LIGHT_GRAY);
@@ -197,7 +201,6 @@ function renderCoverPage(
     h.addY(8);
   }
 
-  // Bottom green bar
   doc.setFillColor(...GREEN);
   doc.rect(h.margin, h.ph - 30, h.cw, 3, 'F');
   doc.setFontSize(8);
@@ -268,7 +271,7 @@ export async function exportAnalysisPdf(
   renderCoverPage(doc, h, fontLoaded,
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
-    [`${tTarget}: ${targetName}`, dateFormatted],
+    [`${tTarget}:${NBSP2}${targetName}`, dateFormatted],
   );
 
   // ── START CONTENT ──
@@ -300,21 +303,21 @@ export async function exportAnalysisPdf(
     h.setFont('bold');
     doc.setTextColor(...NEAR_BLACK);
     doc.text(`${title}:`, h.margin + 4, h.getY());
-    h.addY(8);
+    h.addY(9);
 
     doc.setFontSize(11);
     h.setFont('normal');
-    const lineHeight = 7;
+    const lineHeight = 7.5;
     for (const item of cleaned) {
       h.checkPage(16);
       doc.setFillColor(...bulletColor);
       doc.circle(h.margin + 8, h.getY() - 1.5, 1.2, 'F');
       doc.setTextColor(...DARK_GRAY);
-      const lines: string[] = doc.splitTextToSize(item, h.cw - 18);
+      const lines: string[] = doc.splitTextToSize(cleanVal(item), h.cw - 18);
       doc.text(lines, h.margin + 14, h.getY());
       h.addY(lines.length * lineHeight);
     }
-    h.addY(5);
+    h.addY(6);
   };
 
   const renderImages = async (images: string[] | null) => {
@@ -339,7 +342,7 @@ export async function exportAnalysisPdf(
         doc.setLineWidth(0.3);
         doc.rect(imgX - 1, h.getY() - 1, imgWidth + 2, imgHeight + 2, 'S');
         doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
-        h.addY(imgHeight + 12);
+        h.addY(imgHeight + 14);
       } catch { /* skip broken */ }
     }
   };
@@ -357,7 +360,7 @@ export async function exportAnalysisPdf(
     doc.setTextColor(255, 255, 255);
     doc.text(GROUP_NAMES[category.key] || category.key.toUpperCase(), h.margin + 6, h.getY() + 2);
     doc.setTextColor(...DARK_GRAY);
-    h.addY(18);
+    h.addY(20);
 
     for (const subKey of category.subTabs) {
       const tab = tabMap.get(subKey);
@@ -374,16 +377,16 @@ export async function exportAnalysisPdf(
       doc.setLineWidth(0.6);
       doc.line(h.margin, h.getY(), h.margin + doc.getTextWidth(subLabel) * 1.05, h.getY());
       doc.setTextColor(...DARK_GRAY);
-      h.addY(10);
+      h.addY(12);
 
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
-        const formLabel = `${tDizilis}: `;
-        doc.text(formLabel, h.margin + 2, h.getY());
+        doc.text(`${tDizilis}:${NBSP2}`, h.margin + 2, h.getY());
+        const labelW = doc.getTextWidth(`${tDizilis}:${NBSP2}`);
         h.setFont('normal');
-        doc.text(tab.formation, h.margin + 2 + doc.getTextWidth(formLabel), h.getY());
-        h.addY(10);
+        doc.text(cleanVal(tab.formation), h.margin + 2 + labelW, h.getY());
+        h.addY(12);
       }
 
       renderBullets(tGeneralNotes, tab.general_notes, TACTICAL_BLUE);
@@ -399,7 +402,7 @@ export async function exportAnalysisPdf(
       h.addY(9);
     }
 
-    h.addY(10);
+    h.addY(12);
   }
 
   addPageFooter(doc, fontLoaded, locale);
@@ -431,9 +434,9 @@ export async function exportPlayerPdf(
   const h = createHelpers(doc, fontLoaded);
 
   // ── COVER PAGE ──
-  const teamPos = [player.current_team, player.primary_position].filter(Boolean).join(' · ');
+  const teamPos = [cleanVal(player.current_team), cleanVal(player.primary_position)].filter(Boolean).join(' · ');
   renderCoverPage(doc, h, fontLoaded,
-    player.name,
+    cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
     [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
   );
@@ -449,7 +452,7 @@ export async function exportPlayerPdf(
   doc.setFontSize(18);
   h.setFont('bold');
   doc.setTextColor(255, 255, 255);
-  doc.text(player.name, h.margin + 6, h.getY() + 1);
+  doc.text(cleanVal(player.name), h.margin + 6, h.getY() + 1);
   doc.setTextColor(...DARK_GRAY);
   h.addY(18);
 
@@ -459,13 +462,13 @@ export async function exportPlayerPdf(
   doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
   h.addY(14);
 
-  // 2-column grid for player attributes
+  // 2-column grid for player attributes — clean plain text
   const attrs: { label: string; value: string }[] = [];
-  if (player.current_team) attrs.push({ label: labels.currentTeam, value: player.current_team });
-  if (player.league) attrs.push({ label: labels.league, value: player.league });
-  if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: player.primary_position });
-  if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: player.secondary_position });
-  if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: player.preferred_foot });
+  if (player.current_team) attrs.push({ label: labels.currentTeam, value: cleanVal(player.current_team) });
+  if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
+  if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: cleanVal(player.primary_position) });
+  if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: cleanVal(player.secondary_position) });
+  if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: cleanVal(player.preferred_foot) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
 
   const colWidth = h.cw / 2;
@@ -478,23 +481,25 @@ export async function exportPlayerPdf(
       doc.rect(h.margin, h.getY() - 5, h.cw, rowH, 'F');
     }
 
-    // Left column
+    // Left column — label:  value (double nbsp after colon)
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text(attrs[i].label + ': ', h.margin + 4, h.getY());
+    const leftLabel = attrs[i].label + ':' + NBSP2;
+    doc.text(leftLabel, h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
-    doc.text(attrs[i].value, h.margin + 4, h.getY() + 5);
+    doc.text(attrs[i].value, h.margin + 4 + doc.getTextWidth(leftLabel), h.getY());
 
     // Right column
     if (i + 1 < attrs.length) {
       h.setFont('bold');
       doc.setTextColor(...LIGHT_GRAY);
-      doc.text(attrs[i + 1].label + ': ', h.margin + colWidth + 4, h.getY());
+      const rightLabel = attrs[i + 1].label + ':' + NBSP2;
+      doc.text(rightLabel, h.margin + colWidth + 4, h.getY());
       h.setFont('normal');
       doc.setTextColor(...NEAR_BLACK);
-      doc.text(attrs[i + 1].value, h.margin + colWidth + 4, h.getY() + 5);
+      doc.text(attrs[i + 1].value, h.margin + colWidth + 4 + doc.getTextWidth(rightLabel), h.getY());
     }
 
     h.addY(rowH);
@@ -507,16 +512,18 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text('Transfermarkt: ', h.margin + 4, h.getY());
+    const tmLabel = 'Transfermarkt:' + NBSP2;
+    doc.text(tmLabel, h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
-    const linkLines = doc.splitTextToSize(player.transfermarkt_link, h.cw - 10);
-    doc.text(linkLines, h.margin + 4, h.getY() + 5);
+    const linkText = cleanVal(player.transfermarkt_link);
+    const linkLines = doc.splitTextToSize(linkText, h.cw - 10);
+    doc.text(linkLines, h.margin + 4 + doc.getTextWidth(tmLabel), h.getY());
     h.addY(linkLines.length * 6 + 8);
   }
 
   addPageFooter(doc, fontLoaded, locale);
-  doc.save(`${player.name}.pdf`);
+  doc.save(`${cleanVal(player.name)}.pdf`);
 }
 
 // ══════════════════════════════════════════
@@ -526,10 +533,36 @@ export async function exportPlayerPdf(
 interface SquadExportData {
   name: string;
   formation: string;
-  playerNames: Record<number, string>; // idx -> name
+  playerNames: Record<number, string>;
 }
 
 const FORMATION_POSITIONS: Record<string, { label: string; x: number; y: number }[]> = {
+  '3-4-3': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'LM', x: 15, y: 50 }, { label: 'CM', x: 37, y: 52 }, { label: 'CM', x: 63, y: 52 }, { label: 'RM', x: 85, y: 50 },
+    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
+  ],
+  '3-5-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'LWB', x: 10, y: 50 }, { label: 'CM', x: 35, y: 52 }, { label: 'CDM', x: 50, y: 56 }, { label: 'CM', x: 65, y: 52 }, { label: 'RWB', x: 90, y: 50 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
+  ],
+  '3-4-1-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'LM', x: 15, y: 52 }, { label: 'CM', x: 37, y: 52 }, { label: 'CM', x: 63, y: 52 }, { label: 'RM', x: 85, y: 52 },
+    { label: 'CAM', x: 50, y: 35 },
+    { label: 'ST', x: 37, y: 20 }, { label: 'ST', x: 63, y: 20 },
+  ],
+  '3-1-4-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'CDM', x: 50, y: 58 },
+    { label: 'LM', x: 15, y: 45 }, { label: 'CM', x: 37, y: 45 }, { label: 'CM', x: 63, y: 45 }, { label: 'RM', x: 85, y: 45 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
+  ],
   '4-3-3': [
     { label: 'GK', x: 50, y: 90 },
     { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
@@ -542,18 +575,52 @@ const FORMATION_POSITIONS: Record<string, { label: string; x: number; y: number 
     { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
     { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
   ],
-  '3-5-2': [
-    { label: 'GK', x: 50, y: 90 },
-    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
-    { label: 'LWB', x: 10, y: 50 }, { label: 'CM', x: 35, y: 52 }, { label: 'CDM', x: 50, y: 56 }, { label: 'CM', x: 65, y: 52 }, { label: 'RWB', x: 90, y: 50 },
-    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
-  ],
   '4-2-3-1': [
     { label: 'GK', x: 50, y: 90 },
     { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
     { label: 'CDM', x: 37, y: 55 }, { label: 'CDM', x: 63, y: 55 },
     { label: 'LW', x: 20, y: 38 }, { label: 'CAM', x: 50, y: 35 }, { label: 'RW', x: 80, y: 38 },
     { label: 'ST', x: 50, y: 18 },
+  ],
+  '4-1-4-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CDM', x: 50, y: 56 },
+    { label: 'LM', x: 15, y: 40 }, { label: 'CM', x: 37, y: 42 }, { label: 'CM', x: 63, y: 42 }, { label: 'RM', x: 85, y: 40 },
+    { label: 'ST', x: 50, y: 18 },
+  ],
+  '4-3-1-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 52 }, { label: 'CM', x: 50, y: 50 }, { label: 'CM', x: 70, y: 52 },
+    { label: 'CAM', x: 50, y: 35 },
+    { label: 'ST', x: 37, y: 20 }, { label: 'ST', x: 63, y: 20 },
+  ],
+  '4-3-2-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 52 }, { label: 'CM', x: 50, y: 50 }, { label: 'CM', x: 70, y: 52 },
+    { label: 'LW', x: 30, y: 32 }, { label: 'RW', x: 70, y: 32 },
+    { label: 'ST', x: 50, y: 18 },
+  ],
+  '5-3-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LWB', x: 10, y: 68 }, { label: 'CB', x: 30, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 70, y: 72 }, { label: 'RWB', x: 90, y: 68 },
+    { label: 'CM', x: 30, y: 48 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 48 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
+  ],
+  '5-4-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LWB', x: 10, y: 68 }, { label: 'CB', x: 30, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 70, y: 72 }, { label: 'RWB', x: 90, y: 68 },
+    { label: 'LM', x: 15, y: 45 }, { label: 'CM', x: 37, y: 47 }, { label: 'CM', x: 63, y: 47 }, { label: 'RM', x: 85, y: 45 },
+    { label: 'ST', x: 50, y: 20 },
+  ],
+  '5-2-1-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LWB', x: 10, y: 68 }, { label: 'CB', x: 30, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 70, y: 72 }, { label: 'RWB', x: 90, y: 68 },
+    { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 },
+    { label: 'CAM', x: 50, y: 35 },
+    { label: 'ST', x: 37, y: 20 }, { label: 'ST', x: 63, y: 20 },
   ],
 };
 
@@ -569,7 +636,7 @@ export async function exportSquadPdf(
   renderCoverPage(doc, h, fontLoaded,
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
-    [`${locale === 'tr' ? 'Diziliş' : 'Formation'}: ${squad.formation}`, formatDate(new Date().toISOString(), locale)],
+    [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${NBSP2}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
   );
 
   // ── PITCH PAGE ──
@@ -585,7 +652,6 @@ export async function exportSquadPdf(
   h.addY(12);
 
   // Draw pitch
-  const pitchX = h.margin + 5;
   const pitchW = h.cw - 10;
   const pitchH = pitchW * (105 / 68);
   const maxPitchH = h.ph - h.getY() - 30;
@@ -601,9 +667,9 @@ export async function exportSquadPdf(
   // Pitch lines
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.5);
-  doc.rect(pX + 2, pY + 2, finalPitchW - 4, finalPitchH - 4, 'S'); // outer
-  doc.line(pX + 2, pY + finalPitchH / 2, pX + finalPitchW - 2, pY + finalPitchH / 2); // halfway
-  doc.circle(pX + finalPitchW / 2, pY + finalPitchH / 2, finalPitchW * 0.12, 'S'); // center circle
+  doc.rect(pX + 2, pY + 2, finalPitchW - 4, finalPitchH - 4, 'S');
+  doc.line(pX + 2, pY + finalPitchH / 2, pX + finalPitchW - 2, pY + finalPitchH / 2);
+  doc.circle(pX + finalPitchW / 2, pY + finalPitchH / 2, finalPitchW * 0.12, 'S');
 
   // Penalty areas
   const penW = finalPitchW * 0.44;
@@ -638,7 +704,6 @@ export async function exportSquadPdf(
       doc.setFontSize(7);
       h.setFont('bold');
       doc.setTextColor(255, 255, 255);
-      // Background pill for name
       const nameW = doc.getTextWidth(name);
       doc.setFillColor(0, 0, 0);
       doc.setGState(new (doc as any).GState({ opacity: 0.5 }));
