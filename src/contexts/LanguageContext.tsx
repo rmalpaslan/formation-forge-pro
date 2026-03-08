@@ -41,7 +41,7 @@ const translations = {
     corner: 'Korner',
     freeKick: 'Serbest Vuruş',
     throwIn: 'Taç Atışı',
-    formation: 'Formasyon',
+    formation: 'Diziliş',
     generalNotes: 'Genel Notlar',
     pros: 'Olumlu Yönler',
     cons: 'Olumsuz Yönler',
