@@ -277,7 +277,7 @@ const SquadBuilder = () => {
           <Select value={formation} onValueChange={(v) => { setFormation(v); setAssignments({}); }}>
             <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {Object.keys(formationPositions).map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+              {Object.keys(formationPositions).sort().map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleDraftSave} disabled={saving}>
