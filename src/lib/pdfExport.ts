@@ -143,7 +143,8 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
   const totalPages = (doc as any).internal.getNumberOfPages();
   const pageLabel = locale === 'tr' ? 'Sayfa' : 'Page';
-  for (let i = 1; i <= totalPages; i++) {
+  // Skip page 1 (cover page) — no footer on cover
+  for (let i = 2; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFont(fn, 'normal');
     doc.setFontSize(7);
