@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Trash2, Edit, Plus, Search, ExternalLink } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ExternalLink, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { exportPlayerPdf } from '@/lib/pdfExport';
 
 const PlayerList = () => {
   const { user } = useAuth();
@@ -20,6 +21,7 @@ const PlayerList = () => {
   const [viewPlayer, setViewPlayer] = useState<any>(null);
   const [filterLeague, setFilterLeague] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
+  const [filterYear, setFilterYear] = useState('all');
 
   const load = async () => {
     if (!user) return;
@@ -37,6 +39,19 @@ const PlayerList = () => {
     load();
   };
 
+  const handleExportPdf = async (player: any, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    await exportPlayerPdf(player, {
+      currentTeam: t('currentTeam'),
+      league: t('league'),
+      primaryPosition: t('primaryPosition'),
+      secondaryPosition: t('secondaryPosition'),
+      preferredFoot: t('preferredFoot'),
+      birthDate: t('birthDate'),
+    });
+    toast.success(t('exportPdf'));
+  };
+
   const leagueOptions = useMemo(() => {
     const set = new Set<string>();
     players.forEach(p => { if ((p as any).league) set.add((p as any).league); });
@@ -49,14 +64,21 @@ const PlayerList = () => {
     return Array.from(set).sort();
   }, [players]);
 
+  const yearOptions = useMemo(() => {
+    const set = new Set<string>();
+    players.forEach(p => { if (p.created_at) set.add(p.created_at.substring(0, 4)); });
+    return Array.from(set).sort().reverse();
+  }, [players]);
+
   const filtered = useMemo(() => {
     return players.filter((p) => {
       if (search && !`${p.name} ${p.current_team}`.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterLeague !== 'all' && (p as any).league !== filterLeague) return false;
       if (filterTeam !== 'all' && p.current_team !== filterTeam) return false;
+      if (filterYear !== 'all' && !p.created_at?.startsWith(filterYear)) return false;
       return true;
     });
-  }, [players, search, filterLeague, filterTeam]);
+  }, [players, search, filterLeague, filterTeam, filterYear]);
 
   return (
     <div className="space-y-6">
@@ -87,6 +109,15 @@ const PlayerList = () => {
             </SelectContent>
           </Select>
         )}
+        {yearOptions.length > 0 && (
+          <Select value={filterYear} onValueChange={setFilterYear}>
+            <SelectTrigger className="w-28"><SelectValue placeholder={t('year')} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('allYears')}</SelectItem>
+              {yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
       </div>
       <div className="space-y-3">
         {filtered.map((p) => (
@@ -99,7 +130,10 @@ const PlayerList = () => {
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" onClick={(e) => handleExportPdf(p, e)} title={t('exportPlayerPdf')}>
+                  <FileDown className="h-4 w-4" />
+                </Button>
                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/players/${p.id}/edit`); }}>
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -135,6 +169,9 @@ const PlayerList = () => {
                 </div>
               )}
               <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1" onClick={() => handleExportPdf(viewPlayer)}>
+                  <FileDown className="mr-2 h-4 w-4" />{t('exportPlayerPdf')}
+                </Button>
                 <Button variant="outline" className="flex-1" onClick={() => { setViewPlayer(null); navigate(`/players/${viewPlayer.id}/edit`); }}>
                   <Edit className="mr-2 h-4 w-4" />{t('edit')}
                 </Button>

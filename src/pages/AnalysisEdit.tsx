@@ -168,7 +168,6 @@ const AnalysisEdit = () => {
     const ok = await doSave();
     if (!ok) return;
     toast.success(t('draftSaved'));
-    // If both flow step 1, move to next
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
       resetAllTabs();
       setAnalysis(null);
