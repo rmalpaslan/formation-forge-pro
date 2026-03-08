@@ -482,7 +482,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
+    doc.text(attrs[i].label + ': ', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
     doc.text(attrs[i].value, h.margin + 4, h.getY() + 5);
@@ -491,7 +491,7 @@ export async function exportPlayerPdf(
     if (i + 1 < attrs.length) {
       h.setFont('bold');
       doc.setTextColor(...LIGHT_GRAY);
-      doc.text(attrs[i + 1].label + ':', h.margin + colWidth + 4, h.getY());
+      doc.text(attrs[i + 1].label + ': ', h.margin + colWidth + 4, h.getY());
       h.setFont('normal');
       doc.setTextColor(...NEAR_BLACK);
       doc.text(attrs[i + 1].value, h.margin + colWidth + 4, h.getY() + 5);
@@ -507,7 +507,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text('Transfermarkt:', h.margin + 4, h.getY());
+    doc.text('Transfermarkt: ', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
     const linkLines = doc.splitTextToSize(player.transfermarkt_link, h.cw - 10);

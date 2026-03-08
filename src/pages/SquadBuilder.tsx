@@ -13,18 +13,6 @@ import { Save, Trash2, Pencil, Plus, FileDown, CheckCircle } from 'lucide-react'
 import { exportSquadPdf } from '@/lib/pdfExport';
 
 const formationPositions: Record<string, { label: string; x: number; y: number }[]> = {
-  '4-3-3': [
-    { label: 'GK', x: 50, y: 90 },
-    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
-    { label: 'CM', x: 30, y: 50 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 50 },
-    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
-  ],
-  '4-4-2': [
-    { label: 'GK', x: 50, y: 90 },
-    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
-    { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
-    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
-  ],
   '3-5-2': [
     { label: 'GK', x: 50, y: 90 },
     { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
@@ -37,6 +25,18 @@ const formationPositions: Record<string, { label: string; x: number; y: number }
     { label: 'CDM', x: 37, y: 55 }, { label: 'CDM', x: 63, y: 55 },
     { label: 'LW', x: 20, y: 38 }, { label: 'CAM', x: 50, y: 35 }, { label: 'RW', x: 80, y: 38 },
     { label: 'ST', x: 50, y: 18 },
+  ],
+  '4-3-3': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 50 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 50 },
+    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
+  ],
+  '4-4-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
   ],
 };
 
@@ -193,7 +193,7 @@ const SquadBuilder = () => {
   const renderPitch = (formationKey: string, assignMap: Record<number, string>, interactive: boolean = false) => {
     const pos = formationPositions[formationKey] || formationPositions['4-3-3'];
     return (
-      <div className="relative w-full max-w-full aspect-[68/105] rounded-lg border-2 border-primary bg-primary/20 overflow-hidden">
+      <div className="relative w-full max-w-full rounded-lg border-2 border-primary bg-primary/20 overflow-hidden" style={{ aspectRatio: '68/105', maxHeight: '80vh' }}>
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
@@ -255,7 +255,7 @@ const SquadBuilder = () => {
             <DialogHeader>
               <DialogTitle>{viewSquad?.name} — {viewSquad?.formation}</DialogTitle>
             </DialogHeader>
-            <div className="w-full" style={{ maxHeight: 'calc(100vh - 12rem)' }}>
+            <div className="w-full" style={{ maxHeight: '80vh' }}>
               {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
             </div>
           </DialogContent>
@@ -277,7 +277,7 @@ const SquadBuilder = () => {
           <Select value={formation} onValueChange={(v) => { setFormation(v); setAssignments({}); }}>
             <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {Object.keys(formationPositions).map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+              {Object.keys(formationPositions).sort().map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={handleDraftSave} disabled={saving}>
