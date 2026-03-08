@@ -127,7 +127,7 @@ const AnalysisEdit = () => {
     setTabs(m);
   };
 
-  const handleSave = async () => {
+  const doSave = async (): Promise<boolean> => {
     setSaving(true);
     await supabase.from('analysis_tabs').delete().eq('match_analysis_id', id!);
 
@@ -167,19 +167,31 @@ const AnalysisEdit = () => {
 
     const { error } = await supabase.from('analysis_tabs').insert(rows);
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); return false; }
     toast.success(t('analysisSaved'));
+    return true;
+  };
 
-    // If "both" flow, reset state and navigate to away analysis
+  const handleSave = async () => {
+    const ok = await doSave();
+    if (!ok) return;
+    // If "both" flow step 1, reset and go to next
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
       resetAllTabs();
       setAnalysis(null);
       navigate(`/analyses/${navState.nextAnalysisId}/edit`, { state: { step: 2 }, replace: true });
-    } else if (currentStep === 2 || !isBothFlow) {
-      // After saving 2nd team (or single team), redirect to library
-      if (currentStep === 2) {
-        navigate('/analyses', { replace: true });
-      }
+    }
+  };
+
+  const handleSaveAndClose = async () => {
+    const ok = await doSave();
+    if (!ok) return;
+    if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
+      resetAllTabs();
+      setAnalysis(null);
+      navigate(`/analyses/${navState.nextAnalysisId}/edit`, { state: { step: 2 }, replace: true });
+    } else {
+      navigate('/analyses', { replace: true });
     }
   };
 
