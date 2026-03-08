@@ -7,7 +7,7 @@ interface BulletInputProps {
   placeholder?: string;
 }
 
-export function BulletInput({ label, value, onChange }: BulletInputProps) {
+export function BulletInput({ label, value, onChange, placeholder = 'Type and press Enter for new bullet...' }: BulletInputProps) {
   const items = value.length > 0 ? value : [''];
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLTextAreaElement>) => {
