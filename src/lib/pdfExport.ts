@@ -9,8 +9,8 @@ const NEAR_BLACK: [number, number, number] = [26, 26, 26];
 const RED_ACCENT: [number, number, number] = [180, 40, 40];
 const LIGHT_GRAY: [number, number, number] = [107, 114, 128];
 
-// Double non-breaking space for after colons
-const NBSP2 = '\u00A0\u00A0';
+// Single space after colons (standard)
+const SPC = ' ';
 
 /** Sanitize a value: strip quotes, \n, trim */
 function cleanVal(v: string | null | undefined): string {
