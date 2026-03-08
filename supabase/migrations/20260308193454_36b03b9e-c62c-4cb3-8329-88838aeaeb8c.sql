@@ -1,0 +1,1 @@
+ALTER TABLE public.shared_teams ADD COLUMN IF NOT EXISTS logo_url text DEFAULT NULL;
