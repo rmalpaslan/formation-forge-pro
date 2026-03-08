@@ -193,7 +193,7 @@ const PlayerList = () => {
 
       {/* Player Detail Modal */}
       <Dialog open={!!viewPlayer} onOpenChange={(open) => !open && setViewPlayer(null)}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader style={{ padding: '24px 24px 12px' }}>
             <DialogTitle className="text-xl font-bold pr-10 truncate">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
