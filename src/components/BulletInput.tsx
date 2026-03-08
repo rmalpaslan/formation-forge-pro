@@ -53,7 +53,7 @@ export function BulletInput({ label, value, onChange, placeholder = 'Type and pr
                 el.style.height = el.scrollHeight + 'px';
               }}
               rows={1}
-              placeholder="Type and press Enter for new bullet..."
+              placeholder={placeholder}
               style={{ minHeight: '32px' }}
             />
           </div>
