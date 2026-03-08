@@ -231,7 +231,7 @@ const AnalysisEdit = () => {
         {renderImageRow(tabKey, 'notes')}
       </div>
       <div>
-        <BulletInput label={t('pros')} value={tabs[tabKey].pros} onChange={(v) => updateTab(tabKey, 'pros', v)} />
+        <BulletInput label={t('pros')} value={tabs[tabKey].pros} onChange={(v) => updateTab(tabKey, 'pros', v)} placeholder={t('typeBullet')} />
         {renderImageRow(tabKey, 'pros')}
       </div>
       <div>
