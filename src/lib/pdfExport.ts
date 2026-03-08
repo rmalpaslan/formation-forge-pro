@@ -482,7 +482,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
+    doc.text(attrs[i].label + ': ', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
     doc.text(attrs[i].value, h.margin + 4, h.getY() + 5);
