@@ -219,7 +219,7 @@ function renderCoverPage(
     doc.setFontSize(10);
     h.setFont('normal');
     doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Hazırlayan:${NBSP2}${analystName}`;
+    const prepLabel = `Hazırlayan:${SPC}${analystName}`;
     const prepW = doc.getTextWidth(prepLabel);
     doc.text(prepLabel, (h.pw - prepW) / 2, h.getY());
   }
