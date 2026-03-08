@@ -731,6 +731,6 @@ export async function exportSquadPdf(
     }
   }
 
-  addPageFooter(doc, fontLoaded, locale);
+  addPageFooter(doc, fontLoaded, locale, analystName);
   doc.save(`${squad.name}.pdf`);
 }
