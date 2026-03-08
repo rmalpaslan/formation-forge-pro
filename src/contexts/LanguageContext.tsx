@@ -294,6 +294,7 @@ const translations = {
     mental: 'Mental',
     tacticalIQ: 'Tactical IQ',
     contractStatus: 'Contract Status',
+    potentialAbility: 'Potential Ability',
     skillRatings: 'Skill Ratings',
     keyTraits: 'Key Traits',
     fast: 'Fast',

@@ -48,7 +48,7 @@ const PlayerNew = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const staticLeagues = leagues.map(l => l.name);
 

@@ -75,6 +75,7 @@ const PlayerList = () => {
       mental: t('mental' as any),
       tacticalIQ: t('tacticalIQ' as any),
       contractStatus: t('contractStatus' as any),
+      potentialAbility: t('potentialAbility' as any),
       skillRatings: t('skillRatings' as any),
       keyTraits: t('keyTraits' as any),
       scoutNote: t('scoutNote' as any),
