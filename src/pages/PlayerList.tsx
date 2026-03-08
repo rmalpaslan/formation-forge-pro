@@ -174,7 +174,7 @@ const PlayerList = () => {
             <DialogTitle className="text-xl font-bold">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
-            <div className="space-y-3">
+            <div style={{ padding: '20px' }}>
               <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
               <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
               <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />

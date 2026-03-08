@@ -8,6 +8,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarFooter, useSidebar,
 } from '@/components/ui/sidebar';
+import logo from '@/assets/logo.png';
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -31,8 +32,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-border">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-primary font-bold text-base tracking-wider">
-            {!collapsed && 'CE'}
+          <SidebarGroupLabel className="flex items-center gap-2 py-3">
+            <img src={logo} alt="CE" className="h-7 w-7 rounded-full shrink-0" />
+            {!collapsed && <span className="text-primary font-bold text-base tracking-wider">CE</span>}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
