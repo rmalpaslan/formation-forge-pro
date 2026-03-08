@@ -32,6 +32,7 @@ const translations = {
     creating: 'Oluşturuluyor...',
     target: 'Hedef',
     save: 'Kaydet',
+    saveAndClose: 'Kaydet ve Kapat',
     saving: 'Kaydediliyor...',
     analysisSaved: 'Analiz kaydedildi!',
     defense: 'Savunma',
