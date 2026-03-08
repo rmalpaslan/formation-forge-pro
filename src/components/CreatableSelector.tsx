@@ -21,11 +21,7 @@ export function CreatableSelector({
 
   useEffect(() => {
     const load = async () => {
-      let q = supabase.from(table).select('name');
-      if (filterColumn && filterValue) {
-        q = q.eq(filterColumn, filterValue);
-      }
-      const { data } = await q.order('name');
+      const { data } = await supabase.from(table).select('name').order('name') as any;
       setDbOptions((data || []).map((r: any) => r.name));
     };
     load();
