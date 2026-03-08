@@ -278,10 +278,18 @@ const AnalysisEdit = () => {
             {isBothFlow && <span className="ml-2 text-primary font-medium">({currentStep === 1 ? t('step1of2') : t('step2of2')})</span>}
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? t('saving') : isBothFlow && currentStep === 1 ? t('saveAndContinue') : t('save')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleSave} disabled={saving}>
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? t('saving') : isBothFlow && currentStep === 1 ? t('saveAndContinue') : t('save')}
+          </Button>
+          {!(isBothFlow && currentStep === 1) && (
+            <Button onClick={handleSaveAndClose} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              {t('saveAndClose')}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="defense">

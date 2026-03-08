@@ -146,6 +146,7 @@ const translations = {
     creating: 'Creating...',
     target: 'Target',
     save: 'Save',
+    saveAndClose: 'Save & Close',
     saving: 'Saving...',
     analysisSaved: 'Analysis saved!',
     defense: 'Defense',
