@@ -643,6 +643,7 @@ const FORMATION_POSITIONS: Record<string, { label: string; x: number; y: number 
 export async function exportSquadPdf(
   squad: SquadExportData,
   locale: string = 'tr',
+  analystName?: string,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
