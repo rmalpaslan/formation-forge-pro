@@ -11,6 +11,16 @@ import { Trash2, Edit, Plus, Search, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportAnalysisPdf } from '@/lib/pdfExport';
 
+function formatDateDDMMYYYY(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  } catch { return dateStr; }
+}
+
 const AnalysisList = () => {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
