@@ -159,7 +159,7 @@ const translations = {
     both: 'Both',
     continueToAnalysis: 'Continue to Analysis',
     creating: 'Creating...',
-    target: 'Target',
+    target: 'Focus Team',
     save: 'Save',
     saveAndClose: 'Save & Close',
     saving: 'Saving...',

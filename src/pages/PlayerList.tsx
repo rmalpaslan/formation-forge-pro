@@ -210,9 +210,9 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="grid gap-2 py-1.5 border-b border-border/50 last:border-0" style={{ gridTemplateColumns: '140px 1fr' }}>
-      <span className="text-sm text-muted-foreground font-medium">{label}</span>
-      <span className="text-sm font-medium" style={{ overflowWrap: 'break-word' }}>{value || '—'}</span>
+    <div className="flex items-baseline py-2 border-b border-border/50 last:border-0">
+      <span className="text-sm text-muted-foreground shrink-0" style={{ width: '160px', fontWeight: 700, whiteSpace: 'nowrap' }}>{label}</span>
+      <span className="text-sm font-medium" style={{ overflowWrap: 'break-word', minWidth: 0 }}>{value || '—'}</span>
     </div>
   );
 }
