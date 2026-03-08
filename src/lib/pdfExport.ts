@@ -266,6 +266,7 @@ export async function exportAnalysisPdf(
   tCons: string,
   groupLabels?: GroupLabels,
   locale: string = 'tr',
+  analystName?: string,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
