@@ -193,7 +193,7 @@ const SquadBuilder = () => {
   const renderPitch = (formationKey: string, assignMap: Record<number, string>, interactive: boolean = false) => {
     const pos = formationPositions[formationKey] || formationPositions['4-3-3'];
     return (
-      <div className="relative w-full max-w-full aspect-[68/105] rounded-lg border-2 border-primary bg-primary/20 overflow-hidden">
+      <div className="relative w-full max-w-full rounded-lg border-2 border-primary bg-primary/20 overflow-hidden" style={{ aspectRatio: '68/105', maxHeight: '80vh' }}>
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
