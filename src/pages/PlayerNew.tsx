@@ -12,9 +12,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import { Save, CheckCircle } from 'lucide-react';
 import { leagues } from '@/data/leaguesAndTeams';
+import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'CF', 'ST'];
 const feet = ['Right', 'Left', 'Both'];
+
+const TRAIT_KEYS = ['fast', 'playmaker', 'strong', 'aerialThreat', 'creative', 'defensive', 'clinical', 'versatile', 'leader', 'workRate'] as const;
 
 const PlayerNew = () => {
   const { id } = useParams();
@@ -27,6 +31,10 @@ const PlayerNew = () => {
   const [primaryPosition, setPrimaryPosition] = useState('ST');
   const [secondaryPosition, setSecondaryPosition] = useState('');
   const [transfermarktLink, setTransfermarktLink] = useState('');
+  const [technicalRating, setTechnicalRating] = useState(0);
+  const [tacticalRating, setTacticalRating] = useState(0);
+  const [physicalRating, setPhysicalRating] = useState(0);
+  const [keyTraits, setKeyTraits] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -46,10 +54,22 @@ const PlayerNew = () => {
           setPrimaryPosition(data.primary_position || 'ST');
           setSecondaryPosition(data.secondary_position || '');
           setTransfermarktLink(data.transfermarkt_link || '');
+          setTechnicalRating((data as any).technical_rating || 0);
+          setTacticalRating((data as any).tactical_rating || 0);
+          setPhysicalRating((data as any).physical_rating || 0);
+          setKeyTraits((data as any).key_traits || []);
         }
       });
     }
   }, [id]);
+
+  const toggleTrait = (trait: string) => {
+    setKeyTraits(prev =>
+      prev.includes(trait)
+        ? prev.filter(t => t !== trait)
+        : prev.length < 3 ? [...prev, trait] : prev
+    );
+  };
 
   const doSave = async (): Promise<boolean> => {
     if (!name) { toast.error(t('nameRequired')); return false; }
@@ -59,6 +79,8 @@ const PlayerNew = () => {
       birth_date: birthDate || null,
       preferred_foot: preferredFoot, primary_position: primaryPosition,
       secondary_position: secondaryPosition || null, transfermarkt_link: transfermarktLink || null,
+      technical_rating: technicalRating, tactical_rating: tacticalRating, physical_rating: physicalRating,
+      key_traits: keyTraits,
       user_id: user!.id,
     };
     const { error } = isEdit
@@ -90,13 +112,7 @@ const PlayerNew = () => {
           <Input placeholder={t('playerName')} value={name} onChange={(e) => setName(e.target.value)} />
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('league')}</label>
-            <CreatableSelector
-              value={league}
-              onChange={setLeague}
-              placeholder={t('searchLeague')}
-              table="shared_leagues"
-              staticOptions={staticLeagues}
-            />
+            <CreatableSelector value={league} onChange={setLeague} placeholder={t('searchLeague')} table="shared_leagues" staticOptions={staticLeagues} />
           </div>
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('currentTeam')}</label>
@@ -132,6 +148,38 @@ const PlayerNew = () => {
               </Select>
             </div>
           </div>
+
+          {/* Skill Ratings */}
+          <div className="space-y-3 rounded-lg border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground">{t('skillRatings')}</h3>
+            {([['technical', technicalRating, setTechnicalRating], ['tactical', tacticalRating, setTacticalRating], ['physical', physicalRating, setPhysicalRating]] as const).map(([key, val, setter]) => (
+              <div key={key} className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t(key as any)}</span>
+                  <span className="font-bold text-primary">{val}/5</span>
+                </div>
+                <Slider min={0} max={5} step={1} value={[val as number]} onValueChange={([v]) => (setter as any)(v)} className="w-full" />
+              </div>
+            ))}
+          </div>
+
+          {/* Key Traits */}
+          <div className="space-y-2 rounded-lg border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground">{t('keyTraits')} <span className="font-normal text-muted-foreground">({keyTraits.length}/3)</span></h3>
+            <div className="flex flex-wrap gap-2">
+              {TRAIT_KEYS.map(trait => (
+                <Badge
+                  key={trait}
+                  variant={keyTraits.includes(trait) ? 'default' : 'outline'}
+                  className={`cursor-pointer transition-colors ${keyTraits.includes(trait) ? '' : 'opacity-60 hover:opacity-100'}`}
+                  onClick={() => toggleTrait(trait)}
+                >
+                  {t(trait as any)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
           <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleDraftSave} disabled={loading}>
