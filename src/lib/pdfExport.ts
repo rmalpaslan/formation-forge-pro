@@ -152,33 +152,38 @@ export async function exportAnalysisPdf(
     set_pieces: groupLabels?.setPieces || 'DURAN TOPLAR',
   };
 
-  // ── Cover / Title ──
-  doc.setFontSize(22);
+  // ── Cover / Title (centered, large, bold) ──
+  doc.setFontSize(24);
   h.setFont('bold');
-  doc.setTextColor(31, 41, 55); // #1F2937
-  doc.text(`${analysis.home_team} vs ${analysis.away_team}`, h.margin, h.getY());
-  h.addY(10);
+  doc.setTextColor(31, 41, 55);
+  const titleText = `${analysis.home_team} vs ${analysis.away_team}`;
+  const titleWidth = doc.getTextWidth(titleText);
+  doc.text(titleText, (h.pw - titleWidth) / 2, h.getY());
+  h.addY(12);
 
   doc.setFontSize(11);
   h.setFont('normal');
   doc.setTextColor(107, 114, 128);
   const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
-  doc.text(`${analysis.match_date}  ·  ${tTarget}: ${targetName}`, h.margin, h.getY());
-  h.addY(8);
+  const metaText = `${analysis.match_date}  ·  ${tTarget}: ${targetName}`;
+  const metaWidth = doc.getTextWidth(metaText);
+  doc.text(metaText, (h.pw - metaWidth) / 2, h.getY());
+  h.addY(10);
 
+  // Thick green line under title
   doc.setDrawColor(34, 139, 34);
-  doc.setLineWidth(0.8);
+  doc.setLineWidth(1.2);
   doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
-  h.addY(14);
+  h.addY(16);
 
-  // Build a lookup: sub_tab -> TabData
+  // Build lookup
   const tabMap = new Map<string, TabData>();
   for (const td of tabsData) {
     const key = td.sub_tab || td.tab_type;
     tabMap.set(key, td);
   }
 
-  // Helper: check if a tab has any content
+  // Check content
   const hasContent = (tab: TabData | undefined): boolean => {
     if (!tab) return false;
     const notes = (tab.general_notes || []).filter(s => s.trim());
@@ -188,121 +193,130 @@ export async function exportAnalysisPdf(
     return notes.length > 0 || pros.length > 0 || cons.length > 0 || imgs.length > 0;
   };
 
-  // ── Render bullets ──
-  const renderBullets = (title: string, items: string[] | null) => {
+  // ── Render bullets with clean circles ──
+  const renderBullets = (title: string, items: string[] | null, bulletColor: [number, number, number] = [34, 139, 34]) => {
     const cleaned = (items || []).filter(s => s.trim() !== '');
     if (cleaned.length === 0) return;
 
-    h.checkPage(16);
+    h.checkPage(18);
     doc.setFontSize(11);
     h.setFont('bold');
-    doc.setTextColor(31, 41, 55);
+    doc.setTextColor(26, 26, 26);
     doc.text(`${title}:`, h.margin + 4, h.getY());
-    h.addY(7);
+    h.addY(8);
 
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     h.setFont('normal');
+    const lineHeight = 6.5; // ~1.5 line spacing at 11pt
     for (const item of cleaned) {
-      h.checkPage(14);
-      // Green bullet
-      doc.setTextColor(34, 139, 34);
-      doc.text('\u2022', h.margin + 6, h.getY());
+      h.checkPage(16);
+      // Clean filled circle bullet
+      doc.setFillColor(...bulletColor);
+      doc.circle(h.margin + 8, h.getY() - 1.5, 1.2, 'F');
       doc.setTextColor(31, 41, 55);
-      const lines: string[] = doc.splitTextToSize(item, h.cw - 16);
-      doc.text(lines, h.margin + 12, h.getY());
-      h.addY(lines.length * 5.5);
+      const lines: string[] = doc.splitTextToSize(item, h.cw - 18);
+      doc.text(lines, h.margin + 14, h.getY());
+      h.addY(lines.length * lineHeight);
     }
-    h.addY(4);
+    h.addY(5);
   };
 
-  // ── Render images ──
+  // ── Render images (centered, 90% width, subtle border) ──
   const renderImages = async (images: string[] | null) => {
     const urls = (images || []).filter(s => s.trim());
     for (const imgUrl of urls) {
       const image = await loadImageAsset(imgUrl);
       if (!image) continue;
 
-      let imgWidth = h.cw * 0.85;
+      let imgWidth = h.cw * 0.90;
       let imgHeight = (image.height / image.width) * imgWidth;
-      const maxH = h.ph * 0.42;
+      const maxH = h.ph * 0.45;
       if (imgHeight > maxH) {
         imgWidth *= maxH / imgHeight;
         imgHeight = maxH;
       }
 
       const imgX = h.margin + (h.cw - imgWidth) / 2;
-      h.checkPage(imgHeight + 14);
+      h.checkPage(imgHeight + 16);
 
       try {
+        // Subtle border
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.rect(imgX - 1, h.getY() - 1, imgWidth + 2, imgHeight + 2, 'S');
         doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
-        h.addY(imgHeight + 10);
+        h.addY(imgHeight + 12);
       } catch { /* skip broken */ }
     }
   };
 
   // ── Iterate categories ──
   for (const category of CATEGORY_ORDER) {
-    // Check if any sub-tab in this category has content
     const categoryTabs = category.subTabs.map(st => tabMap.get(st)).filter(Boolean) as TabData[];
     const categoryHasContent = categoryTabs.some(hasContent);
     if (!categoryHasContent) continue;
 
-    // ── Category Header (large, green) ──
-    h.checkPage(30);
+    // ── Category Header: green background bar ──
+    h.checkPage(32);
     doc.setFillColor(34, 139, 34);
-    doc.rect(h.margin, h.getY() - 6, h.cw, 12, 'F');
-    doc.setFontSize(18);
+    doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
+    doc.setFontSize(20);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
-    doc.text(GROUP_NAMES[category.key] || category.key.toUpperCase(), h.margin + 5, h.getY() + 1);
+    doc.text(GROUP_NAMES[category.key] || category.key.toUpperCase(), h.margin + 6, h.getY() + 2);
     doc.setTextColor(31, 41, 55);
-    h.addY(16);
+    h.addY(18);
 
     // ── Sub-tabs ──
     for (const subKey of category.subTabs) {
       const tab = tabMap.get(subKey);
       if (!tab || !hasContent(tab)) continue;
 
-      // Sub-header
-      h.checkPage(20);
-      doc.setFontSize(14);
+      // Sub-header: 16pt bold dark gray
+      h.checkPage(22);
+      doc.setFontSize(16);
       h.setFont('bold');
-      doc.setTextColor(34, 139, 34);
+      doc.setTextColor(26, 26, 26);
       const subLabel = subTabLabels[subKey] || subKey;
       doc.text(subLabel, h.margin, h.getY());
+      // Thin green underline
+      h.addY(3);
+      doc.setDrawColor(34, 139, 34);
+      doc.setLineWidth(0.6);
+      doc.line(h.margin, h.getY(), h.margin + doc.getTextWidth(subLabel) * 1.05, h.getY());
       doc.setTextColor(31, 41, 55);
-      h.addY(8);
+      h.addY(10);
 
-      // Diziliş (formation)
+      // Diziliş (formation) with space after colon
       if (tab.formation) {
-        doc.setFontSize(10);
+        doc.setFontSize(11);
         h.setFont('bold');
-        doc.text(`${tDizilis}: `, h.margin + 2, h.getY());
+        const formLabel = `${tDizilis}: `;
+        doc.text(formLabel, h.margin + 2, h.getY());
         h.setFont('normal');
-        const fw = doc.getTextWidth(`${tDizilis}: `);
-        doc.text(tab.formation, h.margin + 2 + fw, h.getY());
-        h.addY(8);
+        doc.text(tab.formation, h.margin + 2 + doc.getTextWidth(formLabel), h.getY());
+        h.addY(10);
       }
 
-      // Text sections FIRST
-      renderBullets(tGeneralNotes, tab.general_notes);
-      renderBullets(tPros, tab.pros);
-      renderBullets(tCons, tab.cons);
+      // Text sections FIRST (always before images)
+      renderBullets(tGeneralNotes, tab.general_notes, [34, 139, 34]);
+      renderBullets(tPros, tab.pros, [34, 139, 34]);
+      renderBullets(tCons, tab.cons, [180, 40, 40]);
 
-      // Images AFTER text
+      // Images AFTER all text
       await renderImages(tab.images);
 
-      // Sub-section divider
-      h.addY(6);
+      // 25px spacing between analysis blocks
+      h.addY(9); // ~25px in PDF units
       h.checkPage(4);
       doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.2);
+      doc.setLineWidth(0.15);
       doc.line(h.margin + 10, h.getY(), h.pw - h.margin - 10, h.getY());
-      h.addY(10);
+      h.addY(9);
     }
 
     // Extra space between categories
-    h.addY(8);
+    h.addY(10);
   }
 
   doc.save(`${analysis.home_team}_vs_${analysis.away_team}.pdf`);
@@ -335,28 +349,32 @@ export async function exportPlayerPdf(
     doc.setFont(fontLoaded ? 'NotoSans' : 'helvetica', style);
   };
 
+  // Green header bar with player name
   doc.setFillColor(34, 139, 34);
-  doc.rect(margin, y - 7, pageWidth - margin * 2, 12, 'F');
-  doc.setFontSize(16);
+  doc.rect(margin, y - 7, pageWidth - margin * 2, 14, 'F');
+  doc.setFontSize(18);
   setFont('bold');
   doc.setTextColor(255, 255, 255);
-  doc.text(player.name, margin + 4, y);
+  doc.text(player.name, margin + 6, y + 1);
   doc.setTextColor(31, 41, 55);
-  y += 14;
+  y += 16;
 
-  doc.setDrawColor(160);
-  doc.setLineWidth(0.5);
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 10;
+  y += 12;
 
   const addRow = (label: string, value: string | null | undefined) => {
     if (!value) return;
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     setFont('bold');
-    doc.text(`${label}:`, margin, y);
+    doc.setTextColor(26, 26, 26);
+    const labelText = `${label}: `;
+    doc.text(labelText, margin, y);
     setFont('normal');
-    doc.text(value, margin + 55, y);
-    y += 8;
+    doc.setTextColor(31, 41, 55);
+    doc.text(value, margin + doc.getTextWidth(labelText), y);
+    y += 9;
   };
 
   addRow(labels.currentTeam, player.current_team);
