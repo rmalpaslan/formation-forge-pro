@@ -158,7 +158,7 @@ const PlayerNew = () => {
               <label className="text-sm text-muted-foreground">{t('primaryPosition')}</label>
               <Select value={primaryPosition} onValueChange={setPrimaryPosition}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{positions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                <SelectContent>{positions.map((p) => <SelectItem key={p} value={p}>{lang === 'tr' ? (positionMapTR[p] || p) : p}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
@@ -167,7 +167,7 @@ const PlayerNew = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{t('none')}</SelectItem>
-                  {positions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  {positions.map((p) => <SelectItem key={p} value={p}>{lang === 'tr' ? (positionMapTR[p] || p) : p}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
