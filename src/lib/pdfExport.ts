@@ -287,7 +287,7 @@ export async function exportAnalysisPdf(
   renderCoverPage(doc, h, fontLoaded,
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
-    [`${tTarget}:${NBSP2}${targetName}`, dateFormatted],
+    [`${tTarget}:${SPC}${targetName}`, dateFormatted],
     analystName,
   );
 
