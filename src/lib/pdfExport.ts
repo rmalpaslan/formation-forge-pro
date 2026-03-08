@@ -454,6 +454,7 @@ export async function exportPlayerPdf(
     cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
     [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
+    analystName,
   );
 
   // ── DATA PAGE ──
