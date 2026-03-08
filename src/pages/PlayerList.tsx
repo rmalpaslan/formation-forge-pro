@@ -226,7 +226,7 @@ const PlayerList = () => {
                   { label: t('physical' as any), value: (viewPlayer as any).physical_rating || 0 },
                   { label: t('mental' as any), value: (viewPlayer as any).mental_rating || 0 },
                   { label: t('tacticalIQ' as any), value: (viewPlayer as any).tactical_iq_rating || 0 },
-                  { label: t('contractStatus' as any), value: (viewPlayer as any).contract_status || 0 },
+                  { label: t('potentialAbility' as any), value: (viewPlayer as any).contract_status || 0 },
                 ];
                 const hasAny = allRatings.some(r => r.value > 0);
                 if (!hasAny) return null;
