@@ -542,7 +542,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    const tmLabel = 'Transfermarkt:' + NBSP2;
+    const tmLabel = 'Transfermarkt:' + SPC;
     doc.text(tmLabel, h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
