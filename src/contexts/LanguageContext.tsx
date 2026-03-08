@@ -159,6 +159,7 @@ const translations = {
     scoutNote: 'Scout Final Görüşü',
     scoutNotePlaceholder: 'Oyuncuya dair uzun değerlendirmenizi buraya yazın...',
     saved: 'Kaydedildi',
+    currentAbility: 'Mevcut Yetenek',
   },
   en: {
     dashboard: 'Dashboard',
