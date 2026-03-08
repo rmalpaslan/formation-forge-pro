@@ -458,9 +458,17 @@ interface PlayerData {
   physical_rating?: number | null;
   mental_rating?: number | null;
   tactical_iq_rating?: number | null;
+  current_ability?: number | null;
   contract_status?: number | null;
   key_traits?: string[] | null;
   scout_note?: string | null;
+}
+
+const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+function localizeFootPdf(foot: string | null | undefined, locale: string): string {
+  if (!foot) return '';
+  if (locale === 'tr') return footLabelTR_pdf[foot] || foot;
+  return foot;
 }
 
 export async function exportPlayerPdf(
@@ -536,7 +544,7 @@ export async function exportPlayerPdf(
   if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
   if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: localizePosition(player.primary_position, locale) });
   if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
-  if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: cleanVal(player.preferred_foot) });
+  if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
 
   const colW = (h.cw - 10) / 2;
@@ -582,6 +590,7 @@ export async function exportPlayerPdf(
     { label: labels.physical || 'Fiziksel', value: player.physical_rating || 0 },
     { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
     { label: labels.tacticalIQ || 'Oyun Bilgisi', value: player.tactical_iq_rating || 0 },
+    { label: labels.currentAbility || (locale === 'tr' ? 'Mevcut Yetenek' : 'Current Ability'), value: player.current_ability || 0 },
     { label: labels.potentialAbility || (locale === 'tr' ? 'Potansiyel Yetenek' : 'Potential Ability'), value: player.contract_status || 0 },
   ];
   const hasRatings = ratings.some(r => r.value > 0);

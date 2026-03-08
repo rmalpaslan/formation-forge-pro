@@ -26,6 +26,8 @@ const TRAIT_KEYS = [
   'crossing', 'longShot', 'tackling', 'positioning',
 ] as const;
 
+const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+
 const PlayerNew = () => {
   const { id } = useParams();
   const isEdit = !!id;
@@ -42,6 +44,7 @@ const PlayerNew = () => {
   const [physicalRating, setPhysicalRating] = useState(0);
   const [mentalRating, setMentalRating] = useState(0);
   const [tacticalIQRating, setTacticalIQRating] = useState(0);
+  const [currentAbility, setCurrentAbility] = useState(0);
   const [contractStatus, setContractStatus] = useState(0);
   const [keyTraits, setKeyTraits] = useState<string[]>([]);
   const [scoutNote, setScoutNote] = useState('');
@@ -69,6 +72,7 @@ const PlayerNew = () => {
           setPhysicalRating((data as any).physical_rating || 0);
           setMentalRating((data as any).mental_rating || 0);
           setTacticalIQRating((data as any).tactical_iq_rating || 0);
+          setCurrentAbility((data as any).current_ability || 0);
           setContractStatus((data as any).contract_status || 0);
           setKeyTraits((data as any).key_traits || []);
           setScoutNote((data as any).scout_note || '');
@@ -94,7 +98,8 @@ const PlayerNew = () => {
       preferred_foot: preferredFoot, primary_position: primaryPosition,
       secondary_position: secondaryPosition || null, transfermarkt_link: transfermarktLink || null,
       technical_rating: technicalRating, tactical_rating: tacticalRating, physical_rating: physicalRating,
-      mental_rating: mentalRating, tactical_iq_rating: tacticalIQRating, contract_status: contractStatus,
+      mental_rating: mentalRating, tactical_iq_rating: tacticalIQRating,
+      current_ability: currentAbility, contract_status: contractStatus,
       key_traits: keyTraits,
       scout_note: scoutNote || null,
       user_id: user!.id,
@@ -120,12 +125,15 @@ const PlayerNew = () => {
     }
   };
 
+  const localizeFoot = (f: string) => lang === 'tr' ? (footLabelTR[f] || f) : f;
+
   const ratingRows: [string, number, (v: number) => void][] = [
     [t('technical' as any), technicalRating, setTechnicalRating],
     [t('tactical' as any), tacticalRating, setTacticalRating],
     [t('physical' as any), physicalRating, setPhysicalRating],
     [t('mental' as any), mentalRating, setMentalRating],
     [t('tacticalIQ' as any), tacticalIQRating, setTacticalIQRating],
+    [t('currentAbility' as any), currentAbility, setCurrentAbility],
     [t('potentialAbility' as any), contractStatus, setContractStatus],
   ];
 
@@ -151,7 +159,7 @@ const PlayerNew = () => {
             <label className="text-sm text-muted-foreground">{t('preferredFoot')}</label>
             <Select value={preferredFoot} onValueChange={setPreferredFoot}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{feet.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+              <SelectContent>{feet.map((f) => <SelectItem key={f} value={f}>{localizeFoot(f)}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-4">

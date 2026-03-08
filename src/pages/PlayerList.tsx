@@ -15,6 +15,14 @@ import { Trash2, Edit, Plus, Search, ExternalLink, FileDown } from 'lucide-react
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
 
+const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+
+function localizeFoot(foot: string | null | undefined, lang: string): string {
+  if (!foot) return '—';
+  if (lang === 'tr') return footLabelTR[foot] || foot;
+  return foot;
+}
+
 function formatDateDDMMYYYY(dateStr: string): string {
   try {
     const d = new Date(dateStr);
@@ -74,7 +82,7 @@ const PlayerList = () => {
       physical: t('physical' as any),
       mental: t('mental' as any),
       tacticalIQ: t('tacticalIQ' as any),
-      contractStatus: t('contractStatus' as any),
+      currentAbility: t('currentAbility' as any),
       potentialAbility: t('potentialAbility' as any),
       skillRatings: t('skillRatings' as any),
       keyTraits: t('keyTraits' as any),
@@ -157,11 +165,11 @@ const PlayerList = () => {
       <div className="space-y-3">
         {filtered.map((p) => (
           <Card key={p.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewPlayer(p)}>
-            <CardContent className="flex items-center justify-between" style={{ padding: '20px' }}>
+            <CardContent className="flex items-center justify-between p-5">
               <div className="flex flex-col min-w-0 flex-1 mr-4">
                 <div className="font-bold text-base truncate">{p.name}</div>
                 <div className="text-sm text-muted-foreground truncate">
-                  {p.current_team} · {localizePosition(p.primary_position, lang)} · {p.preferred_foot}
+                  {p.current_team} · {localizePosition(p.primary_position, lang)} · {localizeFoot(p.preferred_foot, lang)}
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
                 {(p as any).key_traits?.length > 0 && (
@@ -194,12 +202,12 @@ const PlayerList = () => {
 
       {/* Player Detail Modal */}
       <Dialog open={!!viewPlayer} onOpenChange={(open) => !open && setViewPlayer(null)}>
-        <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden">
-          <DialogHeader style={{ padding: '24px 24px 12px' }}>
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden">
+          <DialogHeader className="p-6 pb-3">
             <DialogTitle className="text-xl font-bold pr-10 truncate">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
-            <div className="rounded-lg bg-background border border-border" style={{ padding: '32px', margin: '0 8px 8px' }}>
+            <div className="rounded-lg bg-background border border-border mx-2 mb-2 p-8">
               {/* Key Traits Badges */}
               {(viewPlayer as any).key_traits?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
@@ -215,7 +223,7 @@ const PlayerList = () => {
                 <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
                 <InfoRow label={t('primaryPosition')} value={localizePosition(viewPlayer.primary_position, lang)} />
                 <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />
-                <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
+                <InfoRow label={t('preferredFoot')} value={localizeFoot(viewPlayer.preferred_foot, lang)} />
                 <InfoRow label={t('birthDate')} value={viewPlayer.birth_date ? formatDateDDMMYYYY(viewPlayer.birth_date) : '—'} />
               </div>
 
@@ -227,6 +235,7 @@ const PlayerList = () => {
                   { label: t('physical' as any), value: (viewPlayer as any).physical_rating || 0 },
                   { label: t('mental' as any), value: (viewPlayer as any).mental_rating || 0 },
                   { label: t('tacticalIQ' as any), value: (viewPlayer as any).tactical_iq_rating || 0 },
+                  { label: t('currentAbility' as any), value: (viewPlayer as any).current_ability || 0 },
                   { label: t('potentialAbility' as any), value: (viewPlayer as any).contract_status || 0 },
                 ];
                 const hasAny = allRatings.some(r => r.value > 0);

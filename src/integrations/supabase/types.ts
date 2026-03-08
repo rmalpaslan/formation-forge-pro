@@ -102,6 +102,7 @@ export type Database = {
           birth_date: string | null
           contract_status: number | null
           created_at: string
+          current_ability: number | null
           current_team: string | null
           id: string
           key_traits: string[] | null
@@ -124,6 +125,7 @@ export type Database = {
           birth_date?: string | null
           contract_status?: number | null
           created_at?: string
+          current_ability?: number | null
           current_team?: string | null
           id?: string
           key_traits?: string[] | null
@@ -146,6 +148,7 @@ export type Database = {
           birth_date?: string | null
           contract_status?: number | null
           created_at?: string
+          current_ability?: number | null
           current_team?: string | null
           id?: string
           key_traits?: string[] | null

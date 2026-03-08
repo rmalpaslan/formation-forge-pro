@@ -159,6 +159,7 @@ const translations = {
     scoutNote: 'Scout Final Görüşü',
     scoutNotePlaceholder: 'Oyuncuya dair uzun değerlendirmenizi buraya yazın...',
     saved: 'Kaydedildi',
+    currentAbility: 'Mevcut Yetenek',
   },
   en: {
     dashboard: 'Dashboard',
@@ -316,6 +317,7 @@ const translations = {
     scoutNote: 'Scout Final Opinion',
     scoutNotePlaceholder: 'Write your detailed assessment of the player here...',
     saved: 'Saved',
+    currentAbility: 'Current Ability',
   },
 } as const;
 
