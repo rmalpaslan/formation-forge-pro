@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Trash2, Edit, Plus, Search, ExternalLink, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
@@ -66,6 +68,11 @@ const PlayerList = () => {
       secondaryPosition: t('secondaryPosition'),
       preferredFoot: t('preferredFoot'),
       birthDate: t('birthDate'),
+      technical: t('technical' as any),
+      tactical: t('tactical' as any),
+      physical: t('physical' as any),
+      skillRatings: t('skillRatings' as any),
+      keyTraits: t('keyTraits' as any),
     }, lang, analystName || undefined);
     toast.success(t('exportPdf'));
   };
@@ -97,6 +104,10 @@ const PlayerList = () => {
       return true;
     });
   }, [players, search, filterLeague, filterTeam, filterYear]);
+
+  const traitLabel = (trait: string) => {
+    try { return t(trait as any); } catch { return trait; }
+  };
 
   return (
     <div className="space-y-6">
@@ -141,17 +152,24 @@ const PlayerList = () => {
         {filtered.map((p) => (
           <Card key={p.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewPlayer(p)}>
             <CardContent className="flex items-center justify-between p-4">
-              <div className="flex flex-col">
-                <div className="font-bold text-base">{p.name}</div>
-                <div className="text-sm text-muted-foreground">
+              <div className="flex flex-col min-w-0 flex-1 mr-3">
+                <div className="font-bold text-base truncate">{p.name}</div>
+                <div className="text-sm text-muted-foreground truncate">
                   {p.current_team} · {p.primary_position} · {p.preferred_foot}
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
+                {(p as any).key_traits?.length > 0 && (
+                  <div className="flex gap-1 mt-1.5">
+                    {(p as any).key_traits.map((tr: string) => (
+                      <Badge key={tr} variant="secondary" className="text-[10px] px-1.5 py-0">{traitLabel(tr)}</Badge>
+                    ))}
+                  </div>
+                )}
                 <span className="text-muted-foreground text-xs mt-1">
                   {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}: {formatDateDDMMYYYY(p.updated_at || p.created_at)}
                 </span>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-1 shrink-0">
                 <Button variant="ghost" size="icon" onClick={(e) => handleExportPdf(p, e)} title={t('exportPlayerPdf')}>
                   <FileDown className="h-4 w-4" />
                 </Button>
@@ -168,28 +186,52 @@ const PlayerList = () => {
         {filtered.length === 0 && <p className="text-muted-foreground text-center py-8">{t('noPlayersFound')}</p>}
       </div>
 
+      {/* Player Detail Modal */}
       <Dialog open={!!viewPlayer} onOpenChange={(open) => !open && setViewPlayer(null)}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">{viewPlayer?.name}</DialogTitle>
+          <DialogHeader className="p-5 pb-3">
+            <DialogTitle className="text-xl font-bold pr-8 truncate">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
             <div className="rounded-lg bg-background border border-border" style={{ padding: '24px' }}>
-              <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
-              <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
-              <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
-              <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position || t('none')} />
-              <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
-              <InfoRow label={t('birthDate')} value={viewPlayer.birth_date || '—'} />
+              {/* Key Traits Badges */}
+              {(viewPlayer as any).key_traits?.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {(viewPlayer as any).key_traits.map((tr: string) => (
+                    <Badge key={tr} className="bg-primary text-primary-foreground text-xs px-3 py-1">{traitLabel(tr)}</Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Info Grid */}
+              <div className="space-y-0">
+                <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
+                <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
+                <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
+                <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position || t('none')} />
+                <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
+                <InfoRow label={t('birthDate')} value={viewPlayer.birth_date ? formatDateDDMMYYYY(viewPlayer.birth_date) : '—'} />
+              </div>
+
+              {/* Skill Ratings */}
+              {((viewPlayer as any).technical_rating > 0 || (viewPlayer as any).tactical_rating > 0 || (viewPlayer as any).physical_rating > 0) && (
+                <div className="mt-5 space-y-3">
+                  <h4 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h4>
+                  <RatingBar label={t('technical' as any)} value={(viewPlayer as any).technical_rating || 0} />
+                  <RatingBar label={t('tactical' as any)} value={(viewPlayer as any).tactical_rating || 0} />
+                  <RatingBar label={t('physical' as any)} value={(viewPlayer as any).physical_rating || 0} />
+                </div>
+              )}
+
               {viewPlayer.transfermarkt_link && (
-                <div className="flex items-baseline py-2.5">
+                <div className="flex items-baseline py-2.5 mt-3">
                   <span className="text-sm text-muted-foreground font-bold shrink-0" style={{ width: '140px', whiteSpace: 'nowrap' }}>Transfermarkt</span>
-                  <a href={viewPlayer.transfermarkt_link} target="_blank" rel="noopener noreferrer" className="text-primary text-sm inline-flex items-center gap-1 hover:underline">
-                    {t('viewDetails')} <ExternalLink className="h-3 w-3" />
+                  <a href={viewPlayer.transfermarkt_link} target="_blank" rel="noopener noreferrer" className="text-primary text-sm inline-flex items-center gap-1 hover:underline truncate">
+                    {t('viewDetails')} <ExternalLink className="h-3 w-3 shrink-0" />
                   </a>
                 </div>
               )}
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-5">
                 <Button variant="outline" className="flex-1" onClick={() => handleExportPdf(viewPlayer)}>
                   <FileDown className="mr-2 h-4 w-4" />{t('exportPlayerPdf')}
                 </Button>
@@ -210,9 +252,21 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex items-baseline border-b border-border/50 last:border-0" style={{ padding: '10px 0' }}>
-      <span className="text-sm text-muted-foreground font-bold shrink-0" style={{ width: '140px', whiteSpace: 'nowrap' }}>{label}</span>
+    <div className="grid gap-3 border-b border-border/50 last:border-0" style={{ gridTemplateColumns: '140px 1fr', padding: '10px 0' }}>
+      <span className="text-sm text-muted-foreground font-bold whitespace-nowrap">{label}</span>
       <span className="text-sm font-medium" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>{value || '—'}</span>
+    </div>
+  );
+}
+
+function RatingBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-bold text-primary">{value}/5</span>
+      </div>
+      <Progress value={(value / 5) * 100} className="h-2" />
     </div>
   );
 }

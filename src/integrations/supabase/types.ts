@@ -103,11 +103,15 @@ export type Database = {
           created_at: string
           current_team: string | null
           id: string
+          key_traits: string[] | null
           league: string | null
           name: string
+          physical_rating: number | null
           preferred_foot: string | null
           primary_position: string | null
           secondary_position: string | null
+          tactical_rating: number | null
+          technical_rating: number | null
           transfermarkt_link: string | null
           updated_at: string
           user_id: string
@@ -117,11 +121,15 @@ export type Database = {
           created_at?: string
           current_team?: string | null
           id?: string
+          key_traits?: string[] | null
           league?: string | null
           name: string
+          physical_rating?: number | null
           preferred_foot?: string | null
           primary_position?: string | null
           secondary_position?: string | null
+          tactical_rating?: number | null
+          technical_rating?: number | null
           transfermarkt_link?: string | null
           updated_at?: string
           user_id: string
@@ -131,11 +139,15 @@ export type Database = {
           created_at?: string
           current_team?: string | null
           id?: string
+          key_traits?: string[] | null
           league?: string | null
           name?: string
+          physical_rating?: number | null
           preferred_foot?: string | null
           primary_position?: string | null
           secondary_position?: string | null
+          tactical_rating?: number | null
+          technical_rating?: number | null
           transfermarkt_link?: string | null
           updated_at?: string
           user_id?: string
