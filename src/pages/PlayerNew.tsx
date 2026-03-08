@@ -16,6 +16,7 @@ import { leagues } from '@/data/leaguesAndTeams';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { positionMapTR } from '@/lib/positionMap';
+import { getRolesForPosition } from '@/lib/positionRoles';
 
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'CF', 'ST'];
 const feet = ['Right', 'Left', 'Both'];
@@ -38,6 +39,7 @@ const PlayerNew = () => {
   const [preferredFoot, setPreferredFoot] = useState('Right');
   const [primaryPosition, setPrimaryPosition] = useState('ST');
   const [secondaryPosition, setSecondaryPosition] = useState('');
+  const [playerRole, setPlayerRole] = useState('');
   const [transfermarktLink, setTransfermarktLink] = useState('');
   const [technicalRating, setTechnicalRating] = useState(0);
   const [tacticalRating, setTacticalRating] = useState(0);
@@ -48,12 +50,19 @@ const PlayerNew = () => {
   const [contractStatus, setContractStatus] = useState(0);
   const [keyTraits, setKeyTraits] = useState<string[]>([]);
   const [scoutNote, setScoutNote] = useState('');
+  const [squadFitNotes, setSquadFitNotes] = useState('');
+  const [squadFitPercentage, setSquadFitPercentage] = useState(0);
+  const [videoLink, setVideoLink] = useState('');
+  const [marketValue, setMarketValue] = useState('');
+  const [resalePotential, setResalePotential] = useState(0);
+  const [injuryHistory, setInjuryHistory] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, lang } = useLanguage();
 
   const staticLeagues = leagues.map(l => l.name);
+  const availableRoles = getRolesForPosition(primaryPosition, lang);
 
   useEffect(() => {
     if (isEdit) {
@@ -66,6 +75,7 @@ const PlayerNew = () => {
           setPreferredFoot(data.preferred_foot || 'Right');
           setPrimaryPosition(data.primary_position || 'ST');
           setSecondaryPosition(data.secondary_position || '');
+          setPlayerRole((data as any).player_role || '');
           setTransfermarktLink(data.transfermarkt_link || '');
           setTechnicalRating((data as any).technical_rating || 0);
           setTacticalRating((data as any).tactical_rating || 0);
@@ -76,10 +86,24 @@ const PlayerNew = () => {
           setContractStatus((data as any).contract_status || 0);
           setKeyTraits((data as any).key_traits || []);
           setScoutNote((data as any).scout_note || '');
+          setSquadFitNotes((data as any).squad_fit_notes || '');
+          setSquadFitPercentage((data as any).squad_fit_percentage || 0);
+          setVideoLink((data as any).video_link || '');
+          setMarketValue((data as any).market_value || '');
+          setResalePotential((data as any).resale_potential || 0);
+          setInjuryHistory((data as any).injury_history || '');
         }
       });
     }
   }, [id]);
+
+  // Reset role when position changes
+  useEffect(() => {
+    const roles = getRolesForPosition(primaryPosition, lang);
+    if (roles.length > 0 && !roles.includes(playerRole)) {
+      setPlayerRole('');
+    }
+  }, [primaryPosition, lang]);
 
   const toggleTrait = (trait: string) => {
     setKeyTraits(prev =>
@@ -97,11 +121,18 @@ const PlayerNew = () => {
       birth_date: birthDate || null,
       preferred_foot: preferredFoot, primary_position: primaryPosition,
       secondary_position: secondaryPosition || null, transfermarkt_link: transfermarktLink || null,
+      player_role: playerRole || null,
       technical_rating: technicalRating, tactical_rating: tacticalRating, physical_rating: physicalRating,
       mental_rating: mentalRating, tactical_iq_rating: tacticalIQRating,
       current_ability: currentAbility, contract_status: contractStatus,
       key_traits: keyTraits,
       scout_note: scoutNote || null,
+      squad_fit_notes: squadFitNotes || null,
+      squad_fit_percentage: squadFitPercentage,
+      video_link: videoLink || null,
+      market_value: marketValue || null,
+      resale_potential: resalePotential,
+      injury_history: injuryHistory || null,
       user_id: user!.id,
     };
     const { error } = isEdit
@@ -182,6 +213,20 @@ const PlayerNew = () => {
             </div>
           </div>
 
+          {/* Player Role */}
+          {availableRoles.length > 0 && (
+            <div className="space-y-1">
+              <label className="text-sm text-muted-foreground">{t('playerRole' as any)}</label>
+              <Select value={playerRole} onValueChange={setPlayerRole}>
+                <SelectTrigger><SelectValue placeholder={t('selectRole' as any)} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t('none')}</SelectItem>
+                  {availableRoles.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Skill Ratings */}
           <div className="space-y-3 rounded-lg border border-border p-4">
             <h3 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h3>
@@ -213,6 +258,51 @@ const PlayerNew = () => {
             </div>
           </div>
 
+          {/* Squad Fit Analysis */}
+          <div className="space-y-3 rounded-lg border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground">{t('squadFit' as any)}</h3>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{t('squadFitPercentage' as any)}</span>
+                <span className="font-bold text-primary">%{squadFitPercentage}</span>
+              </div>
+              <Slider min={0} max={100} step={5} value={[squadFitPercentage]} onValueChange={([v]) => setSquadFitPercentage(v)} className="w-full" />
+            </div>
+            <Textarea
+              placeholder={t('squadFitPlaceholder' as any)}
+              value={squadFitNotes}
+              onChange={(e) => setSquadFitNotes(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
+
+          {/* Financial Info */}
+          <div className="space-y-3 rounded-lg border border-border p-4">
+            <h3 className="text-sm font-bold text-foreground">{t('financialInfo' as any)}</h3>
+            <div className="space-y-1">
+              <label className="text-sm text-muted-foreground">{t('marketValue' as any)}</label>
+              <Input placeholder={t('marketValuePlaceholder' as any)} value={marketValue} onChange={(e) => setMarketValue(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{t('resalePotential' as any)}</span>
+                <span className="font-bold text-primary">{resalePotential}/5</span>
+              </div>
+              <Slider min={0} max={5} step={1} value={[resalePotential]} onValueChange={([v]) => setResalePotential(v)} className="w-full" />
+            </div>
+          </div>
+
+          {/* Injury History */}
+          <div className="space-y-1">
+            <label className="text-sm font-bold text-foreground">{t('injuryHistory' as any)}</label>
+            <Textarea
+              placeholder={t('injuryHistoryPlaceholder' as any)}
+              value={injuryHistory}
+              onChange={(e) => setInjuryHistory(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
+
           {/* Scout Note */}
           <div className="space-y-1">
             <label className="text-sm font-bold text-foreground">{t('scoutNote' as any)}</label>
@@ -222,6 +312,12 @@ const PlayerNew = () => {
               onChange={(e) => setScoutNote(e.target.value)}
               className="min-h-[120px]"
             />
+          </div>
+
+          {/* Video Link */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{t('videoLink' as any)}</label>
+            <Input placeholder={t('videoLinkPlaceholder' as any)} value={videoLink} onChange={(e) => setVideoLink(e.target.value)} />
           </div>
 
           <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />

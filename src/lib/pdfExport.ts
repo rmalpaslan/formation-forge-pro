@@ -10,11 +10,24 @@ const NEAR_BLACK: [number, number, number] = [26, 26, 26];
 const RED_ACCENT: [number, number, number] = [180, 40, 40];
 const LIGHT_GRAY: [number, number, number] = [107, 114, 128];
 
+// Dark mode colors
+const DARK_BG: [number, number, number] = [30, 30, 30];
+const DARK_CARD: [number, number, number] = [42, 42, 42];
+const DARK_TEXT: [number, number, number] = [230, 230, 230];
+const DARK_MUTED: [number, number, number] = [160, 160, 160];
+
 const SPC = ' ';
 
 function cleanVal(v: string | null | undefined): string {
   if (!v) return '';
   return v.replace(/\\n/g, ' ').replace(/"/g, '').replace(/\n/g, ' ').trim();
+}
+
+const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+function localizeFootPdf(foot: string | null | undefined, locale: string): string {
+  if (!foot) return '';
+  if (locale === 'tr') return footLabelTR_pdf[foot] || foot;
+  return foot;
 }
 
 // ── Font Loading ──
@@ -124,16 +137,20 @@ function createHelpers(doc: jsPDF, fontLoaded: boolean) {
   return { pw, ph, margin, cw, setFont, checkPage, getY, setY, addY };
 }
 
-function addPageHeader(doc: jsPDF, fontLoaded: boolean, pw: number, margin: number) {
+function addPageHeader(doc: jsPDF, fontLoaded: boolean, pw: number, margin: number, dark = false) {
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
+  if (dark) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, pw, doc.internal.pageSize.getHeight(), 'F');
+  }
   doc.setFont(fn, 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...LIGHT_GRAY);
+  doc.setTextColor(...(dark ? DARK_MUTED : LIGHT_GRAY));
   doc.text(BRAND, margin, 12);
   doc.setDrawColor(...GREEN);
   doc.setLineWidth(0.4);
   doc.line(margin, 15, pw - margin, 15);
-  doc.setTextColor(...DARK_GRAY);
+  doc.setTextColor(...(dark ? DARK_TEXT : DARK_GRAY));
 }
 
 function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', analystName?: string) {
@@ -160,8 +177,13 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
 
 async function renderCoverPage(
   doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
-  title: string, subtitle: string, metaLines: string[], analystName?: string,
+  title: string, subtitle: string, metaLines: string[], analystName?: string, dark = false,
 ) {
+  if (dark) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, h.pw, h.ph, 'F');
+  }
+
   const logoImage = await loadImageAsset('/images/logo.png');
   if (logoImage) {
     const logoSize = 30;
@@ -187,14 +209,14 @@ async function renderCoverPage(
 
   doc.setFontSize(11);
   h.setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
+  doc.setTextColor(...(dark ? DARK_MUTED : LIGHT_GRAY));
   const stw = doc.getTextWidth(subtitle);
   doc.text(subtitle, (h.pw - stw) / 2, h.getY());
   h.addY(14);
 
   doc.setFontSize(28);
   h.setFont('bold');
-  doc.setTextColor(...NEAR_BLACK);
+  doc.setTextColor(...(dark ? DARK_TEXT : NEAR_BLACK));
   const titleLines: string[] = doc.splitTextToSize(title, h.cw - 20);
   for (const line of titleLines) {
     const tw = doc.getTextWidth(line);
@@ -205,7 +227,7 @@ async function renderCoverPage(
 
   doc.setFontSize(12);
   h.setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
+  doc.setTextColor(...(dark ? DARK_MUTED : LIGHT_GRAY));
   for (const ml of metaLines) {
     const mw = doc.getTextWidth(ml);
     doc.text(ml, (h.pw - mw) / 2, h.getY());
@@ -216,7 +238,7 @@ async function renderCoverPage(
     h.addY(6);
     doc.setFontSize(10);
     h.setFont('normal');
-    doc.setTextColor(...LIGHT_GRAY);
+    doc.setTextColor(...(dark ? DARK_MUTED : LIGHT_GRAY));
     const prepLabel = `Hazırlayan: ${analystName}`;
     const pw2 = doc.getTextWidth(prepLabel);
     doc.text(prepLabel, (h.pw - pw2) / 2, h.getY());
@@ -227,9 +249,88 @@ async function renderCoverPage(
   doc.rect(h.margin, h.ph - 30, h.cw, 3, 'F');
   doc.setFontSize(8);
   h.setFont('normal');
-  doc.setTextColor(...LIGHT_GRAY);
+  doc.setTextColor(...(dark ? DARK_MUTED : LIGHT_GRAY));
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
+}
+
+// ── Radar Chart Drawing ──
+
+function drawRadarChart(
+  doc: jsPDF, h: ReturnType<typeof createHelpers>,
+  data: { label: string; value: number }[],
+  cx: number, cy: number, radius: number, dark = false,
+) {
+  const n = data.length;
+  if (n < 3) return;
+
+  const angleStep = (2 * Math.PI) / n;
+  const startAngle = -Math.PI / 2;
+
+  // Draw grid circles
+  for (let level = 1; level <= 5; level++) {
+    const r = (level / 5) * radius;
+    doc.setDrawColor(...(dark ? [70, 70, 70] as [number, number, number] : [220, 220, 220] as [number, number, number]));
+    doc.setLineWidth(0.2);
+    const pts: [number, number][] = [];
+    for (let i = 0; i < n; i++) {
+      const angle = startAngle + i * angleStep;
+      pts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+    }
+    for (let i = 0; i < pts.length; i++) {
+      const next = (i + 1) % pts.length;
+      doc.line(pts[i][0], pts[i][1], pts[next][0], pts[next][1]);
+    }
+  }
+
+  // Draw axes
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const ex = cx + radius * Math.cos(angle);
+    const ey = cy + radius * Math.sin(angle);
+    doc.setDrawColor(...(dark ? [80, 80, 80] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.2);
+    doc.line(cx, cy, ex, ey);
+
+    // Labels
+    const labelR = radius + 8;
+    const lx = cx + labelR * Math.cos(angle);
+    const ly = cy + labelR * Math.sin(angle);
+    doc.setFontSize(7);
+    h.setFont('bold');
+    doc.setTextColor(...(dark ? DARK_MUTED : LIGHT_GRAY));
+    const align = Math.abs(Math.cos(angle)) < 0.1 ? 'center' : Math.cos(angle) > 0 ? 'left' : 'right';
+    doc.text(data[i].label, lx, ly + 2, { align: align as any });
+  }
+
+  // Draw data polygon
+  const dataPts: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const angle = startAngle + i * angleStep;
+    const r = (data[i].value / 5) * radius;
+    dataPts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+  }
+
+  // Fill
+  doc.setFillColor(34, 139, 34);
+  doc.setGState(new (doc as any).GState({ opacity: 0.2 }));
+  const path = dataPts.map((p, i) => (i === 0 ? `${p[0]} ${p[1]} m` : `${p[0]} ${p[1]} l`)).join(' ') + ' h';
+  // Use lines approach instead
+  doc.setGState(new (doc as any).GState({ opacity: 1 }));
+
+  // Outline
+  doc.setDrawColor(...GREEN);
+  doc.setLineWidth(0.8);
+  for (let i = 0; i < dataPts.length; i++) {
+    const next = (i + 1) % dataPts.length;
+    doc.line(dataPts[i][0], dataPts[i][1], dataPts[next][0], dataPts[next][1]);
+  }
+
+  // Points
+  for (const pt of dataPts) {
+    doc.setFillColor(...GREEN);
+    doc.circle(pt[0], pt[1], 1.2, 'F');
+  }
 }
 
 // ── Types ──
@@ -462,13 +563,13 @@ interface PlayerData {
   contract_status?: number | null;
   key_traits?: string[] | null;
   scout_note?: string | null;
-}
-
-const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
-function localizeFootPdf(foot: string | null | undefined, locale: string): string {
-  if (!foot) return '';
-  if (locale === 'tr') return footLabelTR_pdf[foot] || foot;
-  return foot;
+  player_role?: string | null;
+  squad_fit_notes?: string | null;
+  squad_fit_percentage?: number | null;
+  video_link?: string | null;
+  market_value?: string | null;
+  resale_potential?: number | null;
+  injury_history?: string | null;
 }
 
 export async function exportPlayerPdf(
@@ -476,10 +577,15 @@ export async function exportPlayerPdf(
   labels: Record<string, string>,
   locale: string = 'tr',
   analystName?: string,
+  darkMode: boolean = false,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
+
+  const textColor: [number, number, number] = darkMode ? DARK_TEXT : NEAR_BLACK;
+  const mutedColor: [number, number, number] = darkMode ? DARK_MUTED : LIGHT_GRAY;
+  const bgAlt: [number, number, number] = darkMode ? DARK_CARD : [245, 245, 245];
 
   const posLocalized = localizePosition(player.primary_position, locale);
   const teamPos = [cleanVal(player.current_team), posLocalized].filter(Boolean).join(' · ');
@@ -488,12 +594,19 @@ export async function exportPlayerPdf(
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
     [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
     analystName,
+    darkMode,
   );
 
   // ── SCOUTING DASHBOARD PAGE ──
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, darkMode);
   h.setY(30);
+
+  if (darkMode) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, h.pw, h.ph, 'F');
+    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
+  }
 
   // Green header bar
   doc.setFillColor(...GREEN);
@@ -502,7 +615,7 @@ export async function exportPlayerPdf(
   h.setFont('bold');
   doc.setTextColor(255, 255, 255);
   doc.text(cleanVal(player.name), h.margin + 6, h.getY() + 1);
-  doc.setTextColor(...DARK_GRAY);
+  doc.setTextColor(...textColor);
   h.addY(18);
 
   // ── Key Traits Badges ──
@@ -528,12 +641,12 @@ export async function exportPlayerPdf(
       doc.text(tl, bx + badgePad, h.getY());
       bx += bw + badgeGap;
     }
-    doc.setTextColor(...DARK_GRAY);
+    doc.setTextColor(...textColor);
     h.addY(14);
   }
 
   // Divider
-  doc.setDrawColor(200, 200, 200);
+  doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
   doc.setLineWidth(0.3);
   doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
   h.addY(12);
@@ -543,9 +656,11 @@ export async function exportPlayerPdf(
   if (player.current_team) attrs.push({ label: labels.currentTeam, value: cleanVal(player.current_team) });
   if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
   if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: localizePosition(player.primary_position, locale) });
+  if (player.player_role) attrs.push({ label: labels.playerRole || (locale === 'tr' ? 'Oyuncu Rolü' : 'Player Role'), value: cleanVal(player.player_role) });
   if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
+  if (player.market_value) attrs.push({ label: labels.marketValue || (locale === 'tr' ? 'Piyasa Değeri' : 'Market Value'), value: cleanVal(player.market_value) });
 
   const colW = (h.cw - 10) / 2;
   const labelColW = 55;
@@ -556,31 +671,58 @@ export async function exportPlayerPdf(
     const rowIdx = Math.floor(i / 2);
 
     if (rowIdx % 2 === 0) {
-      doc.setFillColor(245, 245, 245);
+      doc.setFillColor(...bgAlt);
       doc.rect(h.margin, h.getY() - 5, h.cw, rowH, 'F');
     }
 
     doc.setFontSize(9);
     h.setFont('bold');
-    doc.setTextColor(...LIGHT_GRAY);
+    doc.setTextColor(...mutedColor);
     doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
     h.setFont('normal');
-    doc.setTextColor(...NEAR_BLACK);
+    doc.setTextColor(...textColor);
     const leftVal = doc.splitTextToSize(attrs[i].value, colW - labelColW - 8);
     doc.text(leftVal, h.margin + labelColW, h.getY());
 
     if (i + 1 < attrs.length) {
       const rightX = h.margin + colW + 10;
       h.setFont('bold');
-      doc.setTextColor(...LIGHT_GRAY);
+      doc.setTextColor(...mutedColor);
       doc.text(attrs[i + 1].label + ':', rightX, h.getY());
       h.setFont('normal');
-      doc.setTextColor(...NEAR_BLACK);
+      doc.setTextColor(...textColor);
       const rightVal = doc.splitTextToSize(attrs[i + 1].value, colW - labelColW - 8);
       doc.text(rightVal, rightX + labelColW, h.getY());
     }
 
     h.addY(rowH);
+  }
+
+  // ── Radar Chart ──
+  const radarData = [
+    { label: labels.technical || 'Teknik', value: player.technical_rating || 0 },
+    { label: labels.tactical || 'Taktiksel', value: player.tactical_rating || 0 },
+    { label: labels.physical || 'Fiziksel', value: player.physical_rating || 0 },
+    { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
+  ];
+  if (radarData.some(d => d.value > 0)) {
+    h.addY(8);
+    h.checkPage(80);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...textColor);
+    doc.text(labels.radarChart || (locale === 'tr' ? 'Performans Radarı' : 'Performance Radar'), h.margin, h.getY());
+    h.addY(8);
+
+    const chartCx = h.pw / 2;
+    const chartCy = h.getY() + 28;
+    drawRadarChart(doc, h, radarData, chartCx, chartCy, 25, darkMode);
+    h.addY(65);
   }
 
   // ── Skill Ratings (Progress Bars) ──
@@ -592,20 +734,21 @@ export async function exportPlayerPdf(
     { label: labels.tacticalIQ || 'Oyun Bilgisi', value: player.tactical_iq_rating || 0 },
     { label: labels.currentAbility || (locale === 'tr' ? 'Mevcut Yetenek' : 'Current Ability'), value: player.current_ability || 0 },
     { label: labels.potentialAbility || (locale === 'tr' ? 'Potansiyel Yetenek' : 'Potential Ability'), value: player.contract_status || 0 },
+    { label: labels.resalePotential || (locale === 'tr' ? 'Yeniden Satış Potansiyeli' : 'Resale Potential'), value: player.resale_potential || 0 },
   ];
   const hasRatings = ratings.some(r => r.value > 0);
 
   if (hasRatings) {
     h.addY(8);
     h.checkPage(50);
-    doc.setDrawColor(200, 200, 200);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
     h.addY(10);
 
     doc.setFontSize(12);
     h.setFont('bold');
-    doc.setTextColor(...NEAR_BLACK);
+    doc.setTextColor(...textColor);
     doc.text(labels.skillRatings || (locale === 'tr' ? 'Yetenek Puanları' : 'Skill Ratings'), h.margin, h.getY());
     h.addY(12);
 
@@ -617,16 +760,16 @@ export async function exportPlayerPdf(
       h.checkPage(18);
       doc.setFontSize(10);
       h.setFont('bold');
-      doc.setTextColor(...LIGHT_GRAY);
+      doc.setTextColor(...mutedColor);
       doc.text(rating.label + ':', h.margin + 4, h.getY());
 
       h.setFont('bold');
-      doc.setTextColor(...NEAR_BLACK);
+      doc.setTextColor(...textColor);
       doc.text(`${rating.value}/5`, h.pw - h.margin - 10, h.getY());
 
       const barX = h.margin + labelColW + 10;
       const barY = h.getY() - 3.5;
-      doc.setFillColor(230, 230, 230);
+      doc.setFillColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [230, 230, 230] as [number, number, number]));
       doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, 'F');
 
       const fillW = (rating.value / 5) * barW;
@@ -639,24 +782,100 @@ export async function exportPlayerPdf(
     }
   }
 
-  // ── Scout Note ──
-  if (player.scout_note) {
+  // ── Squad Fit ──
+  if ((player.squad_fit_percentage && player.squad_fit_percentage > 0) || player.squad_fit_notes) {
     h.addY(8);
-    h.checkPage(30);
-    doc.setDrawColor(200, 200, 200);
+    h.checkPage(40);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
     h.addY(10);
 
     doc.setFontSize(12);
     h.setFont('bold');
-    doc.setTextColor(...NEAR_BLACK);
+    doc.setTextColor(...textColor);
+    doc.text(labels.squadFit || (locale === 'tr' ? 'Kadro Uyumu' : 'Squad Fit'), h.margin, h.getY());
+    h.addY(12);
+
+    if (player.squad_fit_percentage && player.squad_fit_percentage > 0) {
+      doc.setFontSize(10);
+      h.setFont('bold');
+      doc.setTextColor(...mutedColor);
+      doc.text(`${labels.squadFitPercentage || 'Uyum'}:`, h.margin + 4, h.getY());
+
+      doc.setTextColor(...textColor);
+      doc.text(`%${player.squad_fit_percentage}`, h.margin + labelColW, h.getY());
+
+      const barX = h.margin + labelColW + 20;
+      const barW2 = h.cw - labelColW - 30;
+      const barY = h.getY() - 3.5;
+      doc.setFillColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [230, 230, 230] as [number, number, number]));
+      doc.roundedRect(barX, barY, barW2, 5, 1.5, 1.5, 'F');
+      const fillW = (player.squad_fit_percentage / 100) * barW2;
+      if (fillW > 0) {
+        doc.setFillColor(...GREEN);
+        doc.roundedRect(barX, barY, fillW, 5, 1.5, 1.5, 'F');
+      }
+      h.addY(12);
+    }
+
+    if (player.squad_fit_notes) {
+      doc.setFontSize(10);
+      h.setFont('normal');
+      doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
+      const fitLines: string[] = doc.splitTextToSize(cleanVal(player.squad_fit_notes), h.cw - 8);
+      for (const line of fitLines) {
+        h.checkPage(8);
+        doc.text(line, h.margin + 4, h.getY());
+        h.addY(6);
+      }
+    }
+  }
+
+  // ── Injury History ──
+  if (player.injury_history) {
+    h.addY(8);
+    h.checkPage(30);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...RED_ACCENT);
+    doc.text(`⚠ ${labels.injuryHistory || (locale === 'tr' ? 'Sakatlık Geçmişi' : 'Injury History')}`, h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(10);
+    h.setFont('normal');
+    doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
+    const injLines: string[] = doc.splitTextToSize(cleanVal(player.injury_history), h.cw - 8);
+    for (const line of injLines) {
+      h.checkPage(8);
+      doc.text(line, h.margin + 4, h.getY());
+      h.addY(6);
+    }
+  }
+
+  // ── Scout Note ──
+  if (player.scout_note) {
+    h.addY(8);
+    h.checkPage(30);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...textColor);
     doc.text(labels.scoutNote || (locale === 'tr' ? 'Scout Final Görüşü' : 'Scout Final Opinion'), h.margin, h.getY());
     h.addY(10);
 
     doc.setFontSize(10);
     h.setFont('normal');
-    doc.setTextColor(...DARK_GRAY);
+    doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
     const noteLines: string[] = doc.splitTextToSize(cleanVal(player.scout_note), h.cw - 8);
     for (const line of noteLines) {
       h.checkPage(8);
@@ -665,13 +884,30 @@ export async function exportPlayerPdf(
     }
   }
 
+  // ── Video Link ──
+  if (player.video_link) {
+    h.addY(8);
+    h.checkPage(20);
+    doc.setFillColor(...GREEN);
+    const btnLabel = labels.watchVideo || (locale === 'tr' ? 'Videoyu İzle' : 'Watch Video');
+    doc.setFontSize(10);
+    h.setFont('bold');
+    const btnW = doc.getTextWidth(btnLabel) + 20;
+    const btnH = 10;
+    const btnX = h.margin;
+    doc.roundedRect(btnX, h.getY() - 6, btnW, btnH, 2, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.textWithLink(btnLabel, btnX + 10, h.getY(), { url: player.video_link });
+    h.addY(16);
+  }
+
   // ── Transfermarkt link ──
   if (player.transfermarkt_link) {
     h.addY(4);
     h.checkPage(rowH + 4);
     doc.setFontSize(10);
     h.setFont('bold');
-    doc.setTextColor(...LIGHT_GRAY);
+    doc.setTextColor(...mutedColor);
     doc.text('Transfermarkt:', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
@@ -684,7 +920,7 @@ export async function exportPlayerPdf(
       }
       displayLink += '…';
     }
-    doc.text(displayLink, h.margin + labelColW + 10, h.getY());
+    doc.textWithLink(displayLink, h.margin + labelColW + 10, h.getY(), { url: linkText });
     h.addY(rowH);
   }
 

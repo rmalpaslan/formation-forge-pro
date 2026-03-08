@@ -105,21 +105,28 @@ export type Database = {
           current_ability: number | null
           current_team: string | null
           id: string
+          injury_history: string | null
           key_traits: string[] | null
           league: string | null
+          market_value: string | null
           mental_rating: number | null
           name: string
           physical_rating: number | null
+          player_role: string | null
           preferred_foot: string | null
           primary_position: string | null
+          resale_potential: number | null
           scout_note: string | null
           secondary_position: string | null
+          squad_fit_notes: string | null
+          squad_fit_percentage: number | null
           tactical_iq_rating: number | null
           tactical_rating: number | null
           technical_rating: number | null
           transfermarkt_link: string | null
           updated_at: string
           user_id: string
+          video_link: string | null
         }
         Insert: {
           birth_date?: string | null
@@ -128,21 +135,28 @@ export type Database = {
           current_ability?: number | null
           current_team?: string | null
           id?: string
+          injury_history?: string | null
           key_traits?: string[] | null
           league?: string | null
+          market_value?: string | null
           mental_rating?: number | null
           name: string
           physical_rating?: number | null
+          player_role?: string | null
           preferred_foot?: string | null
           primary_position?: string | null
+          resale_potential?: number | null
           scout_note?: string | null
           secondary_position?: string | null
+          squad_fit_notes?: string | null
+          squad_fit_percentage?: number | null
           tactical_iq_rating?: number | null
           tactical_rating?: number | null
           technical_rating?: number | null
           transfermarkt_link?: string | null
           updated_at?: string
           user_id: string
+          video_link?: string | null
         }
         Update: {
           birth_date?: string | null
@@ -151,21 +165,28 @@ export type Database = {
           current_ability?: number | null
           current_team?: string | null
           id?: string
+          injury_history?: string | null
           key_traits?: string[] | null
           league?: string | null
+          market_value?: string | null
           mental_rating?: number | null
           name?: string
           physical_rating?: number | null
+          player_role?: string | null
           preferred_foot?: string | null
           primary_position?: string | null
+          resale_potential?: number | null
           scout_note?: string | null
           secondary_position?: string | null
+          squad_fit_notes?: string | null
+          squad_fit_percentage?: number | null
           tactical_iq_rating?: number | null
           tactical_rating?: number | null
           technical_rating?: number | null
           transfermarkt_link?: string | null
           updated_at?: string
           user_id?: string
+          video_link?: string | null
         }
         Relationships: []
       }
