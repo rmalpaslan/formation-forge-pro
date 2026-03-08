@@ -410,8 +410,8 @@ export async function exportAnalysisPdf(
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
-        doc.text(`${tDizilis}:${NBSP2}`, h.margin + 2, h.getY());
-        const labelW = doc.getTextWidth(`${tDizilis}:${NBSP2}`);
+        doc.text(`${tDizilis}:${SPC}`, h.margin + 2, h.getY());
+        const labelW = doc.getTextWidth(`${tDizilis}:${SPC}`);
         h.setFont('normal');
         doc.text(cleanVal(tab.formation), h.margin + 2 + labelW, h.getY());
         h.addY(12);
