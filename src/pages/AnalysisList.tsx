@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trash2, Edit, Plus, Search, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
-import jsPDF from 'jspdf';
+import { exportAnalysisPdf } from '@/lib/pdfExport';
 
 const AnalysisList = () => {
   const { user } = useAuth();
