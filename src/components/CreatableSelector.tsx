@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { toTitleCase } from '@/data/leaguesAndTeams';
 
 interface CreatableSelectorProps {
   value: string;
@@ -21,7 +22,11 @@ export function CreatableSelector({
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from(table).select('name').order('name') as any;
+      let q = supabase.from(table).select('name').order('name');
+      if (filterColumn && filterValue) {
+        q = q.eq(filterColumn as any, filterValue) as any;
+      }
+      const { data } = await q;
       setDbOptions((data || []).map((r: any) => r.name));
     };
     load();
@@ -31,7 +36,7 @@ export function CreatableSelector({
 
   const allOptions = useMemo(() => {
     const set = new Set([...staticOptions, ...dbOptions]);
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'tr'));
   }, [staticOptions, dbOptions]);
 
   const results = useMemo(() => {
@@ -48,16 +53,17 @@ export function CreatableSelector({
 
   const handleBlur = async () => {
     setTimeout(() => setOpen(false), 200);
-    if (query && query !== value) {
-      const trimmed = query.trim();
-      if (trimmed) {
-        onChange(trimmed);
-        // Save new entry to DB if not already there
-        if (!allOptions.includes(trimmed)) {
-          await supabase.from(table).upsert({ name: trimmed } as any, { onConflict: 'name' });
-          setDbOptions(prev => [...prev, trimmed]);
-        }
-      }
+    if (!query || query === value) return;
+
+    const normalized = toTitleCase(query.trim());
+    if (!normalized) return;
+
+    onChange(normalized);
+
+    const exists = allOptions.some(o => o.toLowerCase() === normalized.toLowerCase());
+    if (!exists) {
+      await supabase.from(table).upsert({ name: normalized } as any, { onConflict: 'name' });
+      setDbOptions(prev => [...prev, normalized]);
     }
   };
 
@@ -87,3 +93,4 @@ export function CreatableSelector({
     </div>
   );
 }
+

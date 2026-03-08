@@ -230,20 +230,28 @@ export async function exportAnalysisPdf(
     renderBullets(tPros, tab.pros);
     renderBullets(tCons, tab.cons);
 
-    // ── Images AFTER text ──
+    // ── Images AFTER text (never on top of text) ──
     const allImages = tab.images || [];
     for (const imgUrl of allImages) {
-      const dataUrl = await loadImageAsBase64(imgUrl);
-      if (!dataUrl) continue;
+      const image = await loadImageAsset(imgUrl);
+      if (!image) continue;
 
-      // Calculate dimensions maintaining aspect ratio at 85% width
-      const imgWidth = h.contentWidth * 0.85;
-      const imgHeight = imgWidth * 0.6; // 5:3 default aspect
-      h.checkPage(imgHeight + 10);
+      let imgWidth = h.contentWidth * 0.85;
+      let imgHeight = (image.height / image.width) * imgWidth;
+      const maxHeight = h.pageHeight * 0.42;
+
+      if (imgHeight > maxHeight) {
+        const ratio = maxHeight / imgHeight;
+        imgWidth *= ratio;
+        imgHeight = maxHeight;
+      }
+
+      const imgX = h.margin + (h.contentWidth - imgWidth) / 2;
+      h.checkPage(imgHeight + 12);
 
       try {
-        doc.addImage(dataUrl, 'JPEG', h.margin, h.getY(), imgWidth, imgHeight);
-        h.addY(imgHeight + 6);
+        doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
+        h.addY(imgHeight + 8);
       } catch {
         // skip broken images silently
       }
