@@ -67,6 +67,7 @@ export type Database = {
           created_at: string
           home_team: string
           id: string
+          league: string | null
           match_date: string
           target_team: string
           updated_at: string
@@ -77,6 +78,7 @@ export type Database = {
           created_at?: string
           home_team: string
           id?: string
+          league?: string | null
           match_date: string
           target_team?: string
           updated_at?: string
@@ -87,6 +89,7 @@ export type Database = {
           created_at?: string
           home_team?: string
           id?: string
+          league?: string | null
           match_date?: string
           target_team?: string
           updated_at?: string
@@ -100,6 +103,7 @@ export type Database = {
           created_at: string
           current_team: string | null
           id: string
+          league: string | null
           name: string
           preferred_foot: string | null
           primary_position: string | null
@@ -113,6 +117,7 @@ export type Database = {
           created_at?: string
           current_team?: string | null
           id?: string
+          league?: string | null
           name: string
           preferred_foot?: string | null
           primary_position?: string | null
@@ -126,6 +131,7 @@ export type Database = {
           created_at?: string
           current_team?: string | null
           id?: string
+          league?: string | null
           name?: string
           preferred_foot?: string | null
           primary_position?: string | null
@@ -160,6 +166,45 @@ export type Database = {
           last_name?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      shared_leagues: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      shared_teams: {
+        Row: {
+          created_at: string
+          id: string
+          league: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league?: string | null
+          name?: string
         }
         Relationships: []
       }
