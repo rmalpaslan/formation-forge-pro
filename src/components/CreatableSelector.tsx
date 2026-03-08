@@ -73,7 +73,7 @@ export function CreatableSelector({
         placeholder={placeholder}
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => { setQuery(''); setOpen(true); }}
         onBlur={handleBlur}
       />
       {open && results.length > 0 && (

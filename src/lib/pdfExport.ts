@@ -590,6 +590,7 @@ export async function exportPlayerPdf(
     { label: labels.physical || 'Fiziksel', value: player.physical_rating || 0 },
     { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
     { label: labels.tacticalIQ || 'Oyun Bilgisi', value: player.tactical_iq_rating || 0 },
+    { label: labels.currentAbility || (locale === 'tr' ? 'Mevcut Yetenek' : 'Current Ability'), value: player.current_ability || 0 },
     { label: labels.potentialAbility || (locale === 'tr' ? 'Potansiyel Yetenek' : 'Potential Ability'), value: player.contract_status || 0 },
   ];
   const hasRatings = ratings.some(r => r.value > 0);

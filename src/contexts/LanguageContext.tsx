@@ -317,6 +317,7 @@ const translations = {
     scoutNote: 'Scout Final Opinion',
     scoutNotePlaceholder: 'Write your detailed assessment of the player here...',
     saved: 'Saved',
+    currentAbility: 'Current Ability',
   },
 } as const;
 
