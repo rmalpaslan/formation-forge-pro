@@ -143,7 +143,8 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
   const totalPages = (doc as any).internal.getNumberOfPages();
   const pageLabel = locale === 'tr' ? 'Sayfa' : 'Page';
-  for (let i = 1; i <= totalPages; i++) {
+  // Skip page 1 (cover page) — no footer on cover
+  for (let i = 2; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFont(fn, 'normal');
     doc.setFontSize(7);
@@ -212,13 +213,15 @@ function renderCoverPage(
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
 
-  // Analyst attribution on cover page
+  // Analyst attribution on cover page — centered below meta lines
   if (analystName) {
-    doc.setFontSize(9);
+    h.addY(12);
+    doc.setFontSize(10);
     h.setFont('normal');
     doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Prepared by:${NBSP2}${analystName}`;
-    doc.text(prepLabel, h.pw - h.margin, h.ph - 40, { align: 'right' });
+    const prepLabel = `Hazırlayan:${NBSP2}${analystName}`;
+    const prepW = doc.getTextWidth(prepLabel);
+    doc.text(prepLabel, (h.pw - prepW) / 2, h.getY());
   }
 }
 
