@@ -15,6 +15,7 @@ import { Save, CheckCircle } from 'lucide-react';
 import { leagues } from '@/data/leaguesAndTeams';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { positionMapTR } from '@/lib/positionMap';
 
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'CF', 'ST'];
 const feet = ['Right', 'Left', 'Both'];
