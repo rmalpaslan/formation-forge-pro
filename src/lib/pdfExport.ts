@@ -217,6 +217,18 @@ async function renderCoverPage(
     h.addY(8);
   }
 
+  // ── Analyst name centered below meta lines ──
+  if (analystName) {
+    h.addY(6);
+    doc.setFontSize(10);
+    h.setFont('normal');
+    doc.setTextColor(...LIGHT_GRAY);
+    const prepLabel = `Hazırlayan: ${analystName}`;
+    const pw2 = doc.getTextWidth(prepLabel);
+    doc.text(prepLabel, (h.pw - pw2) / 2, h.getY());
+    h.addY(8);
+  }
+
   doc.setFillColor(...GREEN);
   doc.rect(h.margin, h.ph - 30, h.cw, 3, 'F');
   doc.setFontSize(8);
