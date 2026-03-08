@@ -654,6 +654,7 @@ export async function exportSquadPdf(
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
     [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${NBSP2}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
+    analystName,
   );
 
   // ── PITCH PAGE ──
