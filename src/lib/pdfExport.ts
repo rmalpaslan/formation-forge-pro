@@ -472,7 +472,7 @@ export async function exportPlayerPdf(
 
   // ── COVER PAGE ──
   const teamPos = [cleanVal(player.current_team), cleanVal(player.primary_position)].filter(Boolean).join(' · ');
-  renderCoverPage(doc, h, fontLoaded,
+  await renderCoverPage(doc, h, fontLoaded,
     cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
     [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
