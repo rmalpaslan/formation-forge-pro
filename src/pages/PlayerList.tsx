@@ -148,7 +148,7 @@ const PlayerList = () => {
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
                 <span className="text-muted-foreground text-xs mt-1">
-                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}:{'\u00A0\u00A0'}{formatDateDDMMYYYY(p.updated_at || p.created_at)}
+                  {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}: {formatDateDDMMYYYY(p.updated_at || p.created_at)}
                 </span>
               </div>
               <div className="flex gap-1">
