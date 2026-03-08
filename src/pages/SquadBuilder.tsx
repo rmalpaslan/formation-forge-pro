@@ -9,7 +9,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { leagues, getCountryCodes } from '@/data/leaguesAndTeams';
 import { toast } from 'sonner';
-import { Save, Trash2, Pencil, Plus } from 'lucide-react';
+import { Save, Trash2, Pencil, Plus, FileDown, CheckCircle } from 'lucide-react';
+import { exportSquadPdf } from '@/lib/pdfExport';
 
 const formationPositions: Record<string, { label: string; x: number; y: number }[]> = {
   '4-3-3': [
@@ -49,7 +50,7 @@ interface Squad {
 
 const SquadBuilder = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [formation, setFormation] = useState('4-3-3');
   const [squadName, setSquadName] = useState('');
   const [assignments, setAssignments] = useState<Record<number, { id: string; name: string }>>({});
@@ -62,7 +63,6 @@ const SquadBuilder = () => {
   const [viewSquad, setViewSquad] = useState<Squad | null>(null);
   const [showEditor, setShowEditor] = useState(false);
 
-  // Filtering
   const [filterMode, setFilterMode] = useState<'mixed' | 'country' | 'league'>('mixed');
   const [filterCountry, setFilterCountry] = useState('TR');
   const [filterLeague, setFilterLeague] = useState('');
@@ -83,12 +83,8 @@ const SquadBuilder = () => {
     if (filterMode === 'mixed') return players;
     const leagueTeams = new Set<string>();
     leagues.forEach(l => {
-      if (filterMode === 'country' && l.countryCode === filterCountry) {
-        l.teams.forEach(t => leagueTeams.add(t.toLowerCase()));
-      }
-      if (filterMode === 'league' && l.name === filterLeague) {
-        l.teams.forEach(t => leagueTeams.add(t.toLowerCase()));
-      }
+      if (filterMode === 'country' && l.countryCode === filterCountry) l.teams.forEach(t => leagueTeams.add(t.toLowerCase()));
+      if (filterMode === 'league' && l.name === filterLeague) l.teams.forEach(t => leagueTeams.add(t.toLowerCase()));
     });
     return players.filter(p => p.current_team && leagueTeams.has(p.current_team.toLowerCase()));
   }, [players, filterMode, filterCountry, filterLeague]);
@@ -102,8 +98,8 @@ const SquadBuilder = () => {
     setModalOpen(false);
   };
 
-  const handleSave = async () => {
-    if (!squadName) { toast.error(t('enterSquadName')); return; }
+  const doSave = async (): Promise<boolean> => {
+    if (!squadName) { toast.error(t('enterSquadName')); return false; }
     setSaving(true);
     const positionsData: Record<string, string> = {};
     Object.entries(assignments).forEach(([idx, p]) => { positionsData[idx] = p.id; });
@@ -111,13 +107,31 @@ const SquadBuilder = () => {
     if (editingId) {
       const { error } = await supabase.from('squads').update({ name: squadName, formation, positions: positionsData }).eq('id', editingId);
       setSaving(false);
-      if (error) toast.error(error.message);
-      else { toast.success(t('squadUpdated')); loadSquads(); }
+      if (error) { toast.error(error.message); return false; }
+      toast.success(t('squadUpdated'));
+      loadSquads();
+      return true;
     } else {
       const { error } = await supabase.from('squads').insert({ name: squadName, formation, positions: positionsData, user_id: user!.id });
       setSaving(false);
-      if (error) toast.error(error.message);
-      else { toast.success(t('squadSaved')); setShowEditor(false); setSquadName(''); setAssignments({}); loadSquads(); }
+      if (error) { toast.error(error.message); return false; }
+      toast.success(t('squadSaved'));
+      loadSquads();
+      return true;
+    }
+  };
+
+  const handleDraftSave = async () => {
+    await doSave();
+  };
+
+  const handleSaveAndClose = async () => {
+    const ok = await doSave();
+    if (ok) {
+      setShowEditor(false);
+      setEditingId(null);
+      setSquadName('');
+      setAssignments({});
     }
   };
 
@@ -151,6 +165,18 @@ const SquadBuilder = () => {
     setFormation('4-3-3');
     setAssignments({});
     setShowEditor(true);
+  };
+
+  const handleExportPdf = async (squad: Squad) => {
+    const playerNames: Record<number, string> = {};
+    if (squad.positions) {
+      for (const [idx, playerId] of Object.entries(squad.positions)) {
+        const player = players.find((p) => p.id === playerId);
+        if (player) playerNames[Number(idx)] = player.name;
+      }
+    }
+    await exportSquadPdf({ name: squad.name, formation: squad.formation, playerNames }, lang);
+    toast.success(t('exportPdf'));
   };
 
   const getViewAssignments = (squad: Squad) => {
@@ -208,6 +234,9 @@ const SquadBuilder = () => {
                   <span className="text-muted-foreground text-sm ml-3">{squad.formation}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleExportPdf(squad); }} title={t('exportPdf')}>
+                    <FileDown className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleEdit(squad); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -228,6 +257,9 @@ const SquadBuilder = () => {
             </DialogHeader>
             {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
             <div className="flex gap-2 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => viewSquad && handleExportPdf(viewSquad)}>
+                <FileDown className="mr-2 h-4 w-4" />{t('exportPdf')}
+              </Button>
               <Button variant="outline" className="flex-1" onClick={() => viewSquad && handleEdit(viewSquad)}>
                 <Pencil className="mr-2 h-4 w-4" />{t('edit')}
               </Button>
@@ -257,8 +289,11 @@ const SquadBuilder = () => {
               {Object.keys(formationPositions).map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />{saving ? t('saving') : editingId ? t('update') : t('save')}
+          <Button variant="outline" onClick={handleDraftSave} disabled={saving}>
+            <Save className="mr-2 h-4 w-4" />{saving ? t('saving') : t('draftSave')}
+          </Button>
+          <Button onClick={handleSaveAndClose} disabled={saving}>
+            <CheckCircle className="mr-2 h-4 w-4" />{t('finishAnalysis')}
           </Button>
         </div>
       </div>
