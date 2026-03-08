@@ -515,7 +515,7 @@ export async function exportPlayerPdf(
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
-    const leftLabel = attrs[i].label + ':' + NBSP2;
+    const leftLabel = attrs[i].label + ':' + SPC;
     doc.text(leftLabel, h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
