@@ -285,6 +285,7 @@ export async function exportAnalysisPdf(
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
     [`${tTarget}:${NBSP2}${targetName}`, dateFormatted],
+    analystName,
   );
 
   // ── START CONTENT ──
