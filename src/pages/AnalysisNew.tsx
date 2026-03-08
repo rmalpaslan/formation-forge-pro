@@ -100,7 +100,7 @@ const AnalysisNew = () => {
             <Input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">{t('analysisTarget')}</label>
+            <label className="text-sm text-muted-foreground">{t('target')}</label>
             <Select value={targetTeam} onValueChange={setTargetTeam}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
