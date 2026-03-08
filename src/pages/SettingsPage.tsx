@@ -9,11 +9,15 @@ import { toast } from 'sonner';
 const SettingsPage = () => {
   const { t, lang, setLang } = useLanguage();
   const { theme, setTheme } = useTheme();
+  const [pendingLang, setPendingLang] = useState<'tr' | 'en'>(lang);
+  const [pendingTheme, setPendingTheme] = useState(theme || 'dark');
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
+    setLang(pendingLang);
+    setTheme(pendingTheme);
     setSaved(true);
-    toast.success(lang === 'tr' ? 'Kaydedildi' : 'Saved');
+    toast.success(pendingLang === 'tr' ? 'Kaydedildi' : 'Saved');
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -26,7 +30,7 @@ const SettingsPage = () => {
           <p className="text-sm text-muted-foreground">{t('languageDesc')}</p>
         </CardHeader>
         <CardContent>
-          <Select value={lang} onValueChange={(v) => setLang(v as 'tr' | 'en')}>
+          <Select value={pendingLang} onValueChange={(v) => setPendingLang(v as 'tr' | 'en')}>
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
@@ -43,7 +47,7 @@ const SettingsPage = () => {
           <p className="text-sm text-muted-foreground">{t('themeDesc')}</p>
         </CardHeader>
         <CardContent>
-          <Select value={theme || 'dark'} onValueChange={setTheme}>
+          <Select value={pendingTheme} onValueChange={setPendingTheme}>
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
@@ -55,7 +59,7 @@ const SettingsPage = () => {
         </CardContent>
       </Card>
       <Button onClick={handleSave} className="w-full" variant={saved ? 'secondary' : 'default'}>
-        {saved ? (lang === 'tr' ? '✓ Kaydedildi' : '✓ Saved') : (lang === 'tr' ? 'Değişiklikleri Kaydet' : 'Save Changes')}
+        {saved ? (lang === 'tr' ? '✓ Kaydedildi' : '✓ Saved') : t('saveChanges')}
       </Button>
     </div>
   );

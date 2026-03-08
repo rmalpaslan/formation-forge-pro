@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import { localizePosition } from '@/lib/positionMap';
 
 // ── Constants ──
 const BRAND = 'COACHING ENGINEERING';
@@ -9,10 +10,8 @@ const NEAR_BLACK: [number, number, number] = [26, 26, 26];
 const RED_ACCENT: [number, number, number] = [180, 40, 40];
 const LIGHT_GRAY: [number, number, number] = [107, 114, 128];
 
-// Single space after colons (standard)
 const SPC = ' ';
 
-/** Sanitize a value: strip quotes, \n, trim */
 function cleanVal(v: string | null | undefined): string {
   if (!v) return '';
   return v.replace(/\\n/g, ' ').replace(/"/g, '').replace(/\n/g, ' ').trim();
@@ -86,7 +85,7 @@ async function loadImageAsset(url: string): Promise<{ dataUrl: string; format: '
   } catch { return null; }
 }
 
-// ── Date Formatting (DD.MM.YYYY) ──
+// ── Date Formatting ──
 
 function formatDate(dateStr: string | null | undefined, _locale: string): string {
   if (!dateStr) return '';
@@ -143,7 +142,6 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
   const totalPages = (doc as any).internal.getNumberOfPages();
   const pageLabel = locale === 'tr' ? 'Sayfa' : 'Page';
-  // Skip page 1 (cover page) — no footer on cover
   for (let i = 2; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFont(fn, 'normal');
@@ -164,7 +162,6 @@ async function renderCoverPage(
   doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
   title: string, subtitle: string, metaLines: string[], analystName?: string,
 ) {
-  // ── Load and place logo at top-center ──
   const logoImage = await loadImageAsset('/images/logo.png');
   if (logoImage) {
     const logoSize = 30;
@@ -174,8 +171,6 @@ async function renderCoverPage(
   } else {
     h.setY(50);
   }
-
-  // ── Analyst name centered below meta ── (will be placed after meta lines)
 
   doc.setFontSize(14);
   h.setFont('bold');
@@ -217,7 +212,6 @@ async function renderCoverPage(
     h.addY(8);
   }
 
-  // ── Analyst name centered below meta lines ──
   if (analystName) {
     h.addY(6);
     doc.setFontSize(10);
@@ -294,17 +288,15 @@ export async function exportAnalysisPdf(
     set_pieces: groupLabels?.setPieces || 'DURAN TOPLAR',
   };
 
-  // ── COVER PAGE ──
   const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
   const dateFormatted = formatDate(analysis.match_date, locale);
   await renderCoverPage(doc, h, fontLoaded,
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
-    [`${tTarget}:${SPC}${targetName}`, dateFormatted],
+    [`Odak Takım: ${targetName}`, dateFormatted],
     analystName,
   );
 
-  // ── START CONTENT ──
   doc.addPage();
   h.setY(25);
   addPageHeader(doc, fontLoaded, h.pw, h.margin);
@@ -372,7 +364,6 @@ export async function exportAnalysisPdf(
         doc.setLineWidth(0.3);
         doc.rect(imgX - 1, h.getY() - 1, imgWidth + 2, imgHeight + 2, 'S');
         doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
-        // Tactical Snapshot label
         const snapLabel = 'Tactical Snapshot';
         doc.setFontSize(7);
         h.setFont('normal');
@@ -388,7 +379,6 @@ export async function exportAnalysisPdf(
     }
   };
 
-  // ── Iterate categories ──
   for (const category of CATEGORY_ORDER) {
     const categoryTabs = category.subTabs.map(st => tabMap.get(st)).filter(Boolean) as TabData[];
     if (!categoryTabs.some(hasContent)) continue;
@@ -466,7 +456,11 @@ interface PlayerData {
   technical_rating?: number | null;
   tactical_rating?: number | null;
   physical_rating?: number | null;
+  mental_rating?: number | null;
+  tactical_iq_rating?: number | null;
+  contract_status?: number | null;
   key_traits?: string[] | null;
+  scout_note?: string | null;
 }
 
 export async function exportPlayerPdf(
@@ -479,8 +473,8 @@ export async function exportPlayerPdf(
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
 
-  // ── COVER PAGE ──
-  const teamPos = [cleanVal(player.current_team), cleanVal(player.primary_position)].filter(Boolean).join(' · ');
+  const posLocalized = localizePosition(player.primary_position, locale);
+  const teamPos = [cleanVal(player.current_team), posLocalized].filter(Boolean).join(' · ');
   await renderCoverPage(doc, h, fontLoaded,
     cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
@@ -493,7 +487,7 @@ export async function exportPlayerPdf(
   addPageHeader(doc, fontLoaded, h.pw, h.margin);
   h.setY(30);
 
-  // Green header bar with player name
+  // Green header bar
   doc.setFillColor(...GREEN);
   doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
   doc.setFontSize(18);
@@ -516,6 +510,10 @@ export async function exportPlayerPdf(
     for (const tl of traitLabels) {
       const tw = doc.getTextWidth(tl);
       const bw = tw + badgePad * 2;
+      if (bx + bw > h.pw - h.margin) {
+        h.addY(12);
+        bx = h.margin;
+      }
       doc.setFillColor(...GREEN);
       doc.roundedRect(bx, h.getY() - 5, bw, badgeH, 2, 2, 'F');
       doc.setTextColor(255, 255, 255);
@@ -536,36 +534,33 @@ export async function exportPlayerPdf(
   const attrs: { label: string; value: string }[] = [];
   if (player.current_team) attrs.push({ label: labels.currentTeam, value: cleanVal(player.current_team) });
   if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
-  if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: cleanVal(player.primary_position) });
-  if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: cleanVal(player.secondary_position) });
+  if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: localizePosition(player.primary_position, locale) });
+  if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: cleanVal(player.preferred_foot) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
 
-  const colW = (h.cw - 10) / 2; // two columns with gap
-  const labelColW = 52;
-  const rowH = 16; // ~45px at 72dpi ≈ 16mm
+  const colW = (h.cw - 10) / 2;
+  const labelColW = 55;
+  const rowH = 16;
 
-  // Render in 2-column grid
   for (let i = 0; i < attrs.length; i += 2) {
     h.checkPage(rowH + 4);
     const rowIdx = Math.floor(i / 2);
 
-    // Alternating row background
     if (rowIdx % 2 === 0) {
       doc.setFillColor(245, 245, 245);
       doc.rect(h.margin, h.getY() - 5, h.cw, rowH, 'F');
     }
 
-    // Left column
     doc.setFontSize(9);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
     doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
-    doc.text(attrs[i].value, h.margin + labelColW, h.getY());
+    const leftVal = doc.splitTextToSize(attrs[i].value, colW - labelColW - 8);
+    doc.text(leftVal, h.margin + labelColW, h.getY());
 
-    // Right column
     if (i + 1 < attrs.length) {
       const rightX = h.margin + colW + 10;
       h.setFont('bold');
@@ -573,7 +568,8 @@ export async function exportPlayerPdf(
       doc.text(attrs[i + 1].label + ':', rightX, h.getY());
       h.setFont('normal');
       doc.setTextColor(...NEAR_BLACK);
-      doc.text(attrs[i + 1].value, rightX + labelColW, h.getY());
+      const rightVal = doc.splitTextToSize(attrs[i + 1].value, colW - labelColW - 8);
+      doc.text(rightVal, rightX + labelColW, h.getY());
     }
 
     h.addY(rowH);
@@ -581,9 +577,12 @@ export async function exportPlayerPdf(
 
   // ── Skill Ratings (Progress Bars) ──
   const ratings = [
-    { label: labels.technical || 'Technical', value: player.technical_rating || 0 },
-    { label: labels.tactical || 'Tactical', value: player.tactical_rating || 0 },
-    { label: labels.physical || 'Physical', value: player.physical_rating || 0 },
+    { label: labels.technical || 'Teknik', value: player.technical_rating || 0 },
+    { label: labels.tactical || 'Taktiksel', value: player.tactical_rating || 0 },
+    { label: labels.physical || 'Fiziksel', value: player.physical_rating || 0 },
+    { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
+    { label: labels.tacticalIQ || 'Oyun Bilgisi', value: player.tactical_iq_rating || 0 },
+    { label: labels.contractStatus || 'Sözleşme Durumu', value: player.contract_status || 0 },
   ];
   const hasRatings = ratings.some(r => r.value > 0);
 
@@ -601,28 +600,26 @@ export async function exportPlayerPdf(
     doc.text(labels.skillRatings || (locale === 'tr' ? 'Yetenek Puanları' : 'Skill Ratings'), h.margin, h.getY());
     h.addY(12);
 
-    const barW = h.cw - labelColW - 20;
+    const barW = h.cw - labelColW - 30;
     const barH = 5;
 
     for (const rating of ratings) {
+      if (rating.value === 0) continue;
       h.checkPage(18);
       doc.setFontSize(10);
       h.setFont('bold');
       doc.setTextColor(...LIGHT_GRAY);
       doc.text(rating.label + ':', h.margin + 4, h.getY());
 
-      // Value text
       h.setFont('bold');
       doc.setTextColor(...NEAR_BLACK);
       doc.text(`${rating.value}/5`, h.pw - h.margin - 10, h.getY());
 
-      // Background bar
-      const barX = h.margin + labelColW;
+      const barX = h.margin + labelColW + 10;
       const barY = h.getY() - 3.5;
       doc.setFillColor(230, 230, 230);
       doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, 'F');
 
-      // Filled bar
       const fillW = (rating.value / 5) * barW;
       if (fillW > 0) {
         doc.setFillColor(...GREEN);
@@ -630,6 +627,32 @@ export async function exportPlayerPdf(
       }
 
       h.addY(14);
+    }
+  }
+
+  // ── Scout Note ──
+  if (player.scout_note) {
+    h.addY(8);
+    h.checkPage(30);
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...NEAR_BLACK);
+    doc.text(labels.scoutNote || (locale === 'tr' ? 'Scout Final Görüşü' : 'Scout Final Opinion'), h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(10);
+    h.setFont('normal');
+    doc.setTextColor(...DARK_GRAY);
+    const noteLines: string[] = doc.splitTextToSize(cleanVal(player.scout_note), h.cw - 8);
+    for (const line of noteLines) {
+      h.checkPage(8);
+      doc.text(line, h.margin + 4, h.getY());
+      h.addY(6);
     }
   }
 
@@ -652,7 +675,7 @@ export async function exportPlayerPdf(
       }
       displayLink += '…';
     }
-    doc.text(displayLink, h.margin + labelColW, h.getY());
+    doc.text(displayLink, h.margin + labelColW + 10, h.getY());
     h.addY(rowH);
   }
 
@@ -767,7 +790,6 @@ export async function exportSquadPdf(
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
 
-  // ── COVER ──
   await renderCoverPage(doc, h, fontLoaded,
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
@@ -775,19 +797,16 @@ export async function exportSquadPdf(
     analystName,
   );
 
-  // ── PITCH PAGE ──
   doc.addPage();
   addPageHeader(doc, fontLoaded, h.pw, h.margin);
   h.setY(25);
 
-  // Title
   doc.setFontSize(18);
   h.setFont('bold');
   doc.setTextColor(...NEAR_BLACK);
   doc.text(`${squad.name} — ${squad.formation}`, h.margin, h.getY());
   h.addY(12);
 
-  // Draw pitch
   const pitchW = h.cw - 10;
   const pitchH = pitchW * (105 / 68);
   const maxPitchH = h.ph - h.getY() - 30;
@@ -796,37 +815,31 @@ export async function exportSquadPdf(
   const pX = h.margin + (h.cw - finalPitchW) / 2;
   const pY = h.getY();
 
-  // Pitch background
   doc.setFillColor(34, 120, 34);
   doc.roundedRect(pX, pY, finalPitchW, finalPitchH, 3, 3, 'F');
 
-  // Pitch lines
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.5);
   doc.rect(pX + 2, pY + 2, finalPitchW - 4, finalPitchH - 4, 'S');
   doc.line(pX + 2, pY + finalPitchH / 2, pX + finalPitchW - 2, pY + finalPitchH / 2);
   doc.circle(pX + finalPitchW / 2, pY + finalPitchH / 2, finalPitchW * 0.12, 'S');
 
-  // Penalty areas
   const penW = finalPitchW * 0.44;
   const penH = finalPitchH * 0.17;
   doc.rect(pX + (finalPitchW - penW) / 2, pY + 2, penW, penH, 'S');
   doc.rect(pX + (finalPitchW - penW) / 2, pY + finalPitchH - penH - 2, penW, penH, 'S');
 
-  // Player positions
   const positions = FORMATION_POSITIONS[squad.formation] || FORMATION_POSITIONS['4-3-3'];
   for (let idx = 0; idx < positions.length; idx++) {
     const pos = positions[idx];
     const cx = pX + (pos.x / 100) * finalPitchW;
     const cy = pY + (pos.y / 100) * finalPitchH;
 
-    // Circle
     doc.setFillColor(255, 255, 255);
     doc.circle(cx, cy, 5, 'F');
     doc.setFillColor(...GREEN);
     doc.circle(cx, cy, 4.5, 'F');
 
-    // Position label
     doc.setFontSize(7);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
@@ -834,7 +847,6 @@ export async function exportSquadPdf(
     const lblW = doc.getTextWidth(lbl);
     doc.text(lbl, cx - lblW / 2, cy + 2.5);
 
-    // Player name below
     const name = squad.playerNames[idx];
     if (name) {
       doc.setFontSize(7);
