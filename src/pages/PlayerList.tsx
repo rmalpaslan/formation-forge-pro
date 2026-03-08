@@ -14,7 +14,7 @@ import { exportPlayerPdf } from '@/lib/pdfExport';
 
 const PlayerList = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [players, setPlayers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -48,7 +48,7 @@ const PlayerList = () => {
       secondaryPosition: t('secondaryPosition'),
       preferredFoot: t('preferredFoot'),
       birthDate: t('birthDate'),
-    });
+    }, lang);
     toast.success(t('exportPdf'));
   };
 

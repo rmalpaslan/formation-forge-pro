@@ -13,7 +13,7 @@ import { exportAnalysisPdf } from '@/lib/pdfExport';
 
 const AnalysisList = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -48,6 +48,7 @@ const AnalysisList = () => {
       analysis, tabsData || [], tabLabels,
       t('target'), t('formation'), t('generalNotes'), t('pros'), t('cons'),
       { defense: t('defense').toUpperCase(), attack: t('attack').toUpperCase(), setPieces: t('setPieces').toUpperCase() },
+      lang,
     );
   };
 
