@@ -174,7 +174,7 @@ const PlayerList = () => {
             <DialogTitle className="text-xl font-bold">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
-            <div style={{ padding: '20px' }}>
+            <div className="rounded-lg bg-background border border-border" style={{ padding: '24px' }}>
               <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
               <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
               <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
@@ -182,8 +182,8 @@ const PlayerList = () => {
               <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
               <InfoRow label={t('birthDate')} value={viewPlayer.birth_date || '—'} />
               {viewPlayer.transfermarkt_link && (
-                <div>
-                  <span className="text-sm text-muted-foreground">Transfermarkt: </span>
+                <div className="flex items-baseline py-2.5">
+                  <span className="text-sm text-muted-foreground font-bold shrink-0" style={{ width: '140px', whiteSpace: 'nowrap' }}>Transfermarkt</span>
                   <a href={viewPlayer.transfermarkt_link} target="_blank" rel="noopener noreferrer" className="text-primary text-sm inline-flex items-center gap-1 hover:underline">
                     {t('viewDetails')} <ExternalLink className="h-3 w-3" />
                   </a>
