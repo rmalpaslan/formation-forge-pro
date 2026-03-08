@@ -491,7 +491,7 @@ export async function exportPlayerPdf(
     if (i + 1 < attrs.length) {
       h.setFont('bold');
       doc.setTextColor(...LIGHT_GRAY);
-      doc.text(attrs[i + 1].label + ':', h.margin + colWidth + 4, h.getY());
+      doc.text(attrs[i + 1].label + ': ', h.margin + colWidth + 4, h.getY());
       h.setFont('normal');
       doc.setTextColor(...NEAR_BLACK);
       doc.text(attrs[i + 1].value, h.margin + colWidth + 4, h.getY() + 5);
