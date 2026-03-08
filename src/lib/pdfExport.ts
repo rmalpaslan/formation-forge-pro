@@ -672,7 +672,7 @@ export async function exportSquadPdf(
   const h = createHelpers(doc, fontLoaded);
 
   // ── COVER ──
-  renderCoverPage(doc, h, fontLoaded,
+  await renderCoverPage(doc, h, fontLoaded,
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
     [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${SPC}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
