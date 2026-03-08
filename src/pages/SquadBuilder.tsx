@@ -170,7 +170,17 @@ const SquadBuilder = () => {
   const openPlayerModal = (idx: number) => { setSelectedIdx(idx); setModalOpen(true); };
 
   const assignPlayer = (player: any) => {
-    if (selectedIdx !== null) setAssignments((prev) => ({ ...prev, [selectedIdx]: { id: player.id, name: player.name } }));
+    if (selectedIdx !== null) {
+      setAssignments((prev) => {
+        // Remove player from any existing position (duplicate prevention)
+        const updated = { ...prev };
+        for (const [key, val] of Object.entries(updated)) {
+          if (val.id === player.id) delete updated[Number(key)];
+        }
+        updated[selectedIdx] = { id: player.id, name: player.name };
+        return updated;
+      });
+    }
     setModalOpen(false);
   };
 

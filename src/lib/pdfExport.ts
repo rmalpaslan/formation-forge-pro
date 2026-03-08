@@ -356,6 +356,17 @@ export async function exportAnalysisPdf(
         doc.setLineWidth(0.3);
         doc.rect(imgX - 1, h.getY() - 1, imgWidth + 2, imgHeight + 2, 'S');
         doc.addImage(image.dataUrl, image.format, imgX, h.getY(), imgWidth, imgHeight, undefined, 'FAST');
+        // Tactical Snapshot label
+        const snapLabel = 'Tactical Snapshot';
+        doc.setFontSize(7);
+        h.setFont('normal');
+        doc.setFillColor(0, 0, 0);
+        doc.setGState(new (doc as any).GState({ opacity: 0.5 }));
+        doc.roundedRect(imgX + 2, h.getY() + imgHeight - 8, doc.getTextWidth(snapLabel) + 6, 7, 1, 1, 'F');
+        doc.setGState(new (doc as any).GState({ opacity: 1 }));
+        doc.setTextColor(255, 255, 255);
+        doc.text(snapLabel, imgX + 5, h.getY() + imgHeight - 3);
+        doc.setTextColor(...DARK_GRAY);
         h.addY(imgHeight + 14);
       } catch { /* skip broken */ }
     }

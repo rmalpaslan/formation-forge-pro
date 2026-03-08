@@ -189,9 +189,9 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">{value || '—'}</span>
+    <div className="grid grid-cols-2 gap-2 py-1.5 border-b border-border/50 last:border-0">
+      <span className="text-sm text-muted-foreground font-medium">{label}</span>
+      <span className="text-sm font-medium text-right">{value || '—'}</span>
     </div>
   );
 }
