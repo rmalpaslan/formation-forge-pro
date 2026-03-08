@@ -292,7 +292,7 @@ export async function exportAnalysisPdf(
   // ── COVER PAGE ──
   const targetName = analysis.target_team === 'home' ? analysis.home_team : analysis.away_team;
   const dateFormatted = formatDate(analysis.match_date, locale);
-  renderCoverPage(doc, h, fontLoaded,
+  await renderCoverPage(doc, h, fontLoaded,
     `${analysis.home_team} vs ${analysis.away_team}`,
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
     [`${tTarget}:${SPC}${targetName}`, dateFormatted],
