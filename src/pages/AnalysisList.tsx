@@ -44,7 +44,11 @@ const AnalysisList = () => {
       aut_baslangici: t('autBaslangici'), geriden_oyun_kurma: t('geridenOyunKurma'),
       corner: t('corner'), free_kick: t('freeKick'), throw_in: t('throwIn'),
     };
-    await exportAnalysisPdf(analysis, tabsData || [], tabLabels, t('target'), t('formation'), t('generalNotes'), t('pros'), t('cons'));
+    await exportAnalysisPdf(
+      analysis, tabsData || [], tabLabels,
+      t('target'), t('formation'), t('generalNotes'), t('pros'), t('cons'),
+      { defense: t('defense').toUpperCase(), attack: t('attack').toUpperCase(), setPieces: t('setPieces').toUpperCase() },
+    );
   };
 
   // Derive filter options from data
