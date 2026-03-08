@@ -13,18 +13,6 @@ import { Save, Trash2, Pencil, Plus, FileDown, CheckCircle } from 'lucide-react'
 import { exportSquadPdf } from '@/lib/pdfExport';
 
 const formationPositions: Record<string, { label: string; x: number; y: number }[]> = {
-  '4-3-3': [
-    { label: 'GK', x: 50, y: 90 },
-    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
-    { label: 'CM', x: 30, y: 50 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 50 },
-    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
-  ],
-  '4-4-2': [
-    { label: 'GK', x: 50, y: 90 },
-    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
-    { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
-    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
-  ],
   '3-5-2': [
     { label: 'GK', x: 50, y: 90 },
     { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
@@ -37,6 +25,18 @@ const formationPositions: Record<string, { label: string; x: number; y: number }
     { label: 'CDM', x: 37, y: 55 }, { label: 'CDM', x: 63, y: 55 },
     { label: 'LW', x: 20, y: 38 }, { label: 'CAM', x: 50, y: 35 }, { label: 'RW', x: 80, y: 38 },
     { label: 'ST', x: 50, y: 18 },
+  ],
+  '4-3-3': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 50 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 50 },
+    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
+  ],
+  '4-4-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
   ],
 };
 
