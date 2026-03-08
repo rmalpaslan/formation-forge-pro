@@ -116,6 +116,21 @@ const translations = {
     right: 'Sağ',
     left: 'Sol',
     bothFeet: 'Her İkisi',
+    // New keys
+    draftSave: 'Ara Kaydet',
+    finishAnalysis: 'Analizi Bitir',
+    finishPlayer: 'Profili Bitir',
+    theme: 'Tema',
+    themeDesc: 'Uygulama temasını seçin',
+    lightMode: 'Açık Mod',
+    darkMode: 'Koyu Mod',
+    allLeagues: 'Tüm Ligler',
+    allTeams: 'Tüm Takımlar',
+    allYears: 'Tüm Yıllar',
+    year: 'Yıl',
+    team: 'Takım',
+    searchLeague: 'Lig ara...',
+    draftSaved: 'Taslak kaydedildi!',
   },
   en: {
     dashboard: 'Dashboard',
@@ -230,6 +245,21 @@ const translations = {
     right: 'Right',
     left: 'Left',
     bothFeet: 'Both',
+    // New keys
+    draftSave: 'Draft Save',
+    finishAnalysis: 'Finish Analysis',
+    finishPlayer: 'Finish Profile',
+    theme: 'Theme',
+    themeDesc: 'Select application theme',
+    lightMode: 'Light Mode',
+    darkMode: 'Dark Mode',
+    allLeagues: 'All Leagues',
+    allTeams: 'All Teams',
+    allYears: 'All Years',
+    year: 'Year',
+    team: 'Team',
+    searchLeague: 'Search league...',
+    draftSaved: 'Draft saved!',
   },
 } as const;
 
@@ -243,9 +273,7 @@ interface LanguageContextType {
 
 const defaultLanguageContext: LanguageContextType = {
   lang: 'tr',
-  setLang: () => {
-    // noop fallback to avoid runtime crash outside provider boundaries
-  },
+  setLang: () => {},
   t: (key) => translations.tr[key] || key,
 };
 

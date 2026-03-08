@@ -1,9 +1,11 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from 'next-themes';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const SettingsPage = () => {
   const { t, lang, setLang } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
@@ -21,6 +23,23 @@ const SettingsPage = () => {
             <SelectContent>
               <SelectItem value="tr">{t('turkish')}</SelectItem>
               <SelectItem value="en">{t('english')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('theme')}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t('themeDesc')}</p>
+        </CardHeader>
+        <CardContent>
+          <Select value={theme || 'dark'} onValueChange={setTheme}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">{t('lightMode')}</SelectItem>
+              <SelectItem value="dark">{t('darkMode')}</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>
