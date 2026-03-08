@@ -140,7 +140,7 @@ const PlayerNew = () => {
             </Button>
             <Button className="flex-1" onClick={handleFinish} disabled={loading}>
               <CheckCircle className="mr-2 h-4 w-4" />
-              {isEdit ? t('updatePlayer') : t('finishPlayer')}
+              {t('finishPlayer')}
             </Button>
           </div>
         </CardContent>

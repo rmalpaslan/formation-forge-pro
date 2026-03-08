@@ -46,6 +46,23 @@ interface AnalysisData {
   target_team: string;
 }
 
+async function setupFonts(doc: jsPDF): Promise<boolean> {
+  try {
+    const [regularB64, boldB64] = await Promise.all([
+      loadFontBase64(NOTO_REGULAR),
+      loadFontBase64(NOTO_BOLD),
+    ]);
+    doc.addFileToVFS('NotoSans-Regular.ttf', regularB64);
+    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+    doc.addFileToVFS('NotoSans-Bold.ttf', boldB64);
+    doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+    doc.setFont('NotoSans', 'normal');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function exportAnalysisPdf(
   analysis: AnalysisData,
   tabsData: TabData[],
@@ -57,33 +74,18 @@ export async function exportAnalysisPdf(
   tCons: string,
 ) {
   const doc = new jsPDF();
-  let fontLoaded = false;
-
-  try {
-    const [regularB64, boldB64] = await Promise.all([
-      loadFontBase64(NOTO_REGULAR),
-      loadFontBase64(NOTO_BOLD),
-    ]);
-    doc.addFileToVFS('NotoSans-Regular.ttf', regularB64);
-    doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
-    doc.addFileToVFS('NotoSans-Bold.ttf', boldB64);
-    doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
-    doc.setFont('NotoSans', 'normal');
-    fontLoaded = true;
-  } catch {
-    // fallback to helvetica
-  }
-
-  const setFont = (style: 'normal' | 'bold') => {
-    if (fontLoaded) doc.setFont('NotoSans', style);
-    else doc.setFont('helvetica', style);
-  };
+  const fontLoaded = await setupFonts(doc);
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
   const contentWidth = pageWidth - margin * 2;
   let y = 20;
+
+  const setFont = (style: 'normal' | 'bold') => {
+    if (fontLoaded) doc.setFont('NotoSans', style);
+    else doc.setFont('helvetica', style);
+  };
 
   const checkPage = (needed: number) => {
     if (y + needed > pageHeight - 20) {
@@ -126,7 +128,8 @@ export async function exportAnalysisPdf(
       y += 7;
     }
 
-    const addBulletSection = async (title: string, items: string[] | null) => {
+    // Render text sections FIRST, then images
+    const renderBullets = (title: string, items: string[] | null) => {
       const cleaned = (items || []).filter(s => s.trim() !== '');
       if (cleaned.length === 0) return;
 
@@ -147,12 +150,11 @@ export async function exportAnalysisPdf(
       y += 3;
     };
 
-    // Render text sections
-    await addBulletSection(tGeneralNotes, tab.general_notes);
-    await addBulletSection(tPros, tab.pros);
-    await addBulletSection(tCons, tab.cons);
+    renderBullets(tGeneralNotes, tab.general_notes);
+    renderBullets(tPros, tab.pros);
+    renderBullets(tCons, tab.cons);
 
-    // Render images at the end of the tab section
+    // Render images AFTER all text for this section
     const allImages = tab.images || [];
     if (allImages.length > 0) {
       for (const imgUrl of allImages) {
@@ -179,4 +181,65 @@ export async function exportAnalysisPdf(
   }
 
   doc.save(`${analysis.home_team}_vs_${analysis.away_team}.pdf`);
+}
+
+// Player PDF export
+interface PlayerData {
+  name: string;
+  current_team?: string | null;
+  league?: string | null;
+  birth_date?: string | null;
+  preferred_foot?: string | null;
+  primary_position?: string | null;
+  secondary_position?: string | null;
+  transfermarkt_link?: string | null;
+}
+
+export async function exportPlayerPdf(
+  player: PlayerData,
+  labels: Record<string, string>,
+) {
+  const doc = new jsPDF();
+  const fontLoaded = await setupFonts(doc);
+
+  const margin = 15;
+  let y = 25;
+
+  const setFont = (style: 'normal' | 'bold') => {
+    if (fontLoaded) doc.setFont('NotoSans', style);
+    else doc.setFont('helvetica', style);
+  };
+
+  // Title
+  doc.setFontSize(20);
+  setFont('bold');
+  doc.text(player.name, margin, y);
+  y += 12;
+
+  doc.setDrawColor(160);
+  doc.setLineWidth(0.5);
+  doc.line(margin, y, doc.internal.pageSize.getWidth() - margin, y);
+  y += 10;
+
+  const addRow = (label: string, value: string | null | undefined) => {
+    if (!value) return;
+    doc.setFontSize(10);
+    setFont('bold');
+    doc.text(`${label}:`, margin, y);
+    setFont('normal');
+    doc.text(value, margin + 55, y);
+    y += 7;
+  };
+
+  addRow(labels.currentTeam, player.current_team);
+  addRow(labels.league, player.league);
+  addRow(labels.primaryPosition, player.primary_position);
+  addRow(labels.secondaryPosition, player.secondary_position);
+  addRow(labels.preferredFoot, player.preferred_foot);
+  addRow(labels.birthDate, player.birth_date);
+  if (player.transfermarkt_link) {
+    addRow('Transfermarkt', player.transfermarkt_link);
+  }
+
+  doc.save(`${player.name}.pdf`);
 }

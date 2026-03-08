@@ -116,10 +116,9 @@ const translations = {
     right: 'Sağ',
     left: 'Sol',
     bothFeet: 'Her İkisi',
-    // New keys
     draftSave: 'Ara Kaydet',
-    finishAnalysis: 'Analizi Bitir',
-    finishPlayer: 'Profili Bitir',
+    finishAnalysis: 'Kaydet ve Kapat',
+    finishPlayer: 'Kaydet ve Kapat',
     theme: 'Tema',
     themeDesc: 'Uygulama temasını seçin',
     lightMode: 'Açık Mod',
@@ -131,6 +130,7 @@ const translations = {
     team: 'Takım',
     searchLeague: 'Lig ara...',
     draftSaved: 'Taslak kaydedildi!',
+    exportPlayerPdf: 'PDF Olarak Dışa Aktar',
   },
   en: {
     dashboard: 'Dashboard',
@@ -245,10 +245,9 @@ const translations = {
     right: 'Right',
     left: 'Left',
     bothFeet: 'Both',
-    // New keys
     draftSave: 'Draft Save',
-    finishAnalysis: 'Finish Analysis',
-    finishPlayer: 'Finish Profile',
+    finishAnalysis: 'Save & Close',
+    finishPlayer: 'Save & Close',
     theme: 'Theme',
     themeDesc: 'Select application theme',
     lightMode: 'Light Mode',
@@ -260,6 +259,7 @@ const translations = {
     team: 'Team',
     searchLeague: 'Search league...',
     draftSaved: 'Draft saved!',
+    exportPlayerPdf: 'Export to PDF',
   },
 } as const;
 
