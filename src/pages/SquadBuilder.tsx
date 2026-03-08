@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,18 +13,31 @@ import { Save, Trash2, Pencil, Plus, FileDown, CheckCircle } from 'lucide-react'
 import { exportSquadPdf } from '@/lib/pdfExport';
 
 const formationPositions: Record<string, { label: string; x: number; y: number }[]> = {
+  '3-4-3': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'LM', x: 15, y: 50 }, { label: 'CM', x: 37, y: 52 }, { label: 'CM', x: 63, y: 52 }, { label: 'RM', x: 85, y: 50 },
+    { label: 'LW', x: 20, y: 25 }, { label: 'ST', x: 50, y: 18 }, { label: 'RW', x: 80, y: 25 },
+  ],
   '3-5-2': [
     { label: 'GK', x: 50, y: 90 },
     { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
     { label: 'LWB', x: 10, y: 50 }, { label: 'CM', x: 35, y: 52 }, { label: 'CDM', x: 50, y: 56 }, { label: 'CM', x: 65, y: 52 }, { label: 'RWB', x: 90, y: 50 },
     { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
   ],
-  '4-2-3-1': [
+  '3-4-1-2': [
     { label: 'GK', x: 50, y: 90 },
-    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
-    { label: 'CDM', x: 37, y: 55 }, { label: 'CDM', x: 63, y: 55 },
-    { label: 'LW', x: 20, y: 38 }, { label: 'CAM', x: 50, y: 35 }, { label: 'RW', x: 80, y: 38 },
-    { label: 'ST', x: 50, y: 18 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'LM', x: 15, y: 52 }, { label: 'CM', x: 37, y: 52 }, { label: 'CM', x: 63, y: 52 }, { label: 'RM', x: 85, y: 52 },
+    { label: 'CAM', x: 50, y: 35 },
+    { label: 'ST', x: 37, y: 20 }, { label: 'ST', x: 63, y: 20 },
+  ],
+  '3-1-4-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'CB', x: 25, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 75, y: 72 },
+    { label: 'CDM', x: 50, y: 58 },
+    { label: 'LM', x: 15, y: 45 }, { label: 'CM', x: 37, y: 45 }, { label: 'CM', x: 63, y: 45 }, { label: 'RM', x: 85, y: 45 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
   ],
   '4-3-3': [
     { label: 'GK', x: 50, y: 90 },
@@ -38,6 +51,53 @@ const formationPositions: Record<string, { label: string; x: number; y: number }
     { label: 'LM', x: 15, y: 48 }, { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 }, { label: 'RM', x: 85, y: 48 },
     { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
   ],
+  '4-2-3-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CDM', x: 37, y: 55 }, { label: 'CDM', x: 63, y: 55 },
+    { label: 'LW', x: 20, y: 38 }, { label: 'CAM', x: 50, y: 35 }, { label: 'RW', x: 80, y: 38 },
+    { label: 'ST', x: 50, y: 18 },
+  ],
+  '4-1-4-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CDM', x: 50, y: 56 },
+    { label: 'LM', x: 15, y: 40 }, { label: 'CM', x: 37, y: 42 }, { label: 'CM', x: 63, y: 42 }, { label: 'RM', x: 85, y: 40 },
+    { label: 'ST', x: 50, y: 18 },
+  ],
+  '4-3-1-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 52 }, { label: 'CM', x: 50, y: 50 }, { label: 'CM', x: 70, y: 52 },
+    { label: 'CAM', x: 50, y: 35 },
+    { label: 'ST', x: 37, y: 20 }, { label: 'ST', x: 63, y: 20 },
+  ],
+  '4-3-2-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LB', x: 15, y: 70 }, { label: 'CB', x: 37, y: 72 }, { label: 'CB', x: 63, y: 72 }, { label: 'RB', x: 85, y: 70 },
+    { label: 'CM', x: 30, y: 52 }, { label: 'CM', x: 50, y: 50 }, { label: 'CM', x: 70, y: 52 },
+    { label: 'LW', x: 30, y: 32 }, { label: 'RW', x: 70, y: 32 },
+    { label: 'ST', x: 50, y: 18 },
+  ],
+  '5-3-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LWB', x: 10, y: 68 }, { label: 'CB', x: 30, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 70, y: 72 }, { label: 'RWB', x: 90, y: 68 },
+    { label: 'CM', x: 30, y: 48 }, { label: 'CM', x: 50, y: 45 }, { label: 'CM', x: 70, y: 48 },
+    { label: 'ST', x: 37, y: 22 }, { label: 'ST', x: 63, y: 22 },
+  ],
+  '5-4-1': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LWB', x: 10, y: 68 }, { label: 'CB', x: 30, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 70, y: 72 }, { label: 'RWB', x: 90, y: 68 },
+    { label: 'LM', x: 15, y: 45 }, { label: 'CM', x: 37, y: 47 }, { label: 'CM', x: 63, y: 47 }, { label: 'RM', x: 85, y: 45 },
+    { label: 'ST', x: 50, y: 20 },
+  ],
+  '5-2-1-2': [
+    { label: 'GK', x: 50, y: 90 },
+    { label: 'LWB', x: 10, y: 68 }, { label: 'CB', x: 30, y: 72 }, { label: 'CB', x: 50, y: 75 }, { label: 'CB', x: 70, y: 72 }, { label: 'RWB', x: 90, y: 68 },
+    { label: 'CM', x: 37, y: 50 }, { label: 'CM', x: 63, y: 50 },
+    { label: 'CAM', x: 50, y: 35 },
+    { label: 'ST', x: 37, y: 20 }, { label: 'ST', x: 63, y: 20 },
+  ],
 };
 
 interface Squad {
@@ -46,6 +106,17 @@ interface Squad {
   formation: string;
   positions: Record<string, string> | null;
   created_at: string;
+  updated_at: string;
+}
+
+function formatDateDDMMYYYY(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}.${mm}.${d.getFullYear()}`;
+  } catch { return dateStr; }
 }
 
 const SquadBuilder = () => {
@@ -62,6 +133,11 @@ const SquadBuilder = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewSquad, setViewSquad] = useState<Squad | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+
+  // Drag state
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [customOffsets, setCustomOffsets] = useState<Record<number, { x: number; y: number }>>({});
+  const pitchRef = useRef<HTMLDivElement>(null);
 
   const [filterMode, setFilterMode] = useState<'mixed' | 'country' | 'league'>('mixed');
   const [filterCountry, setFilterCountry] = useState('TR');
@@ -98,21 +174,47 @@ const SquadBuilder = () => {
     setModalOpen(false);
   };
 
+  // Drag handlers
+  const handlePointerDown = useCallback((idx: number, e: React.PointerEvent) => {
+    e.preventDefault();
+    setDragIdx(idx);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (dragIdx === null || !pitchRef.current) return;
+    const rect = pitchRef.current.getBoundingClientRect();
+    const xPct = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
+    const yPct = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
+    setCustomOffsets(prev => ({ ...prev, [dragIdx]: { x: xPct, y: yPct } }));
+  }, [dragIdx]);
+
+  const handlePointerUp = useCallback(() => {
+    setDragIdx(null);
+  }, []);
+
   const doSave = async (): Promise<boolean> => {
     if (!squadName) { toast.error(t('enterSquadName')); return false; }
     setSaving(true);
     const positionsData: Record<string, string> = {};
     Object.entries(assignments).forEach(([idx, p]) => { positionsData[idx] = p.id; });
 
+    // Save custom offsets as part of positions JSON
+    const saveData = {
+      name: squadName,
+      formation,
+      positions: { ...positionsData, _offsets: customOffsets } as any,
+    };
+
     if (editingId) {
-      const { error } = await supabase.from('squads').update({ name: squadName, formation, positions: positionsData }).eq('id', editingId);
+      const { error } = await supabase.from('squads').update(saveData).eq('id', editingId);
       setSaving(false);
       if (error) { toast.error(error.message); return false; }
       toast.success(t('squadUpdated'));
       loadSquads();
       return true;
     } else {
-      const { error } = await supabase.from('squads').insert({ name: squadName, formation, positions: positionsData, user_id: user!.id });
+      const { error } = await supabase.from('squads').insert({ ...saveData, user_id: user!.id });
       setSaving(false);
       if (error) { toast.error(error.message); return false; }
       toast.success(t('squadSaved'));
@@ -132,6 +234,7 @@ const SquadBuilder = () => {
       setEditingId(null);
       setSquadName('');
       setAssignments({});
+      setCustomOffsets({});
     }
   };
 
@@ -140,13 +243,23 @@ const SquadBuilder = () => {
     setSquadName(squad.name);
     setFormation(squad.formation);
     const newAssignments: Record<number, { id: string; name: string }> = {};
+    const newOffsets: Record<number, { x: number; y: number }> = {};
     if (squad.positions) {
+      const pos = squad.positions as any;
+      // Restore offsets
+      if (pos._offsets) {
+        for (const [k, v] of Object.entries(pos._offsets)) {
+          newOffsets[Number(k)] = v as { x: number; y: number };
+        }
+      }
       for (const [idx, playerId] of Object.entries(squad.positions)) {
+        if (idx === '_offsets') continue;
         const player = players.find((p) => p.id === playerId);
         if (player) newAssignments[Number(idx)] = { id: player.id, name: player.name };
       }
     }
     setAssignments(newAssignments);
+    setCustomOffsets(newOffsets);
     setShowEditor(true);
     setViewSquad(null);
   };
@@ -155,7 +268,7 @@ const SquadBuilder = () => {
     const { error } = await supabase.from('squads').delete().eq('id', squadId);
     if (error) toast.error(error.message);
     else { toast.success(t('squadDeleted')); loadSquads(); }
-    if (editingId === squadId) { setEditingId(null); setSquadName(''); setAssignments({}); setShowEditor(false); }
+    if (editingId === squadId) { setEditingId(null); setSquadName(''); setAssignments({}); setCustomOffsets({}); setShowEditor(false); }
     if (viewSquad?.id === squadId) setViewSquad(null);
   };
 
@@ -164,6 +277,7 @@ const SquadBuilder = () => {
     setSquadName('');
     setFormation('4-3-3');
     setAssignments({});
+    setCustomOffsets({});
     setShowEditor(true);
   };
 
@@ -171,6 +285,7 @@ const SquadBuilder = () => {
     const playerNames: Record<number, string> = {};
     if (squad.positions) {
       for (const [idx, playerId] of Object.entries(squad.positions)) {
+        if (idx === '_offsets') continue;
         const player = players.find((p) => p.id === playerId);
         if (player) playerNames[Number(idx)] = player.name;
       }
@@ -183,6 +298,7 @@ const SquadBuilder = () => {
     const result: Record<number, string> = {};
     if (squad.positions) {
       for (const [idx, playerId] of Object.entries(squad.positions)) {
+        if (idx === '_offsets') continue;
         const player = players.find((p) => p.id === playerId);
         if (player) result[Number(idx)] = player.name;
       }
@@ -190,29 +306,62 @@ const SquadBuilder = () => {
     return result;
   };
 
-  const renderPitch = (formationKey: string, assignMap: Record<number, string>, interactive: boolean = false) => {
+  const getViewOffsets = (squad: Squad): Record<number, { x: number; y: number }> => {
+    if (squad.positions && (squad.positions as any)._offsets) {
+      const offsets: Record<number, { x: number; y: number }> = {};
+      for (const [k, v] of Object.entries((squad.positions as any)._offsets)) {
+        offsets[Number(k)] = v as { x: number; y: number };
+      }
+      return offsets;
+    }
+    return {};
+  };
+
+  const renderPitch = (
+    formationKey: string,
+    assignMap: Record<number, string>,
+    interactive: boolean = false,
+    offsets?: Record<number, { x: number; y: number }>,
+  ) => {
     const pos = formationPositions[formationKey] || formationPositions['4-3-3'];
+    const activeOffsets = interactive ? customOffsets : (offsets || {});
+
     return (
-      <div className="relative w-full max-w-full rounded-lg border-2 border-primary bg-primary/20 overflow-hidden" style={{ aspectRatio: '68/105', maxHeight: '80vh' }}>
+      <div
+        ref={interactive ? pitchRef : undefined}
+        className="relative w-full max-w-full rounded-lg border-2 border-primary bg-primary/20 overflow-hidden touch-none"
+        style={{ aspectRatio: '68/105', maxHeight: '70vh' }}
+        onPointerMove={interactive ? handlePointerMove : undefined}
+        onPointerUp={interactive ? handlePointerUp : undefined}
+      >
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-t-0" />
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-b-0" />
         </div>
-        {pos.map((p, idx) => (
-          interactive ? (
-            <button key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 group" style={{ left: `${p.x}%`, top: `${p.y}%` }} onClick={() => openPlayerModal(idx)}>
+        {pos.map((p, idx) => {
+          const ox = activeOffsets[idx]?.x ?? p.x;
+          const oy = activeOffsets[idx]?.y ?? p.y;
+
+          return interactive ? (
+            <button
+              key={idx}
+              className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5 group cursor-grab active:cursor-grabbing"
+              style={{ left: `${ox}%`, top: `${oy}%` }}
+              onClick={() => openPlayerModal(idx)}
+              onPointerDown={(e) => handlePointerDown(idx, e)}
+            >
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground group-hover:scale-110 transition-transform">{p.label}</div>
               <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignments[idx]?.name || '—'}</span>
             </button>
           ) : (
-            <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+            <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${ox}%`, top: `${oy}%` }}>
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{p.label}</div>
               <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignMap[idx] || '—'}</span>
             </div>
-          )
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -229,9 +378,14 @@ const SquadBuilder = () => {
           {savedSquads.map((squad) => (
             <Card key={squad.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewSquad(squad)}>
               <CardContent className="flex items-center justify-between p-4">
-                <div>
-                  <span className="font-bold">{squad.name}</span>
-                  <span className="text-muted-foreground text-sm ml-3">{squad.formation}</span>
+                <div className="flex flex-col">
+                  <div>
+                    <span className="font-bold">{squad.name}</span>
+                    <span className="text-muted-foreground text-sm ml-3">{squad.formation}</span>
+                  </div>
+                  <span className="text-muted-foreground text-xs mt-1">
+                    {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}:{'\u00A0\u00A0'}{formatDateDDMMYYYY(squad.updated_at || squad.created_at)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleExportPdf(squad); }} title={t('exportPdf')}>
@@ -255,8 +409,8 @@ const SquadBuilder = () => {
             <DialogHeader>
               <DialogTitle>{viewSquad?.name} — {viewSquad?.formation}</DialogTitle>
             </DialogHeader>
-            <div className="w-full" style={{ maxHeight: '80vh' }}>
-              {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad))}
+            <div className="w-full" style={{ maxHeight: '70vh' }}>
+              {viewSquad && renderPitch(viewSquad.formation, getViewAssignments(viewSquad), false, getViewOffsets(viewSquad))}
             </div>
           </DialogContent>
         </Dialog>
@@ -266,7 +420,7 @@ const SquadBuilder = () => {
 
   // Editor View
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => { setShowEditor(false); setEditingId(null); }}>← {t('savedSquads')}</Button>
@@ -274,7 +428,7 @@ const SquadBuilder = () => {
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <Input placeholder={t('squadName')} value={squadName} onChange={(e) => setSquadName(e.target.value)} className="w-48" />
-          <Select value={formation} onValueChange={(v) => { setFormation(v); setAssignments({}); }}>
+          <Select value={formation} onValueChange={(v) => { setFormation(v); setAssignments({}); setCustomOffsets({}); }}>
             <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
               {Object.keys(formationPositions).sort().map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
@@ -317,6 +471,10 @@ const SquadBuilder = () => {
           </Select>
         )}
       </div>
+
+      <p className="text-xs text-muted-foreground italic">
+        {lang === 'tr' ? 'Oyuncuları sürükleyerek pozisyonlarını ayarlayabilirsiniz.' : 'Drag players to fine-tune their positions.'}
+      </p>
 
       <div className="max-w-2xl mx-auto">
         {renderPitch(formation, {}, true)}
