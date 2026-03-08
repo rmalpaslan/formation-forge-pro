@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Trash2, Edit, Plus, Search, ExternalLink, FileDown } from 'lucide-react';
+import { PlayerRadarChart } from '@/components/RadarChart';
+import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
 
@@ -44,6 +45,7 @@ const PlayerList = () => {
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
   const [analystName, setAnalystName] = useState('');
+  const [darkPdf, setDarkPdf] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -68,7 +70,7 @@ const PlayerList = () => {
     load();
   };
 
-  const handleExportPdf = async (player: any, e?: React.MouseEvent) => {
+  const handleExportPdf = async (player: any, e?: React.MouseEvent, dark = false) => {
     e?.stopPropagation();
     await exportPlayerPdf(player, {
       currentTeam: t('currentTeam'),
@@ -87,7 +89,16 @@ const PlayerList = () => {
       skillRatings: t('skillRatings' as any),
       keyTraits: t('keyTraits' as any),
       scoutNote: t('scoutNote' as any),
-    }, lang, analystName || undefined);
+      playerRole: t('playerRole' as any),
+      squadFit: t('squadFit' as any),
+      squadFitPercentage: t('squadFitPercentage' as any),
+      watchVideo: t('watchVideo' as any),
+      marketValue: t('marketValue' as any),
+      resalePotential: t('resalePotential' as any),
+      injuryHistory: t('injuryHistory' as any),
+      financialInfo: t('financialInfo' as any),
+      radarChart: t('radarChart' as any),
+    }, lang, analystName || undefined, dark);
     toast.success(t('exportPdf'));
   };
 
@@ -122,6 +133,13 @@ const PlayerList = () => {
   const traitLabel = (trait: string) => {
     try { return t(trait as any); } catch { return trait; }
   };
+
+  const getRadarData = (p: any) => [
+    { label: t('technical' as any), value: p.technical_rating || 0 },
+    { label: t('tactical' as any), value: p.tactical_rating || 0 },
+    { label: t('physical' as any), value: p.physical_rating || 0 },
+    { label: t('mental' as any), value: p.mental_rating || 0 },
+  ];
 
   return (
     <div className="space-y-6">
@@ -170,6 +188,7 @@ const PlayerList = () => {
                 <div className="font-bold text-base truncate">{p.name}</div>
                 <div className="text-sm text-muted-foreground truncate">
                   {p.current_team} · {localizePosition(p.primary_position, lang)} · {localizeFoot(p.preferred_foot, lang)}
+                  {(p as any).player_role && <span className="ml-1">· {(p as any).player_role}</span>}
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
                 {(p as any).key_traits?.length > 0 && (
@@ -222,9 +241,17 @@ const PlayerList = () => {
                 <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
                 <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
                 <InfoRow label={t('primaryPosition')} value={localizePosition(viewPlayer.primary_position, lang)} />
+                {(viewPlayer as any).player_role && <InfoRow label={t('playerRole' as any)} value={(viewPlayer as any).player_role} />}
                 <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />
                 <InfoRow label={t('preferredFoot')} value={localizeFoot(viewPlayer.preferred_foot, lang)} />
                 <InfoRow label={t('birthDate')} value={viewPlayer.birth_date ? formatDateDDMMYYYY(viewPlayer.birth_date) : '—'} />
+                {(viewPlayer as any).market_value && <InfoRow label={t('marketValue' as any)} value={(viewPlayer as any).market_value} />}
+              </div>
+
+              {/* Radar Chart */}
+              <div className="mt-5">
+                <h4 className="text-sm font-bold text-foreground mb-2">{t('radarChart' as any)}</h4>
+                <PlayerRadarChart data={getRadarData(viewPlayer)} />
               </div>
 
               {/* Skill Ratings */}
@@ -237,6 +264,7 @@ const PlayerList = () => {
                   { label: t('tacticalIQ' as any), value: (viewPlayer as any).tactical_iq_rating || 0 },
                   { label: t('currentAbility' as any), value: (viewPlayer as any).current_ability || 0 },
                   { label: t('potentialAbility' as any), value: (viewPlayer as any).contract_status || 0 },
+                  { label: t('resalePotential' as any), value: (viewPlayer as any).resale_potential || 0 },
                 ];
                 const hasAny = allRatings.some(r => r.value > 0);
                 if (!hasAny) return null;
@@ -250,12 +278,54 @@ const PlayerList = () => {
                 );
               })()}
 
+              {/* Squad Fit */}
+              {((viewPlayer as any).squad_fit_percentage > 0 || (viewPlayer as any).squad_fit_notes) && (
+                <div className="mt-5 space-y-2">
+                  <h4 className="text-sm font-bold text-foreground">{t('squadFit' as any)}</h4>
+                  {(viewPlayer as any).squad_fit_percentage > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{t('squadFitPercentage' as any)}</span>
+                        <span className="font-bold text-primary">%{(viewPlayer as any).squad_fit_percentage}</span>
+                      </div>
+                      <Progress value={(viewPlayer as any).squad_fit_percentage} className="h-2" />
+                    </div>
+                  )}
+                  {(viewPlayer as any).squad_fit_notes && (
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(viewPlayer as any).squad_fit_notes}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Injury History */}
+              {(viewPlayer as any).injury_history && (
+                <div className="mt-5 space-y-2">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    {t('injuryHistory' as any)}
+                  </h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(viewPlayer as any).injury_history}</p>
+                </div>
+              )}
+
               {/* Scout Note */}
               {(viewPlayer as any).scout_note && (
                 <div className="mt-5 space-y-2">
                   <h4 className="text-sm font-bold text-foreground">{t('scoutNote' as any)}</h4>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(viewPlayer as any).scout_note}</p>
                 </div>
+              )}
+
+              {/* Video Link */}
+              {(viewPlayer as any).video_link && (
+                <a
+                  href={(viewPlayer as any).video_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <Video className="h-4 w-4" /> {t('watchVideo' as any)}
+                </a>
               )}
 
               {viewPlayer.transfermarkt_link && (
@@ -266,14 +336,17 @@ const PlayerList = () => {
                   </a>
                 </div>
               )}
-              <div className="flex gap-2 pt-5">
-                <Button variant="outline" className="flex-1" onClick={() => handleExportPdf(viewPlayer)}>
-                  <FileDown className="mr-2 h-4 w-4" />{t('exportPlayerPdf')}
+              <div className="flex gap-2 pt-5 flex-wrap">
+                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => handleExportPdf(viewPlayer, undefined, false)}>
+                  <FileDown className="mr-2 h-4 w-4" />{t('lightPdf' as any)}
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => { setViewPlayer(null); navigate(`/players/${viewPlayer.id}/edit`); }}>
+                <Button variant="outline" className="flex-1 min-w-[120px] bg-foreground text-background hover:bg-foreground/90" onClick={() => handleExportPdf(viewPlayer, undefined, true)}>
+                  <FileDown className="mr-2 h-4 w-4" />{t('darkModePdf' as any)}
+                </Button>
+                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => { setViewPlayer(null); navigate(`/players/${viewPlayer.id}/edit`); }}>
                   <Edit className="mr-2 h-4 w-4" />{t('edit')}
                 </Button>
-                <Button variant="destructive" className="flex-1" onClick={() => handleDelete(viewPlayer.id)}>
+                <Button variant="destructive" className="flex-1 min-w-[120px]" onClick={() => handleDelete(viewPlayer.id)}>
                   <Trash2 className="mr-2 h-4 w-4" />{t('delete')}
                 </Button>
               </div>
