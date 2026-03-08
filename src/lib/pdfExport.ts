@@ -160,11 +160,30 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
   }
 }
 
-function renderCoverPage(
+async function renderCoverPage(
   doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
   title: string, subtitle: string, metaLines: string[], analystName?: string,
 ) {
-  h.setY(50);
+  // ── Load and place logo at top-center ──
+  const logoImage = await loadImageAsset('/images/logo.png');
+  if (logoImage) {
+    const logoSize = 30;
+    const logoX = (h.pw - logoSize) / 2;
+    doc.addImage(logoImage.dataUrl, logoImage.format, logoX, 20, logoSize, logoSize, undefined, 'FAST');
+    h.setY(58);
+  } else {
+    h.setY(50);
+  }
+
+  // ── Analyst name at top-right ──
+  if (analystName) {
+    doc.setFontSize(9);
+    h.setFont('normal');
+    doc.setTextColor(...LIGHT_GRAY);
+    const prepLabel = `Hazırlayan:${SPC}${analystName}`;
+    doc.text(prepLabel, h.pw - h.margin, 18, { align: 'right' });
+  }
+
   doc.setFontSize(14);
   h.setFont('bold');
   doc.setTextColor(...GREEN);
@@ -212,17 +231,6 @@ function renderCoverPage(
   doc.setTextColor(...LIGHT_GRAY);
   const ftw = doc.getTextWidth(BRAND);
   doc.text(BRAND, (h.pw - ftw) / 2, h.ph - 18);
-
-  // Analyst attribution on cover page — centered below meta lines
-  if (analystName) {
-    h.addY(12);
-    doc.setFontSize(10);
-    h.setFont('normal');
-    doc.setTextColor(...LIGHT_GRAY);
-    const prepLabel = `Hazırlayan:${SPC}${analystName}`;
-    const prepW = doc.getTextWidth(prepLabel);
-    doc.text(prepLabel, (h.pw - prepW) / 2, h.getY());
-  }
 }
 
 // ── Types ──
