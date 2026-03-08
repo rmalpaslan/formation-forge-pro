@@ -22,9 +22,9 @@ export function CreatableSelector({
 
   useEffect(() => {
     const load = async () => {
-      let q = supabase.from(table).select('name').order('name');
+      let q: any = supabase.from(table).select('name').order('name');
       if (filterColumn && filterValue) {
-        q = q.eq(filterColumn as any, filterValue) as any;
+        q = q.eq(filterColumn, filterValue);
       }
       const { data } = await q;
       setDbOptions((data || []).map((r: any) => r.name));
