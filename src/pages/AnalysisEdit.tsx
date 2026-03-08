@@ -222,7 +222,7 @@ const AnalysisEdit = () => {
     <div className="space-y-6 pt-4">
       {showFormation && (
         <div className="max-w-xs">
-          <label className="text-sm text-muted-foreground">{t('formation')}</label>
+          <label className="text-sm text-muted-foreground">{t('formation')}</label> {/* renders as Diziliş */}
           <Select value={tabs[tabKey].formation} onValueChange={(v) => updateTab(tabKey, 'formation', v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
