@@ -458,9 +458,17 @@ interface PlayerData {
   physical_rating?: number | null;
   mental_rating?: number | null;
   tactical_iq_rating?: number | null;
+  current_ability?: number | null;
   contract_status?: number | null;
   key_traits?: string[] | null;
   scout_note?: string | null;
+}
+
+const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+function localizeFootPdf(foot: string | null | undefined, locale: string): string {
+  if (!foot) return '';
+  if (locale === 'tr') return footLabelTR_pdf[foot] || foot;
+  return foot;
 }
 
 export async function exportPlayerPdf(
