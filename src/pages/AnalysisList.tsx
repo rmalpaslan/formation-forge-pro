@@ -30,6 +30,7 @@ const AnalysisList = () => {
   const [filterLeague, setFilterLeague] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [analystName, setAnalystName] = useState('');
 
   const load = async () => {
     if (!user) return;
@@ -37,7 +38,14 @@ const AnalysisList = () => {
     setAnalyses(data || []);
   };
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => {
+    load();
+    if (user) {
+      supabase.from('profiles').select('first_name, last_name').eq('user_id', user.id).single().then(({ data }) => {
+        if (data) setAnalystName([data.first_name, data.last_name].filter(Boolean).join(' '));
+      });
+    }
+  }, [user]);
 
   const handleDelete = async (id: string) => {
     await supabase.from('analysis_tabs').delete().eq('match_analysis_id', id);
