@@ -463,6 +463,10 @@ interface PlayerData {
   primary_position?: string | null;
   secondary_position?: string | null;
   transfermarkt_link?: string | null;
+  technical_rating?: number | null;
+  tactical_rating?: number | null;
+  physical_rating?: number | null;
+  key_traits?: string[] | null;
 }
 
 export async function exportPlayerPdf(
@@ -484,12 +488,12 @@ export async function exportPlayerPdf(
     analystName,
   );
 
-  // ── DATA PAGE ──
+  // ── SCOUTING DASHBOARD PAGE ──
   doc.addPage();
   addPageHeader(doc, fontLoaded, h.pw, h.margin);
   h.setY(30);
 
-  // Green header bar
+  // Green header bar with player name
   doc.setFillColor(...GREEN);
   doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
   doc.setFontSize(18);
@@ -499,13 +503,36 @@ export async function exportPlayerPdf(
   doc.setTextColor(...DARK_GRAY);
   h.addY(18);
 
+  // ── Key Traits Badges ──
+  const traits = (player.key_traits || []).filter(Boolean);
+  if (traits.length > 0) {
+    const traitLabels = traits.map(t => labels[t] || t);
+    const badgeH = 8;
+    const badgePad = 6;
+    const badgeGap = 4;
+    let bx = h.margin;
+    doc.setFontSize(8);
+    h.setFont('bold');
+    for (const tl of traitLabels) {
+      const tw = doc.getTextWidth(tl);
+      const bw = tw + badgePad * 2;
+      doc.setFillColor(...GREEN);
+      doc.roundedRect(bx, h.getY() - 5, bw, badgeH, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.text(tl, bx + badgePad, h.getY());
+      bx += bw + badgeGap;
+    }
+    doc.setTextColor(...DARK_GRAY);
+    h.addY(14);
+  }
+
   // Divider
   doc.setDrawColor(200, 200, 200);
   doc.setLineWidth(0.3);
   doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
-  h.addY(14);
+  h.addY(12);
 
-  // 2-column grid for player attributes — clean plain text
+  // ── 2-column grid for player attributes ──
   const attrs: { label: string; value: string }[] = [];
   if (player.current_team) attrs.push({ label: labels.currentTeam, value: cleanVal(player.current_team) });
   if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
@@ -514,35 +541,99 @@ export async function exportPlayerPdf(
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: cleanVal(player.preferred_foot) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
 
-  // Single-column table layout for player attributes
-  const labelColW = 55; // fixed label column width in mm
-  const rowH = 16; // minimum row height with spacing
+  const colW = (h.cw - 10) / 2; // two columns with gap
+  const labelColW = 52;
+  const rowH = 16; // ~45px at 72dpi ≈ 16mm
 
-  for (let i = 0; i < attrs.length; i++) {
+  // Render in 2-column grid
+  for (let i = 0; i < attrs.length; i += 2) {
     h.checkPage(rowH + 4);
+    const rowIdx = Math.floor(i / 2);
 
     // Alternating row background
-    if (i % 2 === 0) {
+    if (rowIdx % 2 === 0) {
       doc.setFillColor(245, 245, 245);
-      doc.rect(h.margin, h.getY() - 5, h.cw, rowH - 4, 'F');
+      doc.rect(h.margin, h.getY() - 5, h.cw, rowH, 'F');
     }
 
-    // Label
-    doc.setFontSize(10);
+    // Left column
+    doc.setFontSize(9);
     h.setFont('bold');
     doc.setTextColor(...LIGHT_GRAY);
     doc.text(attrs[i].label + ':', h.margin + 4, h.getY());
-
-    // Value
     h.setFont('normal');
     doc.setTextColor(...NEAR_BLACK);
-    const valueLines = doc.splitTextToSize(attrs[i].value, h.cw - labelColW - 8);
-    doc.text(valueLines, h.margin + labelColW, h.getY());
+    doc.text(attrs[i].value, h.margin + labelColW, h.getY());
 
-    h.addY(Math.max(rowH, valueLines.length * 7 + 5));
+    // Right column
+    if (i + 1 < attrs.length) {
+      const rightX = h.margin + colW + 10;
+      h.setFont('bold');
+      doc.setTextColor(...LIGHT_GRAY);
+      doc.text(attrs[i + 1].label + ':', rightX, h.getY());
+      h.setFont('normal');
+      doc.setTextColor(...NEAR_BLACK);
+      doc.text(attrs[i + 1].value, rightX + labelColW, h.getY());
+    }
+
+    h.addY(rowH);
   }
 
-  // Transfermarkt link
+  // ── Skill Ratings (Progress Bars) ──
+  const ratings = [
+    { label: labels.technical || 'Technical', value: player.technical_rating || 0 },
+    { label: labels.tactical || 'Tactical', value: player.tactical_rating || 0 },
+    { label: labels.physical || 'Physical', value: player.physical_rating || 0 },
+  ];
+  const hasRatings = ratings.some(r => r.value > 0);
+
+  if (hasRatings) {
+    h.addY(8);
+    h.checkPage(50);
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...NEAR_BLACK);
+    doc.text(labels.skillRatings || (locale === 'tr' ? 'Yetenek Puanları' : 'Skill Ratings'), h.margin, h.getY());
+    h.addY(12);
+
+    const barW = h.cw - labelColW - 20;
+    const barH = 5;
+
+    for (const rating of ratings) {
+      h.checkPage(18);
+      doc.setFontSize(10);
+      h.setFont('bold');
+      doc.setTextColor(...LIGHT_GRAY);
+      doc.text(rating.label + ':', h.margin + 4, h.getY());
+
+      // Value text
+      h.setFont('bold');
+      doc.setTextColor(...NEAR_BLACK);
+      doc.text(`${rating.value}/5`, h.pw - h.margin - 10, h.getY());
+
+      // Background bar
+      const barX = h.margin + labelColW;
+      const barY = h.getY() - 3.5;
+      doc.setFillColor(230, 230, 230);
+      doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, 'F');
+
+      // Filled bar
+      const fillW = (rating.value / 5) * barW;
+      if (fillW > 0) {
+        doc.setFillColor(...GREEN);
+        doc.roundedRect(barX, barY, fillW, barH, 1.5, 1.5, 'F');
+      }
+
+      h.addY(14);
+    }
+  }
+
+  // ── Transfermarkt link ──
   if (player.transfermarkt_link) {
     h.addY(4);
     h.checkPage(rowH + 4);
@@ -553,7 +644,6 @@ export async function exportPlayerPdf(
     h.setFont('normal');
     doc.setTextColor(...TACTICAL_BLUE);
     const linkText = cleanVal(player.transfermarkt_link);
-    // Truncate long URLs with ellipsis
     const maxLinkW = h.cw - labelColW - 8;
     let displayLink = linkText;
     if (doc.getTextWidth(displayLink) > maxLinkW) {
