@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { leagues, toTitleCase } from '@/data/leaguesAndTeams';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TeamSelectorProps {
   value: string;
@@ -13,24 +14,43 @@ export function TeamSelector({ value, onChange, placeholder }: TeamSelectorProps
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
   const { t } = useLanguage();
+  const [dbTeams, setDbTeams] = useState<{ name: string; league: string | null }[]>([]);
+
+  useEffect(() => {
+    supabase.from('shared_teams').select('name, league').order('name').then(({ data }) => {
+      setDbTeams((data || []) as any[]);
+    });
+  }, []);
+
+  useEffect(() => { setQuery(value); }, [value]);
 
   const results = useMemo(() => {
     const q = query.toLowerCase().trim();
+    const matched: { name: string; league?: string }[] = [];
+    const seen = new Set<string>();
+
+    const addTeam = (name: string, league?: string) => {
+      if (!seen.has(name.toLowerCase())) {
+        seen.add(name.toLowerCase());
+        matched.push({ name, league });
+      }
+    };
+
     if (!q) {
-      // Show favorite leagues' teams
-      return leagues.filter(l => l.favorite).flatMap(l => l.teams).slice(0, 20);
+      leagues.filter(l => l.favorite).forEach(l => l.teams.forEach(t => addTeam(t, l.name)));
+      dbTeams.forEach(t => addTeam(t.name, t.league || undefined));
+      return matched.slice(0, 20);
     }
-    const matched: string[] = [];
-    leagues.forEach(l => {
-      l.teams.forEach(team => {
-        if (team.toLowerCase().includes(q) && !matched.includes(team)) {
-          matched.push(team);
-        }
-      });
+
+    leagues.forEach(l => l.teams.forEach(team => {
+      if (team.toLowerCase().includes(q)) addTeam(team, l.name);
+    }));
+    dbTeams.forEach(t => {
+      if (t.name.toLowerCase().includes(q)) addTeam(t.name, t.league || undefined);
     });
-    // Also allow custom input
+
     return matched.slice(0, 20);
-  }, [query]);
+  }, [query, dbTeams]);
 
   const handleSelect = (team: string) => {
     setQuery(team);
@@ -38,10 +58,23 @@ export function TeamSelector({ value, onChange, placeholder }: TeamSelectorProps
     setOpen(false);
   };
 
-  const handleBlur = () => {
+  const handleBlur = async () => {
     setTimeout(() => setOpen(false), 200);
     if (query && query !== value) {
-      onChange(toTitleCase(query));
+      const trimmed = toTitleCase(query.trim());
+      onChange(trimmed);
+      // Save to shared_teams if new
+      const allNames = new Set([
+        ...leagues.flatMap(l => l.teams.map(t => t.toLowerCase())),
+        ...dbTeams.map(t => t.name.toLowerCase()),
+      ]);
+      if (!allNames.has(trimmed.toLowerCase())) {
+        await supabase.from('shared_teams').upsert(
+          { name: trimmed } as any,
+          { onConflict: 'name,league' }
+        );
+        setDbTeams(prev => [...prev, { name: trimmed, league: null }]);
+      }
     }
   };
 
@@ -56,17 +89,15 @@ export function TeamSelector({ value, onChange, placeholder }: TeamSelectorProps
       />
       {open && results.length > 0 && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-48 overflow-auto rounded-md border border-border bg-popover shadow-md">
-          {results.map((team) => (
+          {results.map((item, idx) => (
             <button
-              key={team}
+              key={`${item.name}-${idx}`}
               type="button"
               className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors"
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(team); }}
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(item.name); }}
             >
-              {team}
-              <span className="text-muted-foreground text-xs ml-2">
-                {leagues.find(l => l.teams.includes(team))?.name}
-              </span>
+              {item.name}
+              {item.league && <span className="text-muted-foreground text-xs ml-2">{item.league}</span>}
             </button>
           ))}
         </div>

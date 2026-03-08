@@ -7,11 +7,9 @@ import { BulletInput } from '@/components/BulletInput';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
-import { Save, ImagePlus, X } from 'lucide-react';
+import { Save, ImagePlus, X, CheckCircle } from 'lucide-react';
 
-// Master formation list – sorted numerically (3-x first, then 4-x, 5-x, 6-x)
 const allFormations = [
-  '2-1-6-1', '2-1-7', '2-2-5-1', '2-2-6',
   '3-1-5-1', '3-1-6', '3-2-5', '3-4-3', '3-5-2',
   '4-1-4-1', '4-2-3-1', '4-3-3', '4-4-2', '4-5-1',
   '5-3-2', '5-4-1',
@@ -35,8 +33,6 @@ interface SectionData {
 const emptySection = (defaultFormation: string = '4-4-2'): SectionData => ({
   notes: [''], notes_images: [], pros: [''], pros_images: [], cons: [''], cons_images: [], formation: defaultFormation,
 });
-
-type TabKey = typeof attackSubTabs[number] | typeof defenseSubTabs[number] | typeof setPieceSubTabs[number];
 
 const AnalysisEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,14 +69,12 @@ const AnalysisEdit = () => {
             map[key] = {
               formation: row.formation || map[key].formation,
               notes: row.general_notes?.length ? row.general_notes : [''],
-              notes_images: [],
+              notes_images: row.images || [],
               pros: row.pros?.length ? row.pros : [''],
               pros_images: [],
               cons: row.cons?.length ? row.cons : [''],
               cons_images: [],
             };
-            // Put all images under notes by default
-            map[key].notes_images = row.images || [];
           }
         });
         setTabs(map);
@@ -116,7 +110,6 @@ const AnalysisEdit = () => {
     updateTab(tabKey, imgField, newImages);
   };
 
-  // Clean empty bullets before saving
   const cleanBullets = (arr: string[]) => arr.filter(s => s.trim() !== '');
 
   const resetAllTabs = () => {
@@ -168,14 +161,14 @@ const AnalysisEdit = () => {
     const { error } = await supabase.from('analysis_tabs').insert(rows);
     setSaving(false);
     if (error) { toast.error(error.message); return false; }
-    toast.success(t('analysisSaved'));
     return true;
   };
 
-  const handleSave = async () => {
+  const handleDraftSave = async () => {
     const ok = await doSave();
     if (!ok) return;
-    // If "both" flow step 1, reset and go to next
+    toast.success(t('draftSaved'));
+    // If both flow step 1, move to next
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
       resetAllTabs();
       setAnalysis(null);
@@ -183,9 +176,10 @@ const AnalysisEdit = () => {
     }
   };
 
-  const handleSaveAndClose = async () => {
+  const handleFinish = async () => {
     const ok = await doSave();
     if (!ok) return;
+    toast.success(t('analysisSaved'));
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
       resetAllTabs();
       setAnalysis(null);
@@ -279,14 +273,14 @@ const AnalysisEdit = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSave} disabled={saving}>
+          <Button variant="outline" onClick={handleDraftSave} disabled={saving}>
             <Save className="mr-2 h-4 w-4" />
-            {saving ? t('saving') : isBothFlow && currentStep === 1 ? t('saveAndContinue') : t('save')}
+            {saving ? t('saving') : isBothFlow && currentStep === 1 ? t('saveAndContinue') : t('draftSave')}
           </Button>
           {!(isBothFlow && currentStep === 1) && (
-            <Button onClick={handleSaveAndClose} disabled={saving}>
-              <Save className="mr-2 h-4 w-4" />
-              {t('saveAndClose')}
+            <Button onClick={handleFinish} disabled={saving}>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              {t('finishAnalysis')}
             </Button>
           )}
         </div>

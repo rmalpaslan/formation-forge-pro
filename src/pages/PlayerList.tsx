@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,8 +6,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Trash2, Edit, Plus, Search, ExternalLink, X, Eye } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PlayerList = () => {
@@ -17,6 +18,8 @@ const PlayerList = () => {
   const [players, setPlayers] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [viewPlayer, setViewPlayer] = useState<any>(null);
+  const [filterLeague, setFilterLeague] = useState('all');
+  const [filterTeam, setFilterTeam] = useState('all');
 
   const load = async () => {
     if (!user) return;
@@ -34,9 +37,26 @@ const PlayerList = () => {
     load();
   };
 
-  const filtered = players.filter((p) =>
-    `${p.name} ${p.current_team}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const leagueOptions = useMemo(() => {
+    const set = new Set<string>();
+    players.forEach(p => { if ((p as any).league) set.add((p as any).league); });
+    return Array.from(set).sort();
+  }, [players]);
+
+  const teamOptions = useMemo(() => {
+    const set = new Set<string>();
+    players.forEach(p => { if (p.current_team) set.add(p.current_team); });
+    return Array.from(set).sort();
+  }, [players]);
+
+  const filtered = useMemo(() => {
+    return players.filter((p) => {
+      if (search && !`${p.name} ${p.current_team}`.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterLeague !== 'all' && (p as any).league !== filterLeague) return false;
+      if (filterTeam !== 'all' && p.current_team !== filterTeam) return false;
+      return true;
+    });
+  }, [players, search, filterLeague, filterTeam]);
 
   return (
     <div className="space-y-6">
@@ -44,9 +64,29 @@ const PlayerList = () => {
         <h1 className="text-2xl font-bold">{t('playerLibrary')}</h1>
         <Button onClick={() => navigate('/players/new')}><Plus className="mr-2 h-4 w-4" />{t('addPlayer')}</Button>
       </div>
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder={t('searchPlayers')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-wrap gap-3 items-end">
+        <div className="relative max-w-xs flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder={t('searchPlayers')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        {leagueOptions.length > 0 && (
+          <Select value={filterLeague} onValueChange={setFilterLeague}>
+            <SelectTrigger className="w-40"><SelectValue placeholder={t('league')} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('allLeagues')}</SelectItem>
+              {leagueOptions.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+        {teamOptions.length > 0 && (
+          <Select value={filterTeam} onValueChange={setFilterTeam}>
+            <SelectTrigger className="w-40"><SelectValue placeholder={t('team')} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('allTeams')}</SelectItem>
+              {teamOptions.map(tm => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
       </div>
       <div className="space-y-3">
         {filtered.map((p) => (
@@ -56,6 +96,7 @@ const PlayerList = () => {
                 <div className="font-bold text-base">{p.name}</div>
                 <div className="text-sm text-muted-foreground">
                   {p.current_team} · {p.primary_position} · {p.preferred_foot}
+                  {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -72,7 +113,6 @@ const PlayerList = () => {
         {filtered.length === 0 && <p className="text-muted-foreground text-center py-8">{t('noPlayersFound')}</p>}
       </div>
 
-      {/* View Card Modal */}
       <Dialog open={!!viewPlayer} onOpenChange={(open) => !open && setViewPlayer(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -81,6 +121,7 @@ const PlayerList = () => {
           {viewPlayer && (
             <div className="space-y-3">
               <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
+              <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
               <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
               <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position || t('none')} />
               <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
