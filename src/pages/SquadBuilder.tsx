@@ -304,7 +304,7 @@ const SquadBuilder = () => {
         if (player) playerNames[Number(idx)] = player.name;
       }
     }
-    await exportSquadPdf({ name: squad.name, formation: squad.formation, playerNames }, lang);
+    await exportSquadPdf({ name: squad.name, formation: squad.formation, playerNames }, lang, analystName || undefined);
     toast.success(t('exportPdf'));
   };
 
