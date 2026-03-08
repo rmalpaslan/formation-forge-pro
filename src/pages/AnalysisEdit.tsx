@@ -170,9 +170,16 @@ const AnalysisEdit = () => {
     if (error) { toast.error(error.message); return; }
     toast.success(t('analysisSaved'));
 
-    // If "both" flow, navigate to away analysis with clean state
+    // If "both" flow, reset state and navigate to away analysis
     if (isBothFlow && currentStep === 1 && navState?.nextAnalysisId) {
+      resetAllTabs();
+      setAnalysis(null);
       navigate(`/analyses/${navState.nextAnalysisId}/edit`, { state: { step: 2 }, replace: true });
+    } else if (currentStep === 2 || !isBothFlow) {
+      // After saving 2nd team (or single team), redirect to library
+      if (currentStep === 2) {
+        navigate('/analyses', { replace: true });
+      }
     }
   };
 
