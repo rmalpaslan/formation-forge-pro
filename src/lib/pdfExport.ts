@@ -158,7 +158,7 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr') {
 
 function renderCoverPage(
   doc: jsPDF, h: ReturnType<typeof createHelpers>, fontLoaded: boolean,
-  title: string, subtitle: string, metaLines: string[],
+  title: string, subtitle: string, metaLines: string[], analystName?: string,
 ) {
   h.setY(50);
   doc.setFontSize(14);
