@@ -419,7 +419,7 @@ export async function exportAnalysisPdf(
     h.addY(12);
   }
 
-  addPageFooter(doc, fontLoaded, locale);
+  addPageFooter(doc, fontLoaded, locale, analystName);
   doc.save(`${analysis.home_team}_vs_${analysis.away_team}.pdf`);
 }
 
