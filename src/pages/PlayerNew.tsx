@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TeamSelector } from '@/components/TeamSelector';
@@ -18,7 +19,11 @@ import { Badge } from '@/components/ui/badge';
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'CF', 'ST'];
 const feet = ['Right', 'Left', 'Both'];
 
-const TRAIT_KEYS = ['fast', 'playmaker', 'strong', 'aerialThreat', 'creative', 'defensive', 'clinical', 'versatile', 'leader', 'workRate'] as const;
+const TRAIT_KEYS = [
+  'fast', 'playmaker', 'strong', 'aerialThreat', 'creative', 'defensive',
+  'clinical', 'versatile', 'leader', 'workRate', 'ballControl', 'vision',
+  'crossing', 'longShot', 'tackling', 'positioning',
+] as const;
 
 const PlayerNew = () => {
   const { id } = useParams();
@@ -34,7 +39,11 @@ const PlayerNew = () => {
   const [technicalRating, setTechnicalRating] = useState(0);
   const [tacticalRating, setTacticalRating] = useState(0);
   const [physicalRating, setPhysicalRating] = useState(0);
+  const [mentalRating, setMentalRating] = useState(0);
+  const [tacticalIQRating, setTacticalIQRating] = useState(0);
+  const [contractStatus, setContractStatus] = useState(0);
   const [keyTraits, setKeyTraits] = useState<string[]>([]);
+  const [scoutNote, setScoutNote] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -57,7 +66,11 @@ const PlayerNew = () => {
           setTechnicalRating((data as any).technical_rating || 0);
           setTacticalRating((data as any).tactical_rating || 0);
           setPhysicalRating((data as any).physical_rating || 0);
+          setMentalRating((data as any).mental_rating || 0);
+          setTacticalIQRating((data as any).tactical_iq_rating || 0);
+          setContractStatus((data as any).contract_status || 0);
           setKeyTraits((data as any).key_traits || []);
+          setScoutNote((data as any).scout_note || '');
         }
       });
     }
@@ -67,7 +80,7 @@ const PlayerNew = () => {
     setKeyTraits(prev =>
       prev.includes(trait)
         ? prev.filter(t => t !== trait)
-        : prev.length < 3 ? [...prev, trait] : prev
+        : prev.length < 6 ? [...prev, trait] : prev
     );
   };
 
@@ -80,7 +93,9 @@ const PlayerNew = () => {
       preferred_foot: preferredFoot, primary_position: primaryPosition,
       secondary_position: secondaryPosition || null, transfermarkt_link: transfermarktLink || null,
       technical_rating: technicalRating, tactical_rating: tacticalRating, physical_rating: physicalRating,
+      mental_rating: mentalRating, tactical_iq_rating: tacticalIQRating, contract_status: contractStatus,
       key_traits: keyTraits,
+      scout_note: scoutNote || null,
       user_id: user!.id,
     };
     const { error } = isEdit
@@ -103,6 +118,15 @@ const PlayerNew = () => {
       navigate('/players');
     }
   };
+
+  const ratingRows: [string, number, (v: number) => void][] = [
+    [t('technical' as any), technicalRating, setTechnicalRating],
+    [t('tactical' as any), tacticalRating, setTacticalRating],
+    [t('physical' as any), physicalRating, setPhysicalRating],
+    [t('mental' as any), mentalRating, setMentalRating],
+    [t('tacticalIQ' as any), tacticalIQRating, setTacticalIQRating],
+    [t('contractStatus' as any), contractStatus, setContractStatus],
+  ];
 
   return (
     <div className="max-w-lg mx-auto">
@@ -151,21 +175,21 @@ const PlayerNew = () => {
 
           {/* Skill Ratings */}
           <div className="space-y-3 rounded-lg border border-border p-4">
-            <h3 className="text-sm font-bold text-foreground">{t('skillRatings')}</h3>
-            {([['technical', technicalRating, setTechnicalRating], ['tactical', tacticalRating, setTacticalRating], ['physical', physicalRating, setPhysicalRating]] as const).map(([key, val, setter]) => (
-              <div key={key} className="space-y-1">
+            <h3 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h3>
+            {ratingRows.map(([label, val, setter]) => (
+              <div key={label} className="space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{t(key as any)}</span>
+                  <span className="text-muted-foreground">{label}</span>
                   <span className="font-bold text-primary">{val}/5</span>
                 </div>
-                <Slider min={0} max={5} step={1} value={[val as number]} onValueChange={([v]) => (setter as any)(v)} className="w-full" />
+                <Slider min={0} max={5} step={1} value={[val]} onValueChange={([v]) => setter(v)} className="w-full" />
               </div>
             ))}
           </div>
 
           {/* Key Traits */}
           <div className="space-y-2 rounded-lg border border-border p-4">
-            <h3 className="text-sm font-bold text-foreground">{t('keyTraits')} <span className="font-normal text-muted-foreground">({keyTraits.length}/3)</span></h3>
+            <h3 className="text-sm font-bold text-foreground">{t('keyTraits' as any)} <span className="font-normal text-muted-foreground">({keyTraits.length}/6)</span></h3>
             <div className="flex flex-wrap gap-2">
               {TRAIT_KEYS.map(trait => (
                 <Badge
@@ -178,6 +202,17 @@ const PlayerNew = () => {
                 </Badge>
               ))}
             </div>
+          </div>
+
+          {/* Scout Note */}
+          <div className="space-y-1">
+            <label className="text-sm font-bold text-foreground">{t('scoutNote' as any)}</label>
+            <Textarea
+              placeholder={t('scoutNotePlaceholder' as any)}
+              value={scoutNote}
+              onChange={(e) => setScoutNote(e.target.value)}
+              className="min-h-[120px]"
+            />
           </div>
 
           <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />

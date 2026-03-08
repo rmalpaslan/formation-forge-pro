@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { localizePosition } from '@/lib/positionMap';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -71,8 +72,12 @@ const PlayerList = () => {
       technical: t('technical' as any),
       tactical: t('tactical' as any),
       physical: t('physical' as any),
+      mental: t('mental' as any),
+      tacticalIQ: t('tacticalIQ' as any),
+      contractStatus: t('contractStatus' as any),
       skillRatings: t('skillRatings' as any),
       keyTraits: t('keyTraits' as any),
+      scoutNote: t('scoutNote' as any),
     }, lang, analystName || undefined);
     toast.success(t('exportPdf'));
   };
@@ -151,15 +156,15 @@ const PlayerList = () => {
       <div className="space-y-3">
         {filtered.map((p) => (
           <Card key={p.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewPlayer(p)}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex flex-col min-w-0 flex-1 mr-3">
+            <CardContent className="flex items-center justify-between" style={{ padding: '20px' }}>
+              <div className="flex flex-col min-w-0 flex-1 mr-4">
                 <div className="font-bold text-base truncate">{p.name}</div>
                 <div className="text-sm text-muted-foreground truncate">
-                  {p.current_team} · {p.primary_position} · {p.preferred_foot}
+                  {p.current_team} · {localizePosition(p.primary_position, lang)} · {p.preferred_foot}
                   {(p as any).league && <span className="ml-1">· {(p as any).league}</span>}
                 </div>
                 {(p as any).key_traits?.length > 0 && (
-                  <div className="flex gap-1 mt-1.5">
+                  <div className="flex flex-wrap gap-1 mt-1.5">
                     {(p as any).key_traits.map((tr: string) => (
                       <Badge key={tr} variant="secondary" className="text-[10px] px-1.5 py-0">{traitLabel(tr)}</Badge>
                     ))}
@@ -169,7 +174,7 @@ const PlayerList = () => {
                   {lang === 'tr' ? 'Son Güncelleme' : 'Last Updated'}: {formatDateDDMMYYYY(p.updated_at || p.created_at)}
                 </span>
               </div>
-              <div className="flex gap-1 shrink-0">
+              <div className="flex gap-1 shrink-0 ml-2">
                 <Button variant="ghost" size="icon" onClick={(e) => handleExportPdf(p, e)} title={t('exportPlayerPdf')}>
                   <FileDown className="h-4 w-4" />
                 </Button>
@@ -188,12 +193,12 @@ const PlayerList = () => {
 
       {/* Player Detail Modal */}
       <Dialog open={!!viewPlayer} onOpenChange={(open) => !open && setViewPlayer(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader className="p-5 pb-3">
-            <DialogTitle className="text-xl font-bold pr-8 truncate">{viewPlayer?.name}</DialogTitle>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader style={{ padding: '24px 24px 12px' }}>
+            <DialogTitle className="text-xl font-bold pr-10 truncate">{viewPlayer?.name}</DialogTitle>
           </DialogHeader>
           {viewPlayer && (
-            <div className="rounded-lg bg-background border border-border" style={{ padding: '24px' }}>
+            <div className="rounded-lg bg-background border border-border" style={{ padding: '32px', margin: '0 8px 8px' }}>
               {/* Key Traits Badges */}
               {(viewPlayer as any).key_traits?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
@@ -207,19 +212,39 @@ const PlayerList = () => {
               <div className="space-y-0">
                 <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
                 <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
-                <InfoRow label={t('primaryPosition')} value={viewPlayer.primary_position} />
-                <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position || t('none')} />
+                <InfoRow label={t('primaryPosition')} value={localizePosition(viewPlayer.primary_position, lang)} />
+                <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />
                 <InfoRow label={t('preferredFoot')} value={viewPlayer.preferred_foot} />
                 <InfoRow label={t('birthDate')} value={viewPlayer.birth_date ? formatDateDDMMYYYY(viewPlayer.birth_date) : '—'} />
               </div>
 
               {/* Skill Ratings */}
-              {((viewPlayer as any).technical_rating > 0 || (viewPlayer as any).tactical_rating > 0 || (viewPlayer as any).physical_rating > 0) && (
-                <div className="mt-5 space-y-3">
-                  <h4 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h4>
-                  <RatingBar label={t('technical' as any)} value={(viewPlayer as any).technical_rating || 0} />
-                  <RatingBar label={t('tactical' as any)} value={(viewPlayer as any).tactical_rating || 0} />
-                  <RatingBar label={t('physical' as any)} value={(viewPlayer as any).physical_rating || 0} />
+              {(() => {
+                const allRatings = [
+                  { label: t('technical' as any), value: (viewPlayer as any).technical_rating || 0 },
+                  { label: t('tactical' as any), value: (viewPlayer as any).tactical_rating || 0 },
+                  { label: t('physical' as any), value: (viewPlayer as any).physical_rating || 0 },
+                  { label: t('mental' as any), value: (viewPlayer as any).mental_rating || 0 },
+                  { label: t('tacticalIQ' as any), value: (viewPlayer as any).tactical_iq_rating || 0 },
+                  { label: t('contractStatus' as any), value: (viewPlayer as any).contract_status || 0 },
+                ];
+                const hasAny = allRatings.some(r => r.value > 0);
+                if (!hasAny) return null;
+                return (
+                  <div className="mt-5 space-y-3">
+                    <h4 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h4>
+                    {allRatings.filter(r => r.value > 0).map(r => (
+                      <RatingBar key={r.label} label={r.label} value={r.value} />
+                    ))}
+                  </div>
+                );
+              })()}
+
+              {/* Scout Note */}
+              {(viewPlayer as any).scout_note && (
+                <div className="mt-5 space-y-2">
+                  <h4 className="text-sm font-bold text-foreground">{t('scoutNote' as any)}</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(viewPlayer as any).scout_note}</p>
                 </div>
               )}
 
@@ -252,7 +277,7 @@ const PlayerList = () => {
 
 function InfoRow({ label, value }: { label: string; value: string | null }) {
   return (
-    <div className="grid gap-3 border-b border-border/50 last:border-0" style={{ gridTemplateColumns: '140px 1fr', padding: '10px 0' }}>
+    <div className="grid gap-3 border-b border-border/50 last:border-0" style={{ gridTemplateColumns: '140px 1fr', padding: '12px 0' }}>
       <span className="text-sm text-muted-foreground font-bold whitespace-nowrap">{label}</span>
       <span className="text-sm font-medium" style={{ overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0 }}>{value || '—'}</span>
     </div>
