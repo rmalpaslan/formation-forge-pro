@@ -137,7 +137,7 @@ function addPageHeader(doc: jsPDF, fontLoaded: boolean, pw: number, margin: numb
   doc.setTextColor(...DARK_GRAY);
 }
 
-function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr') {
+function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', analystName?: string) {
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
   const fn = fontLoaded ? 'NotoSans' : 'helvetica';
@@ -152,7 +152,10 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr') {
     doc.setLineWidth(0.2);
     doc.line(15, ph - 14, pw - 15, ph - 14);
     doc.text(BRAND, 15, ph - 8);
-    doc.text(`${pageLabel} ${i} / ${totalPages}`, pw - 15, ph - 8, { align: 'right' });
+    const rightText = analystName
+      ? `${analystName}  |  ${pageLabel} ${i} / ${totalPages}`
+      : `${pageLabel} ${i} / ${totalPages}`;
+    doc.text(rightText, pw - 15, ph - 8, { align: 'right' });
   }
 }
 
