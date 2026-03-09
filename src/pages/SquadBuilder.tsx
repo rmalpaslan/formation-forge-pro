@@ -431,6 +431,16 @@ const SquadBuilder = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <ExportModal
+          open={!!exportSquadData}
+          onOpenChange={(open) => !open && setExportSquadData(null)}
+          onExport={(dark) => {
+            if (exportSquadData) {
+              handleExportPdf(exportSquadData);
+            }
+          }}
+        />
       </div>
     );
   }
