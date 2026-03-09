@@ -1088,7 +1088,7 @@ export async function exportSquadPdf(
     doc.setFontSize(7);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
-    const lbl = pos.label;
+    const lbl = localizePosition(pos.label, locale);
     const lblW = doc.getTextWidth(lbl);
     doc.text(lbl, cx - lblW / 2, cy + 2.5);
 

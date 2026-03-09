@@ -17,7 +17,7 @@ import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangl
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
 
-const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İki Ayak' };
 
 function localizeFoot(foot: string | null | undefined, lang: string): string {
   if (!foot) return '—';

@@ -28,7 +28,7 @@ const TRAIT_KEYS = [
   'crossing', 'longShot', 'tackling', 'positioning',
 ] as const;
 
-const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İki Ayak' };
 
 const PlayerNew = () => {
   const { id } = useParams();
