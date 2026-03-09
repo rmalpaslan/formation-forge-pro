@@ -338,11 +338,8 @@ const PlayerList = () => {
                 </div>
               )}
               <div className="flex gap-2 pt-5 flex-wrap">
-                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => handleExportPdf(viewPlayer, undefined, false)}>
-                  <FileDown className="mr-2 h-4 w-4" />{t('lightPdf' as any)}
-                </Button>
-                <Button variant="outline" className="flex-1 min-w-[120px] bg-foreground text-background hover:bg-foreground/90" onClick={() => handleExportPdf(viewPlayer, undefined, true)}>
-                  <FileDown className="mr-2 h-4 w-4" />{t('darkModePdf' as any)}
+                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => setExportPlayer(viewPlayer)}>
+                  <FileDown className="mr-2 h-4 w-4" />{t('exportPdf')}
                 </Button>
                 <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => { setViewPlayer(null); navigate(`/players/${viewPlayer.id}/edit`); }}>
                   <Edit className="mr-2 h-4 w-4" />{t('edit')}
