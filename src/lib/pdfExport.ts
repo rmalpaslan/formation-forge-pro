@@ -167,10 +167,16 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.2);
     doc.line(15, ph - 14, pw - 15, ph - 14);
+
+    // Centered analyst name
+    if (analystName) {
+      const prepLabel = `Hazırlayan: ${analystName}`;
+      const prepW = doc.getTextWidth(prepLabel);
+      doc.text(prepLabel, (pw - prepW) / 2, ph - 8);
+    }
+
     doc.text(BRAND, 15, ph - 8);
-    const rightText = analystName
-      ? `${analystName}  |  ${pageLabel} ${i} / ${totalPages}`
-      : `${pageLabel} ${i} / ${totalPages}`;
+    const rightText = `${pageLabel} ${i} / ${totalPages}`;
     doc.text(rightText, pw - 15, ph - 8, { align: 'right' });
   }
 }
