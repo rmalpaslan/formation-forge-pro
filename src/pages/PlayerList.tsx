@@ -46,7 +46,7 @@ const PlayerList = () => {
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
   const [analystName, setAnalystName] = useState('');
-  const [darkPdf, setDarkPdf] = useState(false);
+  const [exportPlayer, setExportPlayer] = useState<any>(null);
 
   const load = async () => {
     if (!user) return;
