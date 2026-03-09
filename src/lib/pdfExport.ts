@@ -23,7 +23,7 @@ function cleanVal(v: string | null | undefined): string {
   return v.replace(/\\n/g, ' ').replace(/"/g, '').replace(/\n/g, ' ').trim();
 }
 
-const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İki Ayak' };
 function localizeFootPdf(foot: string | null | undefined, locale: string): string {
   if (!foot) return '';
   if (locale === 'tr') return footLabelTR_pdf[foot] || foot;
@@ -167,10 +167,16 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
     doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.2);
     doc.line(15, ph - 14, pw - 15, ph - 14);
+
+    // Centered analyst name
+    if (analystName) {
+      const prepLabel = `Hazırlayan: ${analystName}`;
+      const prepW = doc.getTextWidth(prepLabel);
+      doc.text(prepLabel, (pw - prepW) / 2, ph - 8);
+    }
+
     doc.text(BRAND, 15, ph - 8);
-    const rightText = analystName
-      ? `${analystName}  |  ${pageLabel} ${i} / ${totalPages}`
-      : `${pageLabel} ${i} / ${totalPages}`;
+    const rightText = `${pageLabel} ${i} / ${totalPages}`;
     doc.text(rightText, pw - 15, ph - 8, { align: 'right' });
   }
 }
@@ -1088,7 +1094,7 @@ export async function exportSquadPdf(
     doc.setFontSize(7);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
-    const lbl = pos.label;
+    const lbl = localizePosition(pos.label, locale);
     const lblW = doc.getTextWidth(lbl);
     doc.text(lbl, cx - lblW / 2, cy + 2.5);
 

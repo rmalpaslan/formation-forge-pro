@@ -115,7 +115,7 @@ const translations = {
     allPlayers: 'Tüm Oyuncular',
     right: 'Sağ',
     left: 'Sol',
-    bothFeet: 'Her İkisi',
+    bothFeet: 'Her İki Ayak',
     draftSave: 'Ara Kaydet',
     finishAnalysis: 'Kaydet ve Kapat',
     finishPlayer: 'Kaydet ve Kapat',

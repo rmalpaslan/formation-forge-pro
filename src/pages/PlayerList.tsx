@@ -12,11 +12,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { PlayerRadarChart } from '@/components/RadarChart';
+import { ExportModal } from '@/components/ExportModal';
 import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
 
-const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İki Ayak' };
 
 function localizeFoot(foot: string | null | undefined, lang: string): string {
   if (!foot) return '—';
@@ -45,7 +46,7 @@ const PlayerList = () => {
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
   const [analystName, setAnalystName] = useState('');
-  const [darkPdf, setDarkPdf] = useState(false);
+  const [exportPlayer, setExportPlayer] = useState<any>(null);
 
   const load = async () => {
     if (!user) return;
@@ -203,7 +204,7 @@ const PlayerList = () => {
                 </span>
               </div>
               <div className="flex gap-1 shrink-0 ml-2">
-                <Button variant="ghost" size="icon" onClick={(e) => handleExportPdf(p, e)} title={t('exportPlayerPdf')}>
+                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setExportPlayer(p); }} title={t('exportPlayerPdf')}>
                   <FileDown className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/players/${p.id}/edit`); }}>
@@ -337,11 +338,8 @@ const PlayerList = () => {
                 </div>
               )}
               <div className="flex gap-2 pt-5 flex-wrap">
-                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => handleExportPdf(viewPlayer, undefined, false)}>
-                  <FileDown className="mr-2 h-4 w-4" />{t('lightPdf' as any)}
-                </Button>
-                <Button variant="outline" className="flex-1 min-w-[120px] bg-foreground text-background hover:bg-foreground/90" onClick={() => handleExportPdf(viewPlayer, undefined, true)}>
-                  <FileDown className="mr-2 h-4 w-4" />{t('darkModePdf' as any)}
+                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => setExportPlayer(viewPlayer)}>
+                  <FileDown className="mr-2 h-4 w-4" />{t('exportPdf')}
                 </Button>
                 <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => { setViewPlayer(null); navigate(`/players/${viewPlayer.id}/edit`); }}>
                   <Edit className="mr-2 h-4 w-4" />{t('edit')}
@@ -354,6 +352,15 @@ const PlayerList = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Export Style Selection Modal */}
+      <ExportModal
+        open={!!exportPlayer}
+        onOpenChange={(open) => !open && setExportPlayer(null)}
+        onExport={(dark) => {
+          if (exportPlayer) handleExportPdf(exportPlayer, undefined, dark);
+        }}
+      />
     </div>
   );
 };

@@ -7,7 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { localizePosition } from '@/lib/positionMap';
 import { leagues, getCountryCodes } from '@/data/leaguesAndTeams';
+import { ExportModal } from '@/components/ExportModal';
 import { toast } from 'sonner';
 import { Save, Trash2, Pencil, Plus, FileDown, CheckCircle } from 'lucide-react';
 import { exportSquadPdf } from '@/lib/pdfExport';
@@ -133,6 +135,7 @@ const SquadBuilder = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewSquad, setViewSquad] = useState<Squad | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [exportSquadData, setExportSquadData] = useState<Squad | null>(null);
 
   // Drag state
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -366,13 +369,13 @@ const SquadBuilder = () => {
               onClick={() => openPlayerModal(idx)}
               onPointerDown={(e) => handlePointerDown(idx, e)}
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground group-hover:scale-110 transition-transform">{p.label}</div>
-              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignments[idx]?.name || '—'}</span>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground group-hover:scale-110 transition-transform">{localizePosition(p.label, lang)}</div>
+              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignments[idx]?.name || '—'}</span>
             </button>
           ) : (
             <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${ox}%`, top: `${oy}%` }}>
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{p.label}</div>
-              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignMap[idx] || '—'}</span>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{localizePosition(p.label, lang)}</div>
+              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignMap[idx] || '—'}</span>
             </div>
           );
         })}
@@ -402,7 +405,7 @@ const SquadBuilder = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleExportPdf(squad); }} title={t('exportPdf')}>
+                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setExportSquadData(squad); }} title={t('exportPdf')}>
                     <FileDown className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleEdit(squad); }}>
@@ -428,6 +431,16 @@ const SquadBuilder = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        <ExportModal
+          open={!!exportSquadData}
+          onOpenChange={(open) => !open && setExportSquadData(null)}
+          onExport={(dark) => {
+            if (exportSquadData) {
+              handleExportPdf(exportSquadData);
+            }
+          }}
+        />
       </div>
     );
   }
@@ -502,7 +515,7 @@ const SquadBuilder = () => {
             {filteredPlayers.map((p) => (
               <button key={p.id} className="w-full text-left px-3 py-2 rounded hover:bg-secondary transition-colors" onClick={() => assignPlayer(p)}>
                 <span className="font-medium">{p.name}</span>
-                <span className="text-muted-foreground text-sm ml-2">{p.current_team} · {p.primary_position}</span>
+                <span className="text-muted-foreground text-sm ml-2">{p.current_team} · {localizePosition(p.primary_position, lang)}</span>
               </button>
             ))}
           </div>
