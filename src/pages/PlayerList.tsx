@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { PlayerRadarChart } from '@/components/RadarChart';
+import { ExportModal } from '@/components/ExportModal';
 import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
