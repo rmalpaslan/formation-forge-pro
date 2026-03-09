@@ -204,7 +204,7 @@ const PlayerList = () => {
                 </span>
               </div>
               <div className="flex gap-1 shrink-0 ml-2">
-                <Button variant="ghost" size="icon" onClick={(e) => handleExportPdf(p, e)} title={t('exportPlayerPdf')}>
+                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setExportPlayer(p); }} title={t('exportPlayerPdf')}>
                   <FileDown className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/players/${p.id}/edit`); }}>
