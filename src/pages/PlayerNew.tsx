@@ -282,7 +282,7 @@ const PlayerNew = () => {
             <h3 className="text-sm font-bold text-foreground">{t('financialInfo' as any)}</h3>
             <div className="space-y-1">
               <label className="text-sm text-muted-foreground">{t('marketValue' as any)}</label>
-              <Input placeholder={t('marketValuePlaceholder' as any)} value={marketValue} onChange={(e) => setMarketValue(e.target.value)} />
+              <CurrencyInput value={marketValue} onChange={setMarketValue} placeholder="1.000.000" />
             </div>
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
