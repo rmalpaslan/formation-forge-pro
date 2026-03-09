@@ -352,6 +352,15 @@ const PlayerList = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Export Style Selection Modal */}
+      <ExportModal
+        open={!!exportPlayer}
+        onOpenChange={(open) => !open && setExportPlayer(null)}
+        onExport={(dark) => {
+          if (exportPlayer) handleExportPdf(exportPlayer, undefined, dark);
+        }}
+      />
     </div>
   );
 };
