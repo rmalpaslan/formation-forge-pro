@@ -135,6 +135,7 @@ const SquadBuilder = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewSquad, setViewSquad] = useState<Squad | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [exportSquadData, setExportSquadData] = useState<Squad | null>(null);
 
   // Drag state
   const [dragIdx, setDragIdx] = useState<number | null>(null);
