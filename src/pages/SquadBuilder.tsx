@@ -374,8 +374,8 @@ const SquadBuilder = () => {
             </button>
           ) : (
             <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${ox}%`, top: `${oy}%` }}>
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{p.label}</div>
-              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[50px] sm:max-w-[60px]">{assignMap[idx] || '—'}</span>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{localizePosition(p.label, lang)}</div>
+              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignMap[idx] || '—'}</span>
             </div>
           );
         })}
