@@ -23,7 +23,7 @@ function cleanVal(v: string | null | undefined): string {
   return v.replace(/\\n/g, ' ').replace(/"/g, '').replace(/\n/g, ' ').trim();
 }
 
-const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İkisi' };
+const footLabelTR_pdf: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İki Ayak' };
 function localizeFootPdf(foot: string | null | undefined, locale: string): string {
   if (!foot) return '';
   if (locale === 'tr') return footLabelTR_pdf[foot] || foot;
