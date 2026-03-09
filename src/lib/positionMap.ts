@@ -11,10 +11,10 @@ export const positionMapTR: Record<string, string> = {
   CAM: 'Ofansif Orta Saha',
   LM: 'Sol Orta Saha',
   RM: 'Sağ Orta Saha',
-  LW: 'Sol Açık',
-  RW: 'Sağ Açık',
-  CF: 'Santrfor',
-  ST: 'Santrfor',
+  LW: 'Sol Kanat',
+  RW: 'Sağ Kanat',
+  CF: 'Santrafor',
+  ST: 'Santrafor',
 };
 
 export function localizePosition(pos: string | null | undefined, lang: string): string {
