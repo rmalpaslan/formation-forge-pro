@@ -405,7 +405,7 @@ const SquadBuilder = () => {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleExportPdf(squad); }} title={t('exportPdf')}>
+                  <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setExportSquadData(squad); }} title={t('exportPdf')}>
                     <FileDown className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleEdit(squad); }}>
