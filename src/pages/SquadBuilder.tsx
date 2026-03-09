@@ -515,7 +515,7 @@ const SquadBuilder = () => {
             {filteredPlayers.map((p) => (
               <button key={p.id} className="w-full text-left px-3 py-2 rounded hover:bg-secondary transition-colors" onClick={() => assignPlayer(p)}>
                 <span className="font-medium">{p.name}</span>
-                <span className="text-muted-foreground text-sm ml-2">{p.current_team} · {p.primary_position}</span>
+                <span className="text-muted-foreground text-sm ml-2">{p.current_team} · {localizePosition(p.primary_position, lang)}</span>
               </button>
             ))}
           </div>
