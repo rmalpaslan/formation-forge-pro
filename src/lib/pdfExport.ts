@@ -880,7 +880,7 @@ export async function exportPlayerPdf(
       h.checkPage(8, darkMode);
   if (player.video_link) {
     h.addY(8);
-    h.checkPage(20);
+    h.checkPage(20, darkMode);
     doc.setFillColor(...GREEN);
     const btnLabel = labels.watchVideo || (locale === 'tr' ? 'Videoyu İzle' : 'Watch Video');
     doc.setFontSize(10);
