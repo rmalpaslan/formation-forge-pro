@@ -384,10 +384,14 @@ export async function exportAnalysisPdf(
   groupLabels?: GroupLabels,
   locale: string = 'tr',
   analystName?: string,
+  darkMode: boolean = false,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
+
+  const dark = darkMode;
+  const textColor: [number, number, number] = dark ? DARK_TEXT : NEAR_BLACK;
 
   const GROUP_NAMES: Record<string, string> = {
     defense: groupLabels?.defense || 'SAVUNMA',
@@ -402,11 +406,12 @@ export async function exportAnalysisPdf(
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
     [`Odak Takım: ${targetName}`, dateFormatted],
     analystName,
+    dark,
   );
 
   doc.addPage();
   h.setY(25);
-  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
 
   const tabMap = new Map<string, TabData>();
   for (const td of tabsData) {
