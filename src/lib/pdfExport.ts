@@ -687,7 +687,7 @@ export async function exportPlayerPdf(
   const rowH = 16;
 
   for (let i = 0; i < attrs.length; i += 2) {
-    h.checkPage(rowH + 4);
+    h.checkPage(rowH + 4, darkMode);
     const rowIdx = Math.floor(i / 2);
 
     if (rowIdx % 2 === 0) {
