@@ -436,10 +436,10 @@ export async function exportAnalysisPdf(
     const cleaned = (items || []).filter(s => s.trim() !== '');
     if (cleaned.length === 0) return;
 
-    h.checkPage(18);
+    h.checkPage(18, dark);
     doc.setFontSize(11);
     h.setFont('bold');
-    doc.setTextColor(...NEAR_BLACK);
+    doc.setTextColor(...textColor);
     doc.text(`${title}:`, h.margin + 4, h.getY());
     h.addY(9);
 
@@ -447,10 +447,10 @@ export async function exportAnalysisPdf(
     h.setFont('normal');
     const lineHeight = 7.5;
     for (const item of cleaned) {
-      h.checkPage(16);
+      h.checkPage(16, dark);
       doc.setFillColor(...bulletColor);
       doc.circle(h.margin + 8, h.getY() - 1.5, 1.2, 'F');
-      doc.setTextColor(...DARK_GRAY);
+      doc.setTextColor(...(dark ? DARK_MUTED : DARK_GRAY));
       const lines: string[] = doc.splitTextToSize(cleanVal(item), h.cw - 18);
       doc.text(lines, h.margin + 14, h.getY());
       h.addY(lines.length * lineHeight);
