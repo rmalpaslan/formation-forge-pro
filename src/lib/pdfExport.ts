@@ -805,7 +805,7 @@ export async function exportPlayerPdf(
   // ── Squad Fit ──
   if ((player.squad_fit_percentage && player.squad_fit_percentage > 0) || player.squad_fit_notes) {
     h.addY(8);
-    h.checkPage(40);
+    h.checkPage(40, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
