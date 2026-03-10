@@ -1041,21 +1041,31 @@ export async function exportSquadPdf(
   squad: SquadExportData,
   locale: string = 'tr',
   analystName?: string,
+  darkMode: boolean = false,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
+
+  const dark = darkMode;
 
   await renderCoverPage(doc, h, fontLoaded,
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
     [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${SPC}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
     analystName,
+    dark,
   );
 
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
   h.setY(25);
+
+  if (dark) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, h.pw, h.ph, 'F');
+    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
+  }
 
   doc.setFontSize(18);
   h.setFont('bold');
