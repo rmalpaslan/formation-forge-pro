@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { localizePosition } from '@/lib/positionMap';
+import { localizePosition, localizePositionAbbr } from '@/lib/positionMap';
 
 // ── Constants ──
 const BRAND = 'COACHING ENGINEERING';
@@ -123,11 +123,15 @@ function createHelpers(doc: jsPDF, fontLoaded: boolean) {
   const setFont = (style: 'normal' | 'bold') => {
     doc.setFont(fontLoaded ? 'NotoSans' : 'helvetica', style);
   };
-  const checkPage = (needed: number) => {
+  const checkPage = (needed: number, dark = false) => {
     if (y + needed > ph - 25) {
       doc.addPage();
       y = 25;
-      addPageHeader(doc, fontLoaded, pw, margin);
+      if (dark) {
+        doc.setFillColor(...DARK_BG);
+        doc.rect(0, 0, pw, ph, 'F');
+      }
+      addPageHeader(doc, fontLoaded, pw, margin, dark);
     }
   };
   const getY = () => y;
@@ -384,10 +388,14 @@ export async function exportAnalysisPdf(
   groupLabels?: GroupLabels,
   locale: string = 'tr',
   analystName?: string,
+  darkMode: boolean = false,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
+
+  const dark = darkMode;
+  const textColor: [number, number, number] = dark ? DARK_TEXT : NEAR_BLACK;
 
   const GROUP_NAMES: Record<string, string> = {
     defense: groupLabels?.defense || 'SAVUNMA',
@@ -402,11 +410,16 @@ export async function exportAnalysisPdf(
     locale === 'tr' ? 'MAÇ ANALİZ RAPORU' : 'MATCH ANALYSIS REPORT',
     [`Odak Takım: ${targetName}`, dateFormatted],
     analystName,
+    dark,
   );
 
   doc.addPage();
+  if (dark) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, h.pw, h.ph, 'F');
+  }
   h.setY(25);
-  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
 
   const tabMap = new Map<string, TabData>();
   for (const td of tabsData) {
@@ -427,10 +440,10 @@ export async function exportAnalysisPdf(
     const cleaned = (items || []).filter(s => s.trim() !== '');
     if (cleaned.length === 0) return;
 
-    h.checkPage(18);
+    h.checkPage(18, dark);
     doc.setFontSize(11);
     h.setFont('bold');
-    doc.setTextColor(...NEAR_BLACK);
+    doc.setTextColor(...textColor);
     doc.text(`${title}:`, h.margin + 4, h.getY());
     h.addY(9);
 
@@ -438,10 +451,10 @@ export async function exportAnalysisPdf(
     h.setFont('normal');
     const lineHeight = 7.5;
     for (const item of cleaned) {
-      h.checkPage(16);
+      h.checkPage(16, dark);
       doc.setFillColor(...bulletColor);
       doc.circle(h.margin + 8, h.getY() - 1.5, 1.2, 'F');
-      doc.setTextColor(...DARK_GRAY);
+      doc.setTextColor(...(dark ? DARK_MUTED : DARK_GRAY));
       const lines: string[] = doc.splitTextToSize(cleanVal(item), h.cw - 18);
       doc.text(lines, h.margin + 14, h.getY());
       h.addY(lines.length * lineHeight);
@@ -490,36 +503,37 @@ export async function exportAnalysisPdf(
     const categoryTabs = category.subTabs.map(st => tabMap.get(st)).filter(Boolean) as TabData[];
     if (!categoryTabs.some(hasContent)) continue;
 
-    h.checkPage(32);
+    h.checkPage(32, dark);
     doc.setFillColor(...GREEN);
     doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
     doc.setFontSize(20);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
     doc.text(GROUP_NAMES[category.key] || category.key.toUpperCase(), h.margin + 6, h.getY() + 2);
-    doc.setTextColor(...DARK_GRAY);
+    doc.setTextColor(...textColor);
     h.addY(20);
 
     for (const subKey of category.subTabs) {
       const tab = tabMap.get(subKey);
       if (!tab || !hasContent(tab)) continue;
 
-      h.checkPage(22);
+      h.checkPage(22, dark);
       doc.setFontSize(16);
       h.setFont('bold');
-      doc.setTextColor(...NEAR_BLACK);
+      doc.setTextColor(...textColor);
       const subLabel = subTabLabels[subKey] || subKey;
       doc.text(subLabel, h.margin, h.getY());
       h.addY(3);
       doc.setDrawColor(...GREEN);
       doc.setLineWidth(0.6);
       doc.line(h.margin, h.getY(), h.margin + doc.getTextWidth(subLabel) * 1.05, h.getY());
-      doc.setTextColor(...DARK_GRAY);
+      doc.setTextColor(...(dark ? DARK_MUTED : DARK_GRAY));
       h.addY(12);
 
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
+        doc.setTextColor(...textColor);
         doc.text(`${tDizilis}:${SPC}`, h.margin + 2, h.getY());
         const labelW = doc.getTextWidth(`${tDizilis}:${SPC}`);
         h.setFont('normal');
@@ -533,8 +547,8 @@ export async function exportAnalysisPdf(
       await renderImages(tab.images);
 
       h.addY(9);
-      h.checkPage(4);
-      doc.setDrawColor(220, 220, 220);
+      h.checkPage(4, dark);
+      doc.setDrawColor(...(dark ? [60, 60, 60] as [number, number, number] : [220, 220, 220] as [number, number, number]));
       doc.setLineWidth(0.15);
       doc.line(h.margin + 10, h.getY(), h.pw - h.margin - 10, h.getY());
       h.addY(9);
@@ -673,7 +687,7 @@ export async function exportPlayerPdf(
   const rowH = 16;
 
   for (let i = 0; i < attrs.length; i += 2) {
-    h.checkPage(rowH + 4);
+    h.checkPage(rowH + 4, darkMode);
     const rowIdx = Math.floor(i / 2);
 
     if (rowIdx % 2 === 0) {
@@ -713,7 +727,7 @@ export async function exportPlayerPdf(
   ];
   if (radarData.some(d => d.value > 0)) {
     h.addY(8);
-    h.checkPage(80);
+    h.checkPage(80, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -746,7 +760,7 @@ export async function exportPlayerPdf(
 
   if (hasRatings) {
     h.addY(8);
-    h.checkPage(50);
+    h.checkPage(50, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -763,7 +777,7 @@ export async function exportPlayerPdf(
 
     for (const rating of ratings) {
       if (rating.value === 0) continue;
-      h.checkPage(18);
+      h.checkPage(18, darkMode);
       doc.setFontSize(10);
       h.setFont('bold');
       doc.setTextColor(...mutedColor);
@@ -791,7 +805,7 @@ export async function exportPlayerPdf(
   // ── Squad Fit ──
   if ((player.squad_fit_percentage && player.squad_fit_percentage > 0) || player.squad_fit_notes) {
     h.addY(8);
-    h.checkPage(40);
+    h.checkPage(40, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -831,7 +845,7 @@ export async function exportPlayerPdf(
       doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
       const fitLines: string[] = doc.splitTextToSize(cleanVal(player.squad_fit_notes), h.cw - 8);
       for (const line of fitLines) {
-        h.checkPage(8);
+        h.checkPage(8, darkMode);
         doc.text(line, h.margin + 4, h.getY());
         h.addY(6);
       }
@@ -841,7 +855,7 @@ export async function exportPlayerPdf(
   // ── Injury History ──
   if (player.injury_history) {
     h.addY(8);
-    h.checkPage(30);
+    h.checkPage(30, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -858,7 +872,7 @@ export async function exportPlayerPdf(
     doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
     const injLines: string[] = doc.splitTextToSize(cleanVal(player.injury_history), h.cw - 8);
     for (const line of injLines) {
-      h.checkPage(8);
+      h.checkPage(8, darkMode);
       doc.text(line, h.margin + 4, h.getY());
       h.addY(6);
     }
@@ -867,7 +881,7 @@ export async function exportPlayerPdf(
   // ── Scout Note ──
   if (player.scout_note) {
     h.addY(8);
-    h.checkPage(30);
+    h.checkPage(30, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -884,7 +898,7 @@ export async function exportPlayerPdf(
     doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
     const noteLines: string[] = doc.splitTextToSize(cleanVal(player.scout_note), h.cw - 8);
     for (const line of noteLines) {
-      h.checkPage(8);
+      h.checkPage(8, darkMode);
       doc.text(line, h.margin + 4, h.getY());
       h.addY(6);
     }
@@ -893,7 +907,7 @@ export async function exportPlayerPdf(
   // ── Video Link ──
   if (player.video_link) {
     h.addY(8);
-    h.checkPage(20);
+    h.checkPage(20, darkMode);
     doc.setFillColor(...GREEN);
     const btnLabel = labels.watchVideo || (locale === 'tr' ? 'Videoyu İzle' : 'Watch Video');
     doc.setFontSize(10);
@@ -910,7 +924,7 @@ export async function exportPlayerPdf(
   // ── Transfermarkt link ──
   if (player.transfermarkt_link) {
     h.addY(4);
-    h.checkPage(rowH + 4);
+    h.checkPage(rowH + 4, darkMode);
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...mutedColor);
@@ -1036,25 +1050,35 @@ export async function exportSquadPdf(
   squad: SquadExportData,
   locale: string = 'tr',
   analystName?: string,
+  darkMode: boolean = false,
 ) {
   const doc = new jsPDF({ putOnlyUsedFonts: true });
   const fontLoaded = await setupFonts(doc);
   const h = createHelpers(doc, fontLoaded);
+
+  const dark = darkMode;
 
   await renderCoverPage(doc, h, fontLoaded,
     squad.name,
     locale === 'tr' ? 'KADRO RAPORU' : 'SQUAD REPORT',
     [`${locale === 'tr' ? 'Diziliş' : 'Formation'}:${SPC}${squad.formation}`, formatDate(new Date().toISOString(), locale)],
     analystName,
+    dark,
   );
 
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin);
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
   h.setY(25);
+
+  if (dark) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, h.pw, h.ph, 'F');
+    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
+  }
 
   doc.setFontSize(18);
   h.setFont('bold');
-  doc.setTextColor(...NEAR_BLACK);
+  doc.setTextColor(...(dark ? DARK_TEXT : NEAR_BLACK));
   doc.text(`${squad.name} — ${squad.formation}`, h.margin, h.getY());
   h.addY(12);
 
@@ -1094,7 +1118,7 @@ export async function exportSquadPdf(
     doc.setFontSize(7);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
-    const lbl = localizePosition(pos.label, locale);
+    const lbl = localizePositionAbbr(pos.label, locale);
     const lblW = doc.getTextWidth(lbl);
     doc.text(lbl, cx - lblW / 2, cy + 2.5);
 

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ExportModal } from '@/components/ExportModal';
 import { Trash2, Edit, Plus, Search, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportAnalysisPdf } from '@/lib/pdfExport';
@@ -31,6 +32,7 @@ const AnalysisList = () => {
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
   const [analystName, setAnalystName] = useState('');
+  const [exportAnalysis, setExportAnalysis] = useState<any>(null);
 
   const load = async () => {
     if (!user) return;
@@ -54,7 +56,7 @@ const AnalysisList = () => {
     load();
   };
 
-  const handleExportPdf = async (analysis: any) => {
+  const handleExportPdf = async (analysis: any, dark: boolean = false) => {
     const { data: tabsData } = await supabase.from('analysis_tabs').select('*').eq('match_analysis_id', analysis.id);
     const tabLabels: Record<string, string> = {
       aut_karsilama: t('autKarsilama'), on_alan_baskisi: t('onAlanBaskisi'),
@@ -66,11 +68,10 @@ const AnalysisList = () => {
       analysis, tabsData || [], tabLabels,
       t('target'), t('formation'), t('generalNotes'), t('pros'), t('cons'),
       { defense: t('defense').toUpperCase(), attack: t('attack').toUpperCase(), setPieces: t('setPieces').toUpperCase() },
-      lang, analystName || undefined,
+      lang, analystName || undefined, dark,
     );
   };
 
-  // Derive filter options from data
   const leagueOptions = useMemo(() => {
     const set = new Set<string>();
     analyses.forEach(a => { if ((a as any).league) set.add((a as any).league); });
@@ -157,7 +158,7 @@ const AnalysisList = () => {
                 </span>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="icon" onClick={() => handleExportPdf(a)} title={t('exportPdf')}>
+                <Button variant="ghost" size="icon" onClick={() => setExportAnalysis(a)} title={t('exportPdf')}>
                   <FileDown className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => navigate(`/analyses/${a.id}/edit`)}>
@@ -172,6 +173,17 @@ const AnalysisList = () => {
         ))}
         {filtered.length === 0 && <p className="text-muted-foreground text-center py-8">{t('noAnalysesFound')}</p>}
       </div>
+
+      {/* Export Style Selection Modal */}
+      <ExportModal
+        open={!!exportAnalysis}
+        onOpenChange={(open) => !open && setExportAnalysis(null)}
+        onExport={(dark) => {
+          if (exportAnalysis) {
+            handleExportPdf(exportAnalysis, dark);
+          }
+        }}
+      />
     </div>
   );
 };
