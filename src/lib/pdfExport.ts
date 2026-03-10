@@ -845,14 +845,7 @@ export async function exportPlayerPdf(
       doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
       const fitLines: string[] = doc.splitTextToSize(cleanVal(player.squad_fit_notes), h.cw - 8);
       for (const line of fitLines) {
-        h.checkPage(8);
-        doc.text(line, h.margin + 4, h.getY());
-        h.addY(6);
-      }
-    }
-  }
-
-  // ── Injury History ──
+        h.checkPage(8, darkMode);
   if (player.injury_history) {
     h.addY(8);
     h.checkPage(30);
