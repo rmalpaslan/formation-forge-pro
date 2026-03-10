@@ -846,9 +846,24 @@ export async function exportPlayerPdf(
       const fitLines: string[] = doc.splitTextToSize(cleanVal(player.squad_fit_notes), h.cw - 8);
       for (const line of fitLines) {
         h.checkPage(8, darkMode);
+        doc.text(line, h.margin + 4, h.getY());
+        h.addY(6);
+      }
+    }
+  }
+
+  // ── Injury History ──
   if (player.injury_history) {
     h.addY(8);
     h.checkPage(30, darkMode);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...RED_ACCENT);
     doc.text(`⚠ ${labels.injuryHistory || (locale === 'tr' ? 'Sakatlık Geçmişi' : 'Injury History')}`, h.margin, h.getY());
     h.addY(10);
 
