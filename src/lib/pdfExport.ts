@@ -414,6 +414,10 @@ export async function exportAnalysisPdf(
   );
 
   doc.addPage();
+  if (dark) {
+    doc.setFillColor(...DARK_BG);
+    doc.rect(0, 0, h.pw, h.ph, 'F');
+  }
   h.setY(25);
   addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
 
