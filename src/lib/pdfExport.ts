@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { localizePosition } from '@/lib/positionMap';
+import { localizePosition, localizePositionAbbr } from '@/lib/positionMap';
 
 // ── Constants ──
 const BRAND = 'COACHING ENGINEERING';
