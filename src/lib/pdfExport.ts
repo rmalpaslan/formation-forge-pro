@@ -503,36 +503,37 @@ export async function exportAnalysisPdf(
     const categoryTabs = category.subTabs.map(st => tabMap.get(st)).filter(Boolean) as TabData[];
     if (!categoryTabs.some(hasContent)) continue;
 
-    h.checkPage(32);
+    h.checkPage(32, dark);
     doc.setFillColor(...GREEN);
     doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
     doc.setFontSize(20);
     h.setFont('bold');
     doc.setTextColor(255, 255, 255);
     doc.text(GROUP_NAMES[category.key] || category.key.toUpperCase(), h.margin + 6, h.getY() + 2);
-    doc.setTextColor(...DARK_GRAY);
+    doc.setTextColor(...textColor);
     h.addY(20);
 
     for (const subKey of category.subTabs) {
       const tab = tabMap.get(subKey);
       if (!tab || !hasContent(tab)) continue;
 
-      h.checkPage(22);
+      h.checkPage(22, dark);
       doc.setFontSize(16);
       h.setFont('bold');
-      doc.setTextColor(...NEAR_BLACK);
+      doc.setTextColor(...textColor);
       const subLabel = subTabLabels[subKey] || subKey;
       doc.text(subLabel, h.margin, h.getY());
       h.addY(3);
       doc.setDrawColor(...GREEN);
       doc.setLineWidth(0.6);
       doc.line(h.margin, h.getY(), h.margin + doc.getTextWidth(subLabel) * 1.05, h.getY());
-      doc.setTextColor(...DARK_GRAY);
+      doc.setTextColor(...(dark ? DARK_MUTED : DARK_GRAY));
       h.addY(12);
 
       if (tab.formation) {
         doc.setFontSize(11);
         h.setFont('bold');
+        doc.setTextColor(...textColor);
         doc.text(`${tDizilis}:${SPC}`, h.margin + 2, h.getY());
         const labelW = doc.getTextWidth(`${tDizilis}:${SPC}`);
         h.setFont('normal');
@@ -546,8 +547,8 @@ export async function exportAnalysisPdf(
       await renderImages(tab.images);
 
       h.addY(9);
-      h.checkPage(4);
-      doc.setDrawColor(220, 220, 220);
+      h.checkPage(4, dark);
+      doc.setDrawColor(...(dark ? [60, 60, 60] as [number, number, number] : [220, 220, 220] as [number, number, number]));
       doc.setLineWidth(0.15);
       doc.line(h.margin + 10, h.getY(), h.pw - h.margin - 10, h.getY());
       h.addY(9);
