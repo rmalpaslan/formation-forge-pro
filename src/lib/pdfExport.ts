@@ -857,13 +857,7 @@ export async function exportPlayerPdf(
     doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
     const injLines: string[] = doc.splitTextToSize(cleanVal(player.injury_history), h.cw - 8);
     for (const line of injLines) {
-      h.checkPage(8);
-      doc.text(line, h.margin + 4, h.getY());
-      h.addY(6);
-    }
-  }
-
-  // ── Scout Note ──
+      h.checkPage(8, darkMode);
   if (player.scout_note) {
     h.addY(8);
     h.checkPage(30);
