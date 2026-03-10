@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { localizePosition } from '@/lib/positionMap';
+import { localizePosition, localizePositionAbbr } from '@/lib/positionMap';
 import { leagues, getCountryCodes } from '@/data/leaguesAndTeams';
 import { ExportModal } from '@/components/ExportModal';
 import { toast } from 'sonner';
@@ -179,7 +179,6 @@ const SquadBuilder = () => {
   const assignPlayer = (player: any) => {
     if (selectedIdx !== null) {
       setAssignments((prev) => {
-        // Remove player from any existing position (duplicate prevention)
         const updated = { ...prev };
         for (const [key, val] of Object.entries(updated)) {
           if (val.id === player.id) delete updated[Number(key)];
@@ -216,7 +215,6 @@ const SquadBuilder = () => {
     const positionsData: Record<string, string> = {};
     Object.entries(assignments).forEach(([idx, p]) => { positionsData[idx] = p.id; });
 
-    // Save custom offsets as part of positions JSON
     const saveData = {
       name: squadName,
       formation,
@@ -263,7 +261,6 @@ const SquadBuilder = () => {
     const newOffsets: Record<number, { x: number; y: number }> = {};
     if (squad.positions) {
       const pos = squad.positions as any;
-      // Restore offsets
       if (pos._offsets) {
         for (const [k, v] of Object.entries(pos._offsets)) {
           newOffsets[Number(k)] = v as { x: number; y: number };
@@ -298,7 +295,7 @@ const SquadBuilder = () => {
     setShowEditor(true);
   };
 
-  const handleExportPdf = async (squad: Squad) => {
+  const handleExportPdf = async (squad: Squad, dark: boolean = false) => {
     const playerNames: Record<number, string> = {};
     if (squad.positions) {
       for (const [idx, playerId] of Object.entries(squad.positions)) {
@@ -307,7 +304,7 @@ const SquadBuilder = () => {
         if (player) playerNames[Number(idx)] = player.name;
       }
     }
-    await exportSquadPdf({ name: squad.name, formation: squad.formation, playerNames }, lang, analystName || undefined);
+    await exportSquadPdf({ name: squad.name, formation: squad.formation, playerNames }, lang, analystName || undefined, dark);
     toast.success(t('exportPdf'));
   };
 
@@ -360,6 +357,8 @@ const SquadBuilder = () => {
         {pos.map((p, idx) => {
           const ox = activeOffsets[idx]?.x ?? p.x;
           const oy = activeOffsets[idx]?.y ?? p.y;
+          // Use abbreviations in circles (KL, STP, SNT for TR; GK, CB, ST for EN)
+          const abbrLabel = localizePositionAbbr(p.label, lang);
 
           return interactive ? (
             <button
@@ -369,12 +368,12 @@ const SquadBuilder = () => {
               onClick={() => openPlayerModal(idx)}
               onPointerDown={(e) => handlePointerDown(idx, e)}
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground group-hover:scale-110 transition-transform">{localizePosition(p.label, lang)}</div>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1B5E20] border-2 border-[#4CAF50] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white group-hover:scale-110 transition-transform shadow-lg">{abbrLabel}</div>
               <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignments[idx]?.name || '—'}</span>
             </button>
           ) : (
             <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${ox}%`, top: `${oy}%` }}>
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-primary flex items-center justify-center text-[10px] sm:text-xs font-bold text-primary-foreground">{localizePosition(p.label, lang)}</div>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1B5E20] border-2 border-[#4CAF50] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white shadow-lg">{abbrLabel}</div>
               <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignMap[idx] || '—'}</span>
             </div>
           );
@@ -437,7 +436,7 @@ const SquadBuilder = () => {
           onOpenChange={(open) => !open && setExportSquadData(null)}
           onExport={(dark) => {
             if (exportSquadData) {
-              handleExportPdf(exportSquadData);
+              handleExportPdf(exportSquadData, dark);
             }
           }}
         />
