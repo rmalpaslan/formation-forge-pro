@@ -777,7 +777,7 @@ export async function exportPlayerPdf(
 
     for (const rating of ratings) {
       if (rating.value === 0) continue;
-      h.checkPage(18);
+      h.checkPage(18, darkMode);
       doc.setFontSize(10);
       h.setFont('bold');
       doc.setTextColor(...mutedColor);
