@@ -727,7 +727,7 @@ export async function exportPlayerPdf(
   ];
   if (radarData.some(d => d.value > 0)) {
     h.addY(8);
-    h.checkPage(80);
+    h.checkPage(80, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
