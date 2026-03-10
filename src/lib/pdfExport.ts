@@ -897,7 +897,7 @@ export async function exportPlayerPdf(
   // ── Transfermarkt link ──
   if (player.transfermarkt_link) {
     h.addY(4);
-    h.checkPage(rowH + 4);
+    h.checkPage(rowH + 4, darkMode);
     doc.setFontSize(10);
     h.setFont('bold');
     doc.setTextColor(...mutedColor);
