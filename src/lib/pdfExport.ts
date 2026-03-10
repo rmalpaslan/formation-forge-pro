@@ -123,11 +123,15 @@ function createHelpers(doc: jsPDF, fontLoaded: boolean) {
   const setFont = (style: 'normal' | 'bold') => {
     doc.setFont(fontLoaded ? 'NotoSans' : 'helvetica', style);
   };
-  const checkPage = (needed: number) => {
+  const checkPage = (needed: number, dark = false) => {
     if (y + needed > ph - 25) {
       doc.addPage();
       y = 25;
-      addPageHeader(doc, fontLoaded, pw, margin);
+      if (dark) {
+        doc.setFillColor(...DARK_BG);
+        doc.rect(0, 0, pw, ph, 'F');
+      }
+      addPageHeader(doc, fontLoaded, pw, margin, dark);
     }
   };
   const getY = () => y;
