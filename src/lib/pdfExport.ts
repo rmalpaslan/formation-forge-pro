@@ -877,13 +877,7 @@ export async function exportPlayerPdf(
     doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
     const noteLines: string[] = doc.splitTextToSize(cleanVal(player.scout_note), h.cw - 8);
     for (const line of noteLines) {
-      h.checkPage(8);
-      doc.text(line, h.margin + 4, h.getY());
-      h.addY(6);
-    }
-  }
-
-  // ── Video Link ──
+      h.checkPage(8, darkMode);
   if (player.video_link) {
     h.addY(8);
     h.checkPage(20);
