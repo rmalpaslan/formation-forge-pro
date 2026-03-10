@@ -1078,7 +1078,7 @@ export async function exportSquadPdf(
 
   doc.setFontSize(18);
   h.setFont('bold');
-  doc.setTextColor(...NEAR_BLACK);
+  doc.setTextColor(...(dark ? DARK_TEXT : NEAR_BLACK));
   doc.text(`${squad.name} — ${squad.formation}`, h.margin, h.getY());
   h.addY(12);
 
