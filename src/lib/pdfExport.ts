@@ -858,9 +858,15 @@ export async function exportPlayerPdf(
     const injLines: string[] = doc.splitTextToSize(cleanVal(player.injury_history), h.cw - 8);
     for (const line of injLines) {
       h.checkPage(8, darkMode);
+      doc.text(line, h.margin + 4, h.getY());
+      h.addY(6);
+    }
+  }
+
+  // ── Scout Note ──
   if (player.scout_note) {
     h.addY(8);
-    h.checkPage(30);
+    h.checkPage(30, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -878,6 +884,12 @@ export async function exportPlayerPdf(
     const noteLines: string[] = doc.splitTextToSize(cleanVal(player.scout_note), h.cw - 8);
     for (const line of noteLines) {
       h.checkPage(8, darkMode);
+      doc.text(line, h.margin + 4, h.getY());
+      h.addY(6);
+    }
+  }
+
+  // ── Video Link ──
   if (player.video_link) {
     h.addY(8);
     h.checkPage(20, darkMode);
