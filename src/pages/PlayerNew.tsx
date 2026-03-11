@@ -138,6 +138,7 @@ const PlayerNew = () => {
       market_value: marketValue || null,
       resale_potential: resalePotential,
       injury_history: injuryHistory || null,
+      nationality: nationality || null,
       user_id: user!.id,
     };
     const { error } = isEdit
