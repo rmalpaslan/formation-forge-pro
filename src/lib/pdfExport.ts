@@ -174,7 +174,8 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
 
     // Centered analyst name
     if (analystName) {
-      const prepLabel = `Hazırlayan: ${analystName}`;
+      const prepPrefix = locale === 'tr' ? 'Hazırlayan' : 'Prepared by';
+      const prepLabel = `${prepPrefix}: ${analystName}`;
       const prepW = doc.getTextWidth(prepLabel);
       doc.text(prepLabel, (pw - prepW) / 2, ph - 8);
     }
@@ -477,7 +478,7 @@ export async function exportAnalysisPdf(
       }
 
       const imgX = h.margin + (h.cw - imgWidth) / 2;
-      h.checkPage(imgHeight + 16);
+      h.checkPage(imgHeight + 16, darkMode);
 
       try {
         doc.setDrawColor(200, 200, 200);
@@ -619,14 +620,12 @@ export async function exportPlayerPdf(
 
   // ── SCOUTING DASHBOARD PAGE ──
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin, darkMode);
-  h.setY(30);
-
   if (darkMode) {
     doc.setFillColor(...DARK_BG);
     doc.rect(0, 0, h.pw, h.ph, 'F');
-    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
   }
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, darkMode);
+  h.setY(30);
 
   // Green header bar
   doc.setFillColor(...GREEN);
@@ -641,7 +640,8 @@ export async function exportPlayerPdf(
   // ── Key Traits Badges ──
   const traits = (player.key_traits || []).filter(Boolean);
   if (traits.length > 0) {
-    const traitLabels = traits.map(t => labels[t] || t);
+    // Use translated labels from the labels map (trait keys like 'fast','strong' etc.)
+    const traitLabels = traits.map(traitKey => labels[traitKey] || traitKey);
     const badgeH = 8;
     const badgePad = 6;
     const badgeGap = 4;
@@ -726,8 +726,8 @@ export async function exportPlayerPdf(
     { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
   ];
   if (radarData.some(d => d.value > 0)) {
-    h.addY(8);
-    h.checkPage(80, darkMode);
+    h.addY(10);
+    h.checkPage(90, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
@@ -742,7 +742,7 @@ export async function exportPlayerPdf(
     const chartCx = h.pw / 2;
     const chartCy = h.getY() + 28;
     drawRadarChart(doc, h, radarData, chartCx, chartCy, 25, darkMode);
-    h.addY(65);
+    h.addY(70);
   }
 
   // ── Skill Ratings (Progress Bars) ──
@@ -1067,14 +1067,12 @@ export async function exportSquadPdf(
   );
 
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
-  h.setY(25);
-
   if (dark) {
     doc.setFillColor(...DARK_BG);
     doc.rect(0, 0, h.pw, h.ph, 'F');
-    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
   }
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
+  h.setY(25);
 
   doc.setFontSize(18);
   h.setFont('bold');
