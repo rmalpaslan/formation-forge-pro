@@ -641,7 +641,8 @@ export async function exportPlayerPdf(
   // ── Key Traits Badges ──
   const traits = (player.key_traits || []).filter(Boolean);
   if (traits.length > 0) {
-    const traitLabels = traits.map(t => labels[t] || t);
+    // Use translated labels from the labels map (trait keys like 'fast','strong' etc.)
+    const traitLabels = traits.map(traitKey => labels[traitKey] || traitKey);
     const badgeH = 8;
     const badgePad = 6;
     const badgeGap = 4;
