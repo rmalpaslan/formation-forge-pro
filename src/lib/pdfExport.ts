@@ -591,6 +591,7 @@ interface PlayerData {
   market_value?: string | null;
   resale_potential?: number | null;
   injury_history?: string | null;
+  nationality?: string | null;
 }
 
 export async function exportPlayerPdf(
