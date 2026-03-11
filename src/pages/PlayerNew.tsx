@@ -96,6 +96,7 @@ const PlayerNew = () => {
           setMarketValue((data as any).market_value || '');
           setResalePotential((data as any).resale_potential || 0);
           setInjuryHistory((data as any).injury_history || '');
+          setNationality((data as any).nationality || '');
         }
       });
     }
