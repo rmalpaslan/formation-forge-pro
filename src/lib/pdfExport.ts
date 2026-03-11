@@ -477,7 +477,7 @@ export async function exportAnalysisPdf(
       }
 
       const imgX = h.margin + (h.cw - imgWidth) / 2;
-      h.checkPage(imgHeight + 16);
+      h.checkPage(imgHeight + 16, darkMode);
 
       try {
         doc.setDrawColor(200, 200, 200);
