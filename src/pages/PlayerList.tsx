@@ -11,13 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
 import { PlayerRadarChart } from '@/components/RadarChart';
 import { ExportModal } from '@/components/ExportModal';
-import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle, Filter, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
+import { countries, getCountryLabel, getCountryFlag } from '@/data/countries';
 
 const footLabelTR: Record<string, string> = { Right: 'Sağ', Left: 'Sol', Both: 'Her İki Ayak' };
+
+const TRAIT_KEYS = [
+  'fast', 'playmaker', 'strong', 'aerialThreat', 'creative', 'defensive',
+  'clinical', 'versatile', 'leader', 'workRate', 'ballControl', 'vision',
+  'crossing', 'longShot', 'tackling', 'positioning',
+] as const;
 
 function localizeFoot(foot: string | null | undefined, lang: string): string {
   if (!foot) return '—';
@@ -45,6 +54,10 @@ const PlayerList = () => {
   const [filterLeague, setFilterLeague] = useState('all');
   const [filterTeam, setFilterTeam] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [filterNationality, setFilterNationality] = useState('all');
+  const [filterTraits, setFilterTraits] = useState<string[]>([]);
+  const [filterMinPotential, setFilterMinPotential] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [analystName, setAnalystName] = useState('');
   const [exportPlayer, setExportPlayer] = useState<any>(null);
 
@@ -73,11 +86,7 @@ const PlayerList = () => {
 
   const handleExportPdf = async (player: any, e?: React.MouseEvent, dark = false) => {
     e?.stopPropagation();
-    // Build trait labels map so PDF uses translated trait names
     const traitLabelsMap: Record<string, string> = {};
-    const TRAIT_KEYS = ['fast', 'playmaker', 'strong', 'aerialThreat', 'creative', 'defensive',
-      'clinical', 'versatile', 'leader', 'workRate', 'ballControl', 'vision',
-      'crossing', 'longShot', 'tackling', 'positioning'];
     for (const tk of TRAIT_KEYS) {
       traitLabelsMap[tk] = t(tk as any);
     }
@@ -108,6 +117,7 @@ const PlayerList = () => {
       injuryHistory: t('injuryHistory' as any),
       financialInfo: t('financialInfo' as any),
       radarChart: t('radarChart' as any),
+      nationality: lang === 'tr' ? 'Milliyet' : 'Nationality',
     }, lang, analystName || undefined, dark);
     toast.success(t('exportPdf'));
   };
@@ -130,15 +140,44 @@ const PlayerList = () => {
     return Array.from(set).sort().reverse();
   }, [players]);
 
+  const nationalityOptions = useMemo(() => {
+    const set = new Set<string>();
+    players.forEach(p => { if ((p as any).nationality) set.add((p as any).nationality); });
+    return Array.from(set).sort();
+  }, [players]);
+
+  const toggleTrait = (trait: string) => {
+    setFilterTraits(prev =>
+      prev.includes(trait) ? prev.filter(t => t !== trait) : [...prev, trait]
+    );
+  };
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filterLeague !== 'all') count++;
+    if (filterTeam !== 'all') count++;
+    if (filterYear !== 'all') count++;
+    if (filterNationality !== 'all') count++;
+    if (filterTraits.length > 0) count++;
+    if (filterMinPotential > 0) count++;
+    return count;
+  }, [filterLeague, filterTeam, filterYear, filterNationality, filterTraits, filterMinPotential]);
+
   const filtered = useMemo(() => {
     return players.filter((p) => {
       if (search && !`${p.name} ${p.current_team}`.toLowerCase().includes(search.toLowerCase())) return false;
       if (filterLeague !== 'all' && (p as any).league !== filterLeague) return false;
       if (filterTeam !== 'all' && p.current_team !== filterTeam) return false;
       if (filterYear !== 'all' && !p.created_at?.startsWith(filterYear)) return false;
+      if (filterNationality !== 'all' && (p as any).nationality !== filterNationality) return false;
+      if (filterTraits.length > 0) {
+        const playerTraits: string[] = (p as any).key_traits || [];
+        if (!filterTraits.every(ft => playerTraits.includes(ft))) return false;
+      }
+      if (filterMinPotential > 0 && ((p as any).contract_status || 0) < filterMinPotential) return false;
       return true;
     });
-  }, [players, search, filterLeague, filterTeam, filterYear]);
+  }, [players, search, filterLeague, filterTeam, filterYear, filterNationality, filterTraits, filterMinPotential]);
 
   const traitLabel = (trait: string) => {
     try { return t(trait as any); } catch { return trait; }
@@ -157,45 +196,127 @@ const PlayerList = () => {
         <h1 className="text-2xl font-bold">{t('playerLibrary')}</h1>
         <Button onClick={() => navigate('/players/new')}><Plus className="mr-2 h-4 w-4" />{t('addPlayer')}</Button>
       </div>
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="relative max-w-xs flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t('searchPlayers')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-        </div>
-        {leagueOptions.length > 0 && (
-          <Select value={filterLeague} onValueChange={setFilterLeague}>
-            <SelectTrigger className="w-40"><SelectValue placeholder={t('league')} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('allLeagues')}</SelectItem>
-              {leagueOptions.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-        {teamOptions.length > 0 && (
-          <Select value={filterTeam} onValueChange={setFilterTeam}>
-            <SelectTrigger className="w-40"><SelectValue placeholder={t('team')} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('allTeams')}</SelectItem>
-              {teamOptions.map(tm => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
-        {yearOptions.length > 0 && (
-          <Select value={filterYear} onValueChange={setFilterYear}>
-            <SelectTrigger className="w-28"><SelectValue placeholder={t('year')} /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('allYears')}</SelectItem>
-              {yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        )}
+
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder={t('searchPlayers')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
+
+      {/* Collapsible Advanced Filters */}
+      <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Filter className="h-4 w-4" />
+            {lang === 'tr' ? 'Gelişmiş Filtreler' : 'Advanced Filters'}
+            {activeFilterCount > 0 && (
+              <Badge variant="default" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-[10px]">{activeFilterCount}</Badge>
+            )}
+            <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3">
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <div className="flex flex-wrap gap-3 items-end">
+              {leagueOptions.length > 0 && (
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">{t('league')}</label>
+                  <Select value={filterLeague} onValueChange={setFilterLeague}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('allLeagues')}</SelectItem>
+                      {leagueOptions.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {teamOptions.length > 0 && (
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">{t('team')}</label>
+                  <Select value={filterTeam} onValueChange={setFilterTeam}>
+                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('allTeams')}</SelectItem>
+                      {teamOptions.map(tm => <SelectItem key={tm} value={tm}>{tm}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {yearOptions.length > 0 && (
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">{t('year')}</label>
+                  <Select value={filterYear} onValueChange={setFilterYear}>
+                    <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('allYears')}</SelectItem>
+                      {yearOptions.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {nationalityOptions.length > 0 && (
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground font-medium">{lang === 'tr' ? 'Milliyet' : 'Nationality'}</label>
+                  <Select value={filterNationality} onValueChange={setFilterNationality}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{lang === 'tr' ? 'Tümü' : 'All'}</SelectItem>
+                      {nationalityOptions.map(n => (
+                        <SelectItem key={n} value={n}>{getCountryLabel(n, lang)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* Potential Rating Slider */}
+            <div className="space-y-2 max-w-xs">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground font-medium">{lang === 'tr' ? 'Min. Potansiyel Yetenek' : 'Min. Potential Rating'}</span>
+                <span className="font-bold text-primary">{filterMinPotential > 0 ? `${filterMinPotential}+` : lang === 'tr' ? 'Tümü' : 'All'}</span>
+              </div>
+              <Slider min={0} max={5} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
+            </div>
+
+            {/* Key Traits Multi-Select */}
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground font-medium">{t('keyTraits' as any)}</label>
+              <div className="flex flex-wrap gap-1.5">
+                {TRAIT_KEYS.map(trait => (
+                  <Badge
+                    key={trait}
+                    variant={filterTraits.includes(trait) ? 'default' : 'outline'}
+                    className={`cursor-pointer text-[11px] transition-colors ${filterTraits.includes(trait) ? '' : 'opacity-60 hover:opacity-100'}`}
+                    onClick={() => toggleTrait(trait)}
+                  >
+                    {traitLabel(trait)}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => {
+                setFilterLeague('all'); setFilterTeam('all'); setFilterYear('all');
+                setFilterNationality('all'); setFilterTraits([]); setFilterMinPotential(0);
+              }}>
+                {lang === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
+              </Button>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       <div className="space-y-3">
         {filtered.map((p) => (
           <Card key={p.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setViewPlayer(p)}>
             <CardContent className="flex items-center justify-between p-5">
               <div className="flex flex-col min-w-0 flex-1 mr-4">
-                <div className="font-bold text-base truncate">{p.name}</div>
+                <div className="font-bold text-base truncate">
+                  {(p as any).nationality && <span className="mr-1.5">{getCountryFlag((p as any).nationality)}</span>}
+                  {p.name}
+                </div>
                 <div className="text-sm text-muted-foreground truncate">
                   {p.current_team} · {localizePosition(p.primary_position, lang)} · {localizeFoot(p.preferred_foot, lang)}
                   {(p as any).player_role && <span className="ml-1">· {(p as any).player_role}</span>}
@@ -233,7 +354,10 @@ const PlayerList = () => {
       <Dialog open={!!viewPlayer} onOpenChange={(open) => !open && setViewPlayer(null)}>
         <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader className="p-6 pb-3">
-            <DialogTitle className="text-xl font-bold pr-10 truncate">{viewPlayer?.name}</DialogTitle>
+            <DialogTitle className="text-xl font-bold pr-10 truncate">
+              {viewPlayer?.nationality && <span className="mr-2">{getCountryFlag(viewPlayer.nationality)}</span>}
+              {viewPlayer?.name}
+            </DialogTitle>
           </DialogHeader>
           {viewPlayer && (
             <div className="rounded-lg bg-background border border-border mx-2 mb-2 p-8">
@@ -250,6 +374,9 @@ const PlayerList = () => {
               <div className="space-y-0">
                 <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
                 <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
+                {(viewPlayer as any).nationality && (
+                  <InfoRow label={lang === 'tr' ? 'Milliyet' : 'Nationality'} value={getCountryLabel((viewPlayer as any).nationality, lang)} />
+                )}
                 <InfoRow label={t('primaryPosition')} value={localizePosition(viewPlayer.primary_position, lang)} />
                 {(viewPlayer as any).player_role && <InfoRow label={t('playerRole' as any)} value={(viewPlayer as any).player_role} />}
                 <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />

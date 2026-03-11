@@ -343,22 +343,57 @@ const SquadBuilder = () => {
     return (
       <div
         ref={interactive ? pitchRef : undefined}
-        className="relative w-full max-w-full rounded-lg border-2 border-primary bg-primary/20 overflow-hidden touch-none"
-        style={{ aspectRatio: '68/105', maxHeight: '70vh' }}
+        className="relative w-full max-w-full rounded-xl overflow-hidden touch-none"
+        style={{
+          aspectRatio: '68/105',
+          maxHeight: '70vh',
+          background: 'linear-gradient(180deg, #1a6b2a 0%, #228b22 30%, #1e7a24 50%, #228b22 70%, #1a6b2a 100%)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        }}
         onPointerMove={interactive ? handlePointerMove : undefined}
         onPointerUp={interactive ? handlePointerUp : undefined}
       >
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-0 right-0 h-px bg-primary/40" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border border-primary/40" />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-t-0" />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[44%] h-[17%] border border-primary/30 border-b-0" />
+        {/* Grass stripe texture */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 8%, rgba(255,255,255,0.03) 8%, rgba(255,255,255,0.03) 16%)',
+        }} />
+        {/* Field lines */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Border */}
+          <div className="absolute inset-[3%] border-2 border-white/60 rounded-sm" />
+          {/* Half line */}
+          <div className="absolute top-1/2 left-[3%] right-[3%] h-0 border-t-2 border-white/60" />
+          {/* Center circle */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18%] aspect-square rounded-full border-2 border-white/60" />
+          {/* Center dot */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/70" />
+          {/* Penalty areas */}
+          <div className="absolute top-[3%] left-1/2 -translate-x-1/2 w-[44%] h-[14%] border-2 border-t-0 border-white/60" />
+          <div className="absolute bottom-[3%] left-1/2 -translate-x-1/2 w-[44%] h-[14%] border-2 border-b-0 border-white/60" />
+          {/* Goal areas */}
+          <div className="absolute top-[3%] left-1/2 -translate-x-1/2 w-[20%] h-[6%] border-2 border-t-0 border-white/50" />
+          <div className="absolute bottom-[3%] left-1/2 -translate-x-1/2 w-[20%] h-[6%] border-2 border-b-0 border-white/50" />
+          {/* Corner arcs */}
+          <div className="absolute top-[2%] left-[2%] w-4 h-4 border-r-2 border-b-2 border-white/40 rounded-br-full" />
+          <div className="absolute top-[2%] right-[2%] w-4 h-4 border-l-2 border-b-2 border-white/40 rounded-bl-full" />
+          <div className="absolute bottom-[2%] left-[2%] w-4 h-4 border-r-2 border-t-2 border-white/40 rounded-tr-full" />
+          <div className="absolute bottom-[2%] right-[2%] w-4 h-4 border-l-2 border-t-2 border-white/40 rounded-tl-full" />
         </div>
         {pos.map((p, idx) => {
           const ox = activeOffsets[idx]?.x ?? p.x;
           const oy = activeOffsets[idx]?.y ?? p.y;
-          // Use abbreviations in circles (KL, STP, SNT for TR; GK, CB, ST for EN)
           const abbrLabel = localizePositionAbbr(p.label, lang);
+
+          const circleClasses = `
+            w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center
+            text-[10px] sm:text-xs font-bold text-white
+            shadow-[0_0_12px_rgba(76,175,80,0.5)]
+            border border-white/30
+            backdrop-blur-sm
+          `;
+          const circleStyle = {
+            background: 'linear-gradient(135deg, rgba(27,94,32,0.85), rgba(56,142,60,0.75))',
+          };
 
           return interactive ? (
             <button
@@ -368,13 +403,13 @@ const SquadBuilder = () => {
               onClick={() => openPlayerModal(idx)}
               onPointerDown={(e) => handlePointerDown(idx, e)}
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1B5E20] border-2 border-[#4CAF50] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white group-hover:scale-110 transition-transform shadow-lg">{abbrLabel}</div>
-              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignments[idx]?.name || '—'}</span>
+              <div className={`${circleClasses} group-hover:scale-110 transition-transform`} style={circleStyle}>{abbrLabel}</div>
+              <span className="text-[9px] sm:text-[10px] text-white font-semibold truncate max-w-[60px] sm:max-w-[70px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{assignments[idx]?.name || '—'}</span>
             </button>
           ) : (
             <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${ox}%`, top: `${oy}%` }}>
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#1B5E20] border-2 border-[#4CAF50] flex items-center justify-center text-[10px] sm:text-xs font-bold text-white shadow-lg">{abbrLabel}</div>
-              <span className="text-[9px] sm:text-[10px] text-foreground font-medium truncate max-w-[60px] sm:max-w-[70px]">{assignMap[idx] || '—'}</span>
+              <div className={circleClasses} style={circleStyle}>{abbrLabel}</div>
+              <span className="text-[9px] sm:text-[10px] text-white font-semibold truncate max-w-[60px] sm:max-w-[70px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{assignMap[idx] || '—'}</span>
             </div>
           );
         })}

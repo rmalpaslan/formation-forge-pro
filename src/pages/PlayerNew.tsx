@@ -326,6 +326,12 @@ const PlayerNew = () => {
             <Input placeholder={t('videoLinkPlaceholder' as any)} value={videoLink} onChange={(e) => setVideoLink(e.target.value)} />
           </div>
 
+          {/* Nationality */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{lang === 'tr' ? 'Milliyet' : 'Nationality'}</label>
+            <NationalitySelector value={nationality} onChange={setNationality} />
+          </div>
+
           <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1" onClick={handleDraftSave} disabled={loading}>
