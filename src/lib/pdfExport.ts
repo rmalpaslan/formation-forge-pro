@@ -174,7 +174,8 @@ function addPageFooter(doc: jsPDF, fontLoaded: boolean, locale: string = 'tr', a
 
     // Centered analyst name
     if (analystName) {
-      const prepLabel = `Hazırlayan: ${analystName}`;
+      const prepPrefix = locale === 'tr' ? 'Hazırlayan' : 'Prepared by';
+      const prepLabel = `${prepPrefix}: ${analystName}`;
       const prepW = doc.getTextWidth(prepLabel);
       doc.text(prepLabel, (pw - prepW) / 2, ph - 8);
     }
