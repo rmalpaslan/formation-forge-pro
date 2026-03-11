@@ -620,14 +620,12 @@ export async function exportPlayerPdf(
 
   // ── SCOUTING DASHBOARD PAGE ──
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin, darkMode);
-  h.setY(30);
-
   if (darkMode) {
     doc.setFillColor(...DARK_BG);
     doc.rect(0, 0, h.pw, h.ph, 'F');
-    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
   }
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, darkMode);
+  h.setY(30);
 
   // Green header bar
   doc.setFillColor(...GREEN);

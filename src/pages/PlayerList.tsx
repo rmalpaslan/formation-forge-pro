@@ -73,7 +73,16 @@ const PlayerList = () => {
 
   const handleExportPdf = async (player: any, e?: React.MouseEvent, dark = false) => {
     e?.stopPropagation();
+    // Build trait labels map so PDF uses translated trait names
+    const traitLabelsMap: Record<string, string> = {};
+    const TRAIT_KEYS = ['fast', 'playmaker', 'strong', 'aerialThreat', 'creative', 'defensive',
+      'clinical', 'versatile', 'leader', 'workRate', 'ballControl', 'vision',
+      'crossing', 'longShot', 'tackling', 'positioning'];
+    for (const tk of TRAIT_KEYS) {
+      traitLabelsMap[tk] = t(tk as any);
+    }
     await exportPlayerPdf(player, {
+      ...traitLabelsMap,
       currentTeam: t('currentTeam'),
       league: t('league'),
       primaryPosition: t('primaryPosition'),
