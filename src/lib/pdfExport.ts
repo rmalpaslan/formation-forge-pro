@@ -728,8 +728,8 @@ export async function exportPlayerPdf(
     { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
   ];
   if (radarData.some(d => d.value > 0)) {
-    h.addY(8);
-    h.checkPage(80, darkMode);
+    h.addY(10);
+    h.checkPage(90, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
     doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
