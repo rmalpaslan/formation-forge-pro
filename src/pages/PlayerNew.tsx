@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { positionMapTR } from '@/lib/positionMap';
 import { getRolesForPosition } from '@/lib/positionRoles';
 import { CurrencyInput } from '@/components/CurrencyInput';
+import { NationalitySelector } from '@/components/NationalitySelector';
 
 // CF and ST both map to 'Santrfor' — keep only ST to avoid duplicates
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'ST'];
