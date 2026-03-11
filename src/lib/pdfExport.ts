@@ -1067,14 +1067,12 @@ export async function exportSquadPdf(
   );
 
   doc.addPage();
-  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
-  h.setY(25);
-
   if (dark) {
     doc.setFillColor(...DARK_BG);
     doc.rect(0, 0, h.pw, h.ph, 'F');
-    addPageHeader(doc, fontLoaded, h.pw, h.margin, true);
   }
+  addPageHeader(doc, fontLoaded, h.pw, h.margin, dark);
+  h.setY(25);
 
   doc.setFontSize(18);
   h.setFont('bold');
