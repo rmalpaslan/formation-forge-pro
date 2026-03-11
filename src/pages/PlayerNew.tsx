@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { positionMapTR } from '@/lib/positionMap';
 import { getRolesForPosition } from '@/lib/positionRoles';
 import { CurrencyInput } from '@/components/CurrencyInput';
+import { NationalitySelector } from '@/components/NationalitySelector';
 
 // CF and ST both map to 'Santrfor' — keep only ST to avoid duplicates
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'ST'];
@@ -58,6 +59,7 @@ const PlayerNew = () => {
   const [marketValue, setMarketValue] = useState('');
   const [resalePotential, setResalePotential] = useState(0);
   const [injuryHistory, setInjuryHistory] = useState('');
+  const [nationality, setNationality] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -94,6 +96,7 @@ const PlayerNew = () => {
           setMarketValue((data as any).market_value || '');
           setResalePotential((data as any).resale_potential || 0);
           setInjuryHistory((data as any).injury_history || '');
+          setNationality((data as any).nationality || '');
         }
       });
     }
@@ -135,6 +138,7 @@ const PlayerNew = () => {
       market_value: marketValue || null,
       resale_potential: resalePotential,
       injury_history: injuryHistory || null,
+      nationality: nationality || null,
       user_id: user!.id,
     };
     const { error } = isEdit
@@ -320,6 +324,12 @@ const PlayerNew = () => {
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('videoLink' as any)}</label>
             <Input placeholder={t('videoLinkPlaceholder' as any)} value={videoLink} onChange={(e) => setVideoLink(e.target.value)} />
+          </div>
+
+          {/* Nationality */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{lang === 'tr' ? 'Milliyet' : 'Nationality'}</label>
+            <NationalitySelector value={nationality} onChange={setNationality} />
           </div>
 
           <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />

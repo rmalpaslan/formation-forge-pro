@@ -591,6 +591,7 @@ interface PlayerData {
   market_value?: string | null;
   resale_potential?: number | null;
   injury_history?: string | null;
+  nationality?: string | null;
 }
 
 export async function exportPlayerPdf(
@@ -680,6 +681,11 @@ export async function exportPlayerPdf(
   if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
+  if (player.nationality) {
+    // Import country data inline for PDF
+    const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
+    attrs.push({ label: natLabel, value: cleanVal(player.nationality) });
+  }
   if (player.market_value) attrs.push({ label: labels.marketValue || (locale === 'tr' ? 'Piyasa Değeri' : 'Market Value'), value: cleanVal(player.market_value) });
 
   const colW = (h.cw - 10) / 2;

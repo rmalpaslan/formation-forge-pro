@@ -111,6 +111,7 @@ export type Database = {
           market_value: string | null
           mental_rating: number | null
           name: string
+          nationality: string | null
           physical_rating: number | null
           player_role: string | null
           preferred_foot: string | null
@@ -141,6 +142,7 @@ export type Database = {
           market_value?: string | null
           mental_rating?: number | null
           name: string
+          nationality?: string | null
           physical_rating?: number | null
           player_role?: string | null
           preferred_foot?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           market_value?: string | null
           mental_rating?: number | null
           name?: string
+          nationality?: string | null
           physical_rating?: number | null
           player_role?: string | null
           preferred_foot?: string | null
