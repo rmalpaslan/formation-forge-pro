@@ -59,6 +59,7 @@ const PlayerNew = () => {
   const [marketValue, setMarketValue] = useState('');
   const [resalePotential, setResalePotential] = useState(0);
   const [injuryHistory, setInjuryHistory] = useState('');
+  const [nationality, setNationality] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
