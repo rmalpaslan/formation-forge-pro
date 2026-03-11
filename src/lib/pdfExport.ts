@@ -744,7 +744,7 @@ export async function exportPlayerPdf(
     const chartCx = h.pw / 2;
     const chartCy = h.getY() + 28;
     drawRadarChart(doc, h, radarData, chartCx, chartCy, 25, darkMode);
-    h.addY(65);
+    h.addY(70);
   }
 
   // ── Skill Ratings (Progress Bars) ──
