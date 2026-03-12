@@ -423,7 +423,8 @@ const SquadBuilder = () => {
               onPointerDown={(e) => handlePointerDown(idx, e)}
             >
               <div className={`${circleClasses} group-hover:scale-110 transition-transform`} style={circleStyle}>{abbrLabel}</div>
-              <span className="text-[9px] sm:text-[10px] text-white font-semibold truncate max-w-[60px] sm:max-w-[70px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{assignments[idx]?.name || '—'}</span>
+              <span className="text-[9px] sm:text-[10px] text-white font-semibold truncate max-w-[60px] sm:max-w-[70px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{playerName || '—'}</span>
+              {natName && <span className="text-[8px] text-white/70 truncate max-w-[60px] sm:max-w-[70px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">{natName}</span>}
             </button>
           ) : (
             <div key={idx} className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5" style={{ left: `${ox}%`, top: `${oy}%` }}>
