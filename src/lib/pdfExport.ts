@@ -1154,10 +1154,14 @@ export async function exportSquadPdf(
     const cx = pX + (pos.x / 100) * finalPitchW;
     const cy = pY + (pos.y / 100) * finalPitchH;
 
+    // Glassmorphism-style circle
     doc.setFillColor(255, 255, 255);
+    doc.setGState(new (doc as any).GState({ opacity: 0.2 }));
     doc.circle(cx, cy, 5, 'F');
-    doc.setFillColor(...GREEN);
-    doc.circle(cx, cy, 4.5, 'F');
+    doc.setGState(new (doc as any).GState({ opacity: 1 }));
+    doc.setDrawColor(255, 255, 255);
+    doc.setLineWidth(0.4);
+    doc.circle(cx, cy, 5, 'S');
 
     doc.setFontSize(7);
     h.setFont('bold');
