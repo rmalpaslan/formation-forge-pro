@@ -361,32 +361,32 @@ const SquadBuilder = () => {
         {/* Field lines via SVG for accurate proportions */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 68 105" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Boundary */}
-          <rect x="2" y="2" width="64" height="101" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" rx="0.3" />
+          <rect x="2" y="2" width="64" height="101" stroke="white" strokeOpacity="0.55" strokeWidth="0.35" rx="0.2" />
           {/* Half line */}
-          <line x1="2" y1="52.5" x2="66" y2="52.5" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
+          <line x1="2" y1="52.5" x2="66" y2="52.5" stroke="white" strokeOpacity="0.55" strokeWidth="0.35" />
           {/* Center circle */}
-          <circle cx="34" cy="52.5" r="9.15" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
+          <circle cx="34" cy="52.5" r="9.15" stroke="white" strokeOpacity="0.55" strokeWidth="0.35" />
           {/* Center dot */}
-          <circle cx="34" cy="52.5" r="0.5" fill="white" fillOpacity="0.7" />
+          <circle cx="34" cy="52.5" r="0.5" fill="white" fillOpacity="0.65" />
           {/* Penalty area top */}
-          <rect x="13.84" y="2" width="40.32" height="16.5" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
+          <rect x="13.84" y="2" width="40.32" height="16.5" stroke="white" strokeOpacity="0.55" strokeWidth="0.35" />
           {/* Penalty area bottom */}
-          <rect x="13.84" y="86.5" width="40.32" height="16.5" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
+          <rect x="13.84" y="86.5" width="40.32" height="16.5" stroke="white" strokeOpacity="0.55" strokeWidth="0.35" />
           {/* Goal area top */}
-          <rect x="24.84" y="2" width="18.32" height="5.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <rect x="24.84" y="2" width="18.32" height="5.5" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
           {/* Goal area bottom */}
-          <rect x="24.84" y="97.5" width="18.32" height="5.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <rect x="24.84" y="97.5" width="18.32" height="5.5" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
           {/* Penalty spots */}
-          <circle cx="34" cy="13" r="0.35" fill="white" fillOpacity="0.6" />
-          <circle cx="34" cy="92" r="0.35" fill="white" fillOpacity="0.6" />
+          <circle cx="34" cy="13" r="0.35" fill="white" fillOpacity="0.55" />
+          <circle cx="34" cy="92" r="0.35" fill="white" fillOpacity="0.55" />
           {/* Penalty arcs */}
-          <path d="M 25.5 18.5 A 9.15 9.15 0 0 0 42.5 18.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
-          <path d="M 25.5 86.5 A 9.15 9.15 0 0 1 42.5 86.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
-          {/* Corner arcs — perfect 90° quarter circles at each corner */}
-          <path d="M 2 4 A 2 2 0 0 0 4 2" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
-          <path d="M 64 2 A 2 2 0 0 0 66 4" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
-          <path d="M 2 101 A 2 2 0 0 1 4 103" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
-          <path d="M 64 103 A 2 2 0 0 1 66 101" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <path d="M 25.5 18.5 A 9.15 9.15 0 0 0 42.5 18.5" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
+          <path d="M 25.5 86.5 A 9.15 9.15 0 0 1 42.5 86.5" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
+          {/* Corner arcs — perfect 90° quarter circles */}
+          <path d="M 2 4 A 2 2 0 0 0 4 2" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
+          <path d="M 64 2 A 2 2 0 0 0 66 4" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
+          <path d="M 2 101 A 2 2 0 0 1 4 103" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
+          <path d="M 64 103 A 2 2 0 0 1 66 101" stroke="white" strokeOpacity="0.45" strokeWidth="0.3" />
         </svg>
         {pos.map((p, idx) => {
           const ox = activeOffsets[idx]?.x ?? p.x;
