@@ -1096,19 +1096,57 @@ export async function exportSquadPdf(
   const pX = h.margin + (h.cw - finalPitchW) / 2;
   const pY = h.getY();
 
-  doc.setFillColor(34, 120, 34);
+  // Draw pitch with gradient
+  doc.setFillColor(26, 107, 42);
   doc.roundedRect(pX, pY, finalPitchW, finalPitchH, 3, 3, 'F');
+  // Lighter stripe overlay
+  doc.setFillColor(34, 139, 34);
+  doc.setGState(new (doc as any).GState({ opacity: 0.3 }));
+  const stripeH = finalPitchH / 10;
+  for (let i = 0; i < 10; i += 2) {
+    doc.rect(pX, pY + i * stripeH, finalPitchW, stripeH, 'F');
+  }
+  doc.setGState(new (doc as any).GState({ opacity: 1 }));
 
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.5);
+  // Boundary
   doc.rect(pX + 2, pY + 2, finalPitchW - 4, finalPitchH - 4, 'S');
+  // Half line
   doc.line(pX + 2, pY + finalPitchH / 2, pX + finalPitchW - 2, pY + finalPitchH / 2);
+  // Center circle
   doc.circle(pX + finalPitchW / 2, pY + finalPitchH / 2, finalPitchW * 0.12, 'S');
+  // Center dot
+  doc.setFillColor(255, 255, 255);
+  doc.circle(pX + finalPitchW / 2, pY + finalPitchH / 2, 0.6, 'F');
 
   const penW = finalPitchW * 0.44;
   const penH = finalPitchH * 0.17;
+  // Penalty areas
   doc.rect(pX + (finalPitchW - penW) / 2, pY + 2, penW, penH, 'S');
   doc.rect(pX + (finalPitchW - penW) / 2, pY + finalPitchH - penH - 2, penW, penH, 'S');
+  // Goal areas
+  const goalW = finalPitchW * 0.27;
+  const goalH = finalPitchH * 0.055;
+  doc.rect(pX + (finalPitchW - goalW) / 2, pY + 2, goalW, goalH, 'S');
+  doc.rect(pX + (finalPitchW - goalW) / 2, pY + finalPitchH - goalH - 2, goalW, goalH, 'S');
+
+  // Corner arcs
+  const cornerR = 2;
+  // Top-left
+  doc.setLineWidth(0.35);
+  const arcSegments = 10;
+  const drawArc = (cx: number, cy: number, startA: number, endA: number) => {
+    for (let i = 0; i < arcSegments; i++) {
+      const a1 = startA + (endA - startA) * (i / arcSegments);
+      const a2 = startA + (endA - startA) * ((i + 1) / arcSegments);
+      doc.line(cx + cornerR * Math.cos(a1), cy + cornerR * Math.sin(a1), cx + cornerR * Math.cos(a2), cy + cornerR * Math.sin(a2));
+    }
+  };
+  drawArc(pX + 2, pY + 2, 0, Math.PI / 2);
+  drawArc(pX + finalPitchW - 2, pY + 2, Math.PI / 2, Math.PI);
+  drawArc(pX + 2, pY + finalPitchH - 2, -Math.PI / 2, 0);
+  drawArc(pX + finalPitchW - 2, pY + finalPitchH - 2, Math.PI, Math.PI * 1.5);
 
   const positions = FORMATION_POSITIONS[squad.formation] || FORMATION_POSITIONS['4-3-3'];
   for (let idx = 0; idx < positions.length; idx++) {
