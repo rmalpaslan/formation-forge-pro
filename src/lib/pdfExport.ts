@@ -683,9 +683,10 @@ export async function exportPlayerPdf(
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
   if (player.nationality) {
-    // Import country data inline for PDF
     const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
-    attrs.push({ label: natLabel, value: cleanVal(player.nationality) });
+    const c = countries.find(c => c.code === player.nationality);
+    const natDisplayName = c ? (locale === 'tr' ? c.nameTR : c.name) : (player.nationality || '');
+    attrs.push({ label: natLabel, value: natDisplayName });
   }
   if (player.market_value) attrs.push({ label: labels.marketValue || (locale === 'tr' ? 'Piyasa Değeri' : 'Market Value'), value: cleanVal(player.market_value) });
 
