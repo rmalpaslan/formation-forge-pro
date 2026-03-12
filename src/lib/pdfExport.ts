@@ -793,7 +793,7 @@ export async function exportPlayerPdf(
 
       h.setFont('bold');
       doc.setTextColor(...textColor);
-      doc.text(`${rating.value}/5`, h.pw - h.margin - 10, h.getY());
+      doc.text(`${rating.value}/10`, h.pw - h.margin - 10, h.getY());
 
       const barX = h.margin + labelColW + 10;
       const barY = h.getY() - 3.5;
