@@ -1096,11 +1096,11 @@ export async function exportSquadPdf(
   const pX = h.margin + (h.cw - finalPitchW) / 2;
   const pY = h.getY();
 
-  // Draw pitch with gradient
-  doc.setFillColor(26, 107, 42);
+  // Draw pitch with dark green gradient
+  doc.setFillColor(13, 51, 32);
   doc.roundedRect(pX, pY, finalPitchW, finalPitchH, 3, 3, 'F');
   // Lighter stripe overlay
-  doc.setFillColor(34, 139, 34);
+  doc.setFillColor(20, 70, 44);
   doc.setGState(new (doc as any).GState({ opacity: 0.3 }));
   const stripeH = finalPitchH / 10;
   for (let i = 0; i < 10; i += 2) {
