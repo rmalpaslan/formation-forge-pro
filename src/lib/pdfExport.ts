@@ -279,9 +279,9 @@ function drawRadarChart(
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
-  // Draw grid circles
-  for (let level = 1; level <= 5; level++) {
-    const r = (level / 5) * radius;
+  // Draw grid circles (10-point scale)
+  for (let level = 1; level <= 10; level += 2) {
+    const r = (level / 10) * radius;
     doc.setDrawColor(...(dark ? [70, 70, 70] as [number, number, number] : [220, 220, 220] as [number, number, number]));
     doc.setLineWidth(0.2);
     const pts: [number, number][] = [];
@@ -319,7 +319,7 @@ function drawRadarChart(
   const dataPts: [number, number][] = [];
   for (let i = 0; i < n; i++) {
     const angle = startAngle + i * angleStep;
-    const r = (data[i].value / 5) * radius;
+    const r = (data[i].value / 10) * radius;
     dataPts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
   }
 
@@ -675,6 +675,13 @@ export async function exportPlayerPdf(
 
   // ── 2-column grid for player attributes ──
   const attrs: { label: string; value: string }[] = [];
+  // Nationality first — upper info panel
+  if (player.nationality) {
+    const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
+    const c = countries.find(c => c.code === player.nationality);
+    const natDisplayName = c ? (locale === 'tr' ? c.nameTR : c.name) : (player.nationality || '');
+    attrs.push({ label: natLabel, value: natDisplayName });
+  }
   if (player.current_team) attrs.push({ label: labels.currentTeam, value: cleanVal(player.current_team) });
   if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
   if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: localizePosition(player.primary_position, locale) });
@@ -682,12 +689,6 @@ export async function exportPlayerPdf(
   if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
-  if (player.nationality) {
-    const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
-    const c = countries.find(c => c.code === player.nationality);
-    const natDisplayName = c ? (locale === 'tr' ? c.nameTR : c.name) : (player.nationality || '');
-    attrs.push({ label: natLabel, value: natDisplayName });
-  }
   if (player.market_value) attrs.push({ label: labels.marketValue || (locale === 'tr' ? 'Piyasa Değeri' : 'Market Value'), value: cleanVal(player.market_value) });
 
   const colW = (h.cw - 10) / 2;
@@ -793,14 +794,14 @@ export async function exportPlayerPdf(
 
       h.setFont('bold');
       doc.setTextColor(...textColor);
-      doc.text(`${rating.value}/5`, h.pw - h.margin - 10, h.getY());
+      doc.text(`${rating.value}/10`, h.pw - h.margin - 10, h.getY());
 
       const barX = h.margin + labelColW + 10;
       const barY = h.getY() - 3.5;
       doc.setFillColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [230, 230, 230] as [number, number, number]));
       doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, 'F');
 
-      const fillW = (rating.value / 5) * barW;
+      const fillW = (rating.value / 10) * barW;
       if (fillW > 0) {
         doc.setFillColor(...GREEN);
         doc.roundedRect(barX, barY, fillW, barH, 1.5, 1.5, 'F');
@@ -1096,11 +1097,11 @@ export async function exportSquadPdf(
   const pX = h.margin + (h.cw - finalPitchW) / 2;
   const pY = h.getY();
 
-  // Draw pitch with gradient
-  doc.setFillColor(26, 107, 42);
+  // Draw pitch with dark green gradient
+  doc.setFillColor(13, 51, 32);
   doc.roundedRect(pX, pY, finalPitchW, finalPitchH, 3, 3, 'F');
   // Lighter stripe overlay
-  doc.setFillColor(34, 139, 34);
+  doc.setFillColor(20, 70, 44);
   doc.setGState(new (doc as any).GState({ opacity: 0.3 }));
   const stripeH = finalPitchH / 10;
   for (let i = 0; i < 10; i += 2) {

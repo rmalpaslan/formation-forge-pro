@@ -276,7 +276,7 @@ const PlayerList = () => {
                 <span className="text-muted-foreground font-medium">{lang === 'tr' ? 'Min. Potansiyel Yetenek' : 'Min. Potential Rating'}</span>
                 <span className="font-bold text-primary">{filterMinPotential > 0 ? `${filterMinPotential}+` : lang === 'tr' ? 'Tümü' : 'All'}</span>
               </div>
-              <Slider min={0} max={5} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
+              <Slider min={0} max={10} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
             </div>
 
             {/* Key Traits Multi-Select */}
@@ -372,11 +372,11 @@ const PlayerList = () => {
 
               {/* Info Grid */}
               <div className="space-y-0">
-                <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
-                <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
-                {(viewPlayer as any).nationality && (
+              {(viewPlayer as any).nationality && (
                   <InfoRow label={lang === 'tr' ? 'Milliyet' : 'Nationality'} value={getCountryLabel((viewPlayer as any).nationality, lang)} />
                 )}
+                <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
+                <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
                 <InfoRow label={t('primaryPosition')} value={localizePosition(viewPlayer.primary_position, lang)} />
                 {(viewPlayer as any).player_role && <InfoRow label={t('playerRole' as any)} value={(viewPlayer as any).player_role} />}
                 <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />
@@ -515,9 +515,9 @@ function RatingBar({ label, value }: { label: string; value: number }) {
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-bold text-primary">{value}/5</span>
+        <span className="font-bold text-primary">{value}/10</span>
       </div>
-      <Progress value={(value / 5) * 100} className="h-2" />
+      <Progress value={(value / 10) * 100} className="h-2" />
     </div>
   );
 }

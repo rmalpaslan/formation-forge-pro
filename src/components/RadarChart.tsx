@@ -7,7 +7,7 @@ interface RadarChartProps {
 export function PlayerRadarChart({ data }: RadarChartProps) {
   if (!data.some(d => d.value > 0)) return null;
 
-  const chartData = data.map(d => ({ subject: d.label, A: d.value, fullMark: 5 }));
+  const chartData = data.map(d => ({ subject: d.label, A: d.value, fullMark: 10 }));
 
   return (
     <div className="w-full h-[260px]">
@@ -20,7 +20,7 @@ export function PlayerRadarChart({ data }: RadarChartProps) {
           />
           <PolarRadiusAxis
             angle={90}
-            domain={[0, 5]}
+            domain={[0, 10]}
             tickCount={6}
             tick={{ fontSize: 9 }}
             axisLine={false}
