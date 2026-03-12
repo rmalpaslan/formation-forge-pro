@@ -276,7 +276,7 @@ const PlayerList = () => {
                 <span className="text-muted-foreground font-medium">{lang === 'tr' ? 'Min. Potansiyel Yetenek' : 'Min. Potential Rating'}</span>
                 <span className="font-bold text-primary">{filterMinPotential > 0 ? `${filterMinPotential}+` : lang === 'tr' ? 'Tümü' : 'All'}</span>
               </div>
-              <Slider min={0} max={5} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
+              <Slider min={0} max={10} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
             </div>
 
             {/* Key Traits Multi-Select */}
