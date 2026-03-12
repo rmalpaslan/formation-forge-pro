@@ -392,15 +392,26 @@ const SquadBuilder = () => {
           const oy = activeOffsets[idx]?.y ?? p.y;
           const abbrLabel = localizePositionAbbr(p.label, lang);
 
+          const playerData = interactive ? assignments[idx] : null;
+          const playerName = interactive ? assignments[idx]?.name : assignMap[idx];
+          const playerObj = interactive && assignments[idx] ? players.find(pl => pl.id === assignments[idx].id) : null;
+          const natCode = playerObj?.nationality || null;
+          const natName = natCode ? (() => {
+            const c = countries.find(c => c.code === natCode);
+            if (!c) return '';
+            return lang === 'tr' ? c.nameTR : c.name;
+          })() : null;
+
           const circleClasses = `
             w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center
             text-[10px] sm:text-xs font-bold text-white
-            shadow-[0_0_12px_rgba(76,175,80,0.5)]
-            border border-white/30
-            backdrop-blur-sm
+            shadow-[0_0_16px_rgba(255,255,255,0.15)]
+            border border-white/40
           `;
           const circleStyle = {
-            background: 'linear-gradient(135deg, rgba(27,94,32,0.85), rgba(56,142,60,0.75))',
+            background: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
           };
 
           return interactive ? (
