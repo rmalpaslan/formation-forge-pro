@@ -319,7 +319,7 @@ function drawRadarChart(
   const dataPts: [number, number][] = [];
   for (let i = 0; i < n; i++) {
     const angle = startAngle + i * angleStep;
-    const r = (data[i].value / 5) * radius;
+    const r = (data[i].value / 10) * radius;
     dataPts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
   }
 
