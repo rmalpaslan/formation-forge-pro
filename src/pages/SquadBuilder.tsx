@@ -348,15 +348,15 @@ const SquadBuilder = () => {
         style={{
           aspectRatio: '68/105',
           maxHeight: '70vh',
-          background: 'linear-gradient(180deg, #1a6b2a 0%, #228b22 30%, #1e7a24 50%, #228b22 70%, #1a6b2a 100%)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+          background: 'linear-gradient(180deg, #0d3320 0%, #14462c 30%, #0f3a25 50%, #14462c 70%, #0d3320 100%)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
         }}
         onPointerMove={interactive ? handlePointerMove : undefined}
         onPointerUp={interactive ? handlePointerUp : undefined}
       >
         {/* Grass stripe texture */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 8%, rgba(255,255,255,0.03) 8%, rgba(255,255,255,0.03) 16%)',
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 8%, rgba(255,255,255,0.02) 8%, rgba(255,255,255,0.02) 16%)',
         }} />
         {/* Field lines via SVG for accurate proportions */}
         <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 68 105" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
