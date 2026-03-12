@@ -279,9 +279,9 @@ function drawRadarChart(
   const angleStep = (2 * Math.PI) / n;
   const startAngle = -Math.PI / 2;
 
-  // Draw grid circles
-  for (let level = 1; level <= 5; level++) {
-    const r = (level / 5) * radius;
+  // Draw grid circles (10-point scale)
+  for (let level = 1; level <= 10; level += 2) {
+    const r = (level / 10) * radius;
     doc.setDrawColor(...(dark ? [70, 70, 70] as [number, number, number] : [220, 220, 220] as [number, number, number]));
     doc.setLineWidth(0.2);
     const pts: [number, number][] = [];
