@@ -372,11 +372,11 @@ const PlayerList = () => {
 
               {/* Info Grid */}
               <div className="space-y-0">
-                <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
-                <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
-                {(viewPlayer as any).nationality && (
+              {(viewPlayer as any).nationality && (
                   <InfoRow label={lang === 'tr' ? 'Milliyet' : 'Nationality'} value={getCountryLabel((viewPlayer as any).nationality, lang)} />
                 )}
+                <InfoRow label={t('currentTeam')} value={viewPlayer.current_team} />
+                <InfoRow label={t('league')} value={(viewPlayer as any).league || '—'} />
                 <InfoRow label={t('primaryPosition')} value={localizePosition(viewPlayer.primary_position, lang)} />
                 {(viewPlayer as any).player_role && <InfoRow label={t('playerRole' as any)} value={(viewPlayer as any).player_role} />}
                 <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />
