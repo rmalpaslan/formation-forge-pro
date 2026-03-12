@@ -357,28 +357,36 @@ const SquadBuilder = () => {
         <div className="absolute inset-0 pointer-events-none" style={{
           backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 8%, rgba(255,255,255,0.03) 8%, rgba(255,255,255,0.03) 16%)',
         }} />
-        {/* Field lines */}
-        <div className="absolute inset-0 pointer-events-none">
-          {/* Border */}
-          <div className="absolute inset-[3%] border-2 border-white/60 rounded-sm" />
+        {/* Field lines via SVG for accurate proportions */}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 68 105" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Boundary */}
+          <rect x="2" y="2" width="64" height="101" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" rx="0.3" />
           {/* Half line */}
-          <div className="absolute top-1/2 left-[3%] right-[3%] h-0 border-t-2 border-white/60" />
+          <line x1="2" y1="52.5" x2="66" y2="52.5" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
           {/* Center circle */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[18%] aspect-square rounded-full border-2 border-white/60" />
+          <circle cx="34" cy="52.5" r="9.15" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
           {/* Center dot */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white/70" />
-          {/* Penalty areas */}
-          <div className="absolute top-[3%] left-1/2 -translate-x-1/2 w-[44%] h-[14%] border-2 border-t-0 border-white/60" />
-          <div className="absolute bottom-[3%] left-1/2 -translate-x-1/2 w-[44%] h-[14%] border-2 border-b-0 border-white/60" />
-          {/* Goal areas */}
-          <div className="absolute top-[3%] left-1/2 -translate-x-1/2 w-[20%] h-[6%] border-2 border-t-0 border-white/50" />
-          <div className="absolute bottom-[3%] left-1/2 -translate-x-1/2 w-[20%] h-[6%] border-2 border-b-0 border-white/50" />
-          {/* Corner arcs */}
-          <div className="absolute top-[2%] left-[2%] w-4 h-4 border-r-2 border-b-2 border-white/40 rounded-br-full" />
-          <div className="absolute top-[2%] right-[2%] w-4 h-4 border-l-2 border-b-2 border-white/40 rounded-bl-full" />
-          <div className="absolute bottom-[2%] left-[2%] w-4 h-4 border-r-2 border-t-2 border-white/40 rounded-tr-full" />
-          <div className="absolute bottom-[2%] right-[2%] w-4 h-4 border-l-2 border-t-2 border-white/40 rounded-tl-full" />
-        </div>
+          <circle cx="34" cy="52.5" r="0.5" fill="white" fillOpacity="0.7" />
+          {/* Penalty area top */}
+          <rect x="13.84" y="2" width="40.32" height="16.5" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
+          {/* Penalty area bottom */}
+          <rect x="13.84" y="86.5" width="40.32" height="16.5" stroke="white" strokeOpacity="0.6" strokeWidth="0.4" />
+          {/* Goal area top */}
+          <rect x="24.84" y="2" width="18.32" height="5.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          {/* Goal area bottom */}
+          <rect x="24.84" y="97.5" width="18.32" height="5.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          {/* Penalty spots */}
+          <circle cx="34" cy="13" r="0.35" fill="white" fillOpacity="0.6" />
+          <circle cx="34" cy="92" r="0.35" fill="white" fillOpacity="0.6" />
+          {/* Penalty arcs */}
+          <path d="M 25.5 18.5 A 9.15 9.15 0 0 0 42.5 18.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <path d="M 25.5 86.5 A 9.15 9.15 0 0 1 42.5 86.5" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          {/* Corner arcs — perfect 90° quarter circles at each corner */}
+          <path d="M 2 4 A 2 2 0 0 0 4 2" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <path d="M 64 2 A 2 2 0 0 0 66 4" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <path d="M 2 101 A 2 2 0 0 1 4 103" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+          <path d="M 64 103 A 2 2 0 0 1 66 101" stroke="white" strokeOpacity="0.5" strokeWidth="0.35" />
+        </svg>
         {pos.map((p, idx) => {
           const ox = activeOffsets[idx]?.x ?? p.x;
           const oy = activeOffsets[idx]?.y ?? p.y;
