@@ -675,6 +675,13 @@ export async function exportPlayerPdf(
 
   // ── 2-column grid for player attributes ──
   const attrs: { label: string; value: string }[] = [];
+  // Nationality first — upper info panel
+  if (player.nationality) {
+    const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
+    const c = countries.find(c => c.code === player.nationality);
+    const natDisplayName = c ? (locale === 'tr' ? c.nameTR : c.name) : (player.nationality || '');
+    attrs.push({ label: natLabel, value: natDisplayName });
+  }
   if (player.current_team) attrs.push({ label: labels.currentTeam, value: cleanVal(player.current_team) });
   if (player.league) attrs.push({ label: labels.league, value: cleanVal(player.league) });
   if (player.primary_position) attrs.push({ label: labels.primaryPosition, value: localizePosition(player.primary_position, locale) });
@@ -682,12 +689,6 @@ export async function exportPlayerPdf(
   if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
-  if (player.nationality) {
-    const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
-    const c = countries.find(c => c.code === player.nationality);
-    const natDisplayName = c ? (locale === 'tr' ? c.nameTR : c.name) : (player.nationality || '');
-    attrs.push({ label: natLabel, value: natDisplayName });
-  }
   if (player.market_value) attrs.push({ label: labels.marketValue || (locale === 'tr' ? 'Piyasa Değeri' : 'Market Value'), value: cleanVal(player.market_value) });
 
   const colW = (h.cw - 10) / 2;
