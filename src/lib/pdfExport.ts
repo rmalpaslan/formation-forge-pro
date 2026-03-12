@@ -800,7 +800,7 @@ export async function exportPlayerPdf(
       doc.setFillColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [230, 230, 230] as [number, number, number]));
       doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, 'F');
 
-      const fillW = (rating.value / 5) * barW;
+      const fillW = (rating.value / 10) * barW;
       if (fillW > 0) {
         doc.setFillColor(...GREEN);
         doc.roundedRect(barX, barY, fillW, barH, 1.5, 1.5, 'F');
