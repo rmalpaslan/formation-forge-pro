@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { localizePosition, localizePositionAbbr } from '@/lib/positionMap';
 import { leagues, getCountryCodes } from '@/data/leaguesAndTeams';
 import { ExportModal } from '@/components/ExportModal';
+import { countries } from '@/data/countries';
 import { toast } from 'sonner';
 import { Save, Trash2, Pencil, Plus, FileDown, CheckCircle } from 'lucide-react';
 import { exportSquadPdf } from '@/lib/pdfExport';
