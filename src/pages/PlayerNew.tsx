@@ -180,6 +180,13 @@ const PlayerNew = () => {
         <CardHeader><CardTitle>{isEdit ? t('editPlayer') : t('addNewPlayer')}</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <Input placeholder={t('playerName')} value={name} onChange={(e) => setName(e.target.value)} />
+
+          {/* Nationality — Upper info section */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{lang === 'tr' ? 'Milliyet' : 'Nationality'}</label>
+            <NationalitySelector value={nationality} onChange={setNationality} />
+          </div>
+
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('league')}</label>
             <CreatableSelector value={league} onChange={setLeague} placeholder={t('searchLeague')} table="shared_leagues" staticOptions={staticLeagues} />
@@ -233,16 +240,16 @@ const PlayerNew = () => {
             </div>
           )}
 
-          {/* Skill Ratings */}
+          {/* Skill Ratings — 1-10 scale */}
           <div className="space-y-3 rounded-lg border border-border p-4">
             <h3 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h3>
             {ratingRows.map(([label, val, setter]) => (
               <div key={label} className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{label}</span>
-                  <span className="font-bold text-primary">{val}/5</span>
+                  <span className="font-bold text-primary">{val}/10</span>
                 </div>
-                <Slider min={0} max={5} step={1} value={[val]} onValueChange={([v]) => setter(v)} className="w-full" />
+                <Slider min={0} max={10} step={1} value={[val]} onValueChange={([v]) => setter(v)} className="w-full" />
               </div>
             ))}
           </div>
@@ -292,9 +299,9 @@ const PlayerNew = () => {
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('resalePotential' as any)}</span>
-                <span className="font-bold text-primary">{resalePotential}/5</span>
+                <span className="font-bold text-primary">{resalePotential}/10</span>
               </div>
-              <Slider min={0} max={5} step={1} value={[resalePotential]} onValueChange={([v]) => setResalePotential(v)} className="w-full" />
+              <Slider min={0} max={10} step={1} value={[resalePotential]} onValueChange={([v]) => setResalePotential(v)} className="w-full" />
             </div>
           </div>
 
@@ -324,12 +331,6 @@ const PlayerNew = () => {
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{t('videoLink' as any)}</label>
             <Input placeholder={t('videoLinkPlaceholder' as any)} value={videoLink} onChange={(e) => setVideoLink(e.target.value)} />
-          </div>
-
-          {/* Nationality */}
-          <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">{lang === 'tr' ? 'Milliyet' : 'Nationality'}</label>
-            <NationalitySelector value={nationality} onChange={setNationality} />
           </div>
 
           <Input placeholder={t('transfermarktLink')} value={transfermarktLink} onChange={(e) => setTransfermarktLink(e.target.value)} />

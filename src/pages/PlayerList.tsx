@@ -515,9 +515,9 @@ function RatingBar({ label, value }: { label: string; value: number }) {
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">{label}</span>
-        <span className="font-bold text-primary">{value}/5</span>
+        <span className="font-bold text-primary">{value}/10</span>
       </div>
-      <Progress value={(value / 5) * 100} className="h-2" />
+      <Progress value={(value / 10) * 100} className="h-2" />
     </div>
   );
 }
