@@ -593,6 +593,14 @@ interface PlayerData {
   resale_potential?: number | null;
   injury_history?: string | null;
   nationality?: string | null;
+  watched_match?: string | null;
+  final_grade?: number | null;
+  scout_notes?: string[] | null;
+}
+
+function calcOverallAverage(player: PlayerData): string {
+  const sum = (player.technical_rating || 0) + (player.tactical_rating || 0) + (player.physical_rating || 0) + (player.mental_rating || 0) + (player.tactical_iq_rating || 0);
+  return (sum / 5).toFixed(1);
 }
 
 export async function exportPlayerPdf(
@@ -609,13 +617,21 @@ export async function exportPlayerPdf(
   const textColor: [number, number, number] = darkMode ? DARK_TEXT : NEAR_BLACK;
   const mutedColor: [number, number, number] = darkMode ? DARK_MUTED : LIGHT_GRAY;
   const bgAlt: [number, number, number] = darkMode ? DARK_CARD : [245, 245, 245];
+  const rowH = 16;
 
   const posLocalized = localizePosition(player.primary_position, locale);
   const teamPos = [cleanVal(player.current_team), posLocalized].filter(Boolean).join(' · ');
+  
+  // Cover page meta lines
+  const coverMeta = [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[];
+  if (player.watched_match) {
+    coverMeta.splice(1, 0, `${labels.watchedMatch || 'İzlenen Maç'}: ${cleanVal(player.watched_match)}`);
+  }
+  
   await renderCoverPage(doc, h, fontLoaded,
     cleanVal(player.name),
     locale === 'tr' ? 'OYUNCU İZLEME RAPORU' : 'SCOUTING REPORT',
-    [teamPos, formatDate(new Date().toISOString(), locale)].filter(Boolean) as string[],
+    coverMeta,
     analystName,
     darkMode,
   );
@@ -629,20 +645,27 @@ export async function exportPlayerPdf(
   addPageHeader(doc, fontLoaded, h.pw, h.margin, darkMode);
   h.setY(30);
 
-  // Green header bar
+  // Green header bar with name
   doc.setFillColor(...GREEN);
   doc.rect(h.margin, h.getY() - 7, h.cw, 14, 'F');
   doc.setFontSize(18);
   h.setFont('bold');
   doc.setTextColor(255, 255, 255);
   doc.text(cleanVal(player.name), h.margin + 6, h.getY() + 1);
+  
+  // Final Grade on header bar (right side)
+  if (player.final_grade && player.final_grade > 0) {
+    const gradeText = `${labels.finalGrade || 'Final'}: ${player.final_grade}/10`;
+    doc.setFontSize(14);
+    const gradeW = doc.getTextWidth(gradeText);
+    doc.text(gradeText, h.pw - h.margin - gradeW - 6, h.getY() + 1);
+  }
   doc.setTextColor(...textColor);
   h.addY(18);
 
   // ── Key Traits Badges ──
   const traits = (player.key_traits || []).filter(Boolean);
   if (traits.length > 0) {
-    // Use translated labels from the labels map (trait keys like 'fast','strong' etc.)
     const traitLabels = traits.map(traitKey => labels[traitKey] || traitKey);
     const badgeH = 8;
     const badgePad = 6;
@@ -675,7 +698,6 @@ export async function exportPlayerPdf(
 
   // ── 2-column grid for player attributes ──
   const attrs: { label: string; value: string }[] = [];
-  // Nationality first — upper info panel
   if (player.nationality) {
     const natLabel = labels.nationality || (locale === 'tr' ? 'Milliyet' : 'Nationality');
     const c = countries.find(c => c.code === player.nationality);
@@ -689,11 +711,11 @@ export async function exportPlayerPdf(
   if (player.secondary_position) attrs.push({ label: labels.secondaryPosition, value: localizePosition(player.secondary_position, locale) });
   if (player.preferred_foot) attrs.push({ label: labels.preferredFoot, value: localizeFootPdf(player.preferred_foot, locale) });
   if (player.birth_date) attrs.push({ label: labels.birthDate, value: formatDate(player.birth_date, locale) });
+  if (player.watched_match) attrs.push({ label: labels.watchedMatch || (locale === 'tr' ? 'İzlenen Maç' : 'Watched Match'), value: cleanVal(player.watched_match) });
   if (player.market_value) attrs.push({ label: labels.marketValue || (locale === 'tr' ? 'Piyasa Değeri' : 'Market Value'), value: cleanVal(player.market_value) });
 
   const colW = (h.cw - 10) / 2;
   const labelColW = 55;
-  const rowH = 16;
 
   for (let i = 0; i < attrs.length; i += 2) {
     h.checkPage(rowH + 4, darkMode);
@@ -727,6 +749,23 @@ export async function exportPlayerPdf(
     h.addY(rowH);
   }
 
+  // ── Overall Average Display ──
+  const avg = calcOverallAverage(player);
+  if (parseFloat(avg) > 0) {
+    h.addY(4);
+    h.checkPage(20, darkMode);
+    doc.setFillColor(...GREEN);
+    const avgLabel = `${labels.overallAverage || (locale === 'tr' ? 'Genel Ortalama' : 'Overall Average')}: ${avg}/10`;
+    doc.setFontSize(11);
+    h.setFont('bold');
+    const avgW = doc.getTextWidth(avgLabel) + 16;
+    doc.roundedRect(h.margin, h.getY() - 5, avgW, 12, 3, 3, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.text(avgLabel, h.margin + 8, h.getY() + 1);
+    doc.setTextColor(...textColor);
+    h.addY(18);
+  }
+
   // ── Radar Chart ──
   const radarData = [
     { label: labels.technical || 'Teknik', value: player.technical_rating || 0 },
@@ -735,7 +774,7 @@ export async function exportPlayerPdf(
     { label: labels.mental || 'Zihinsel', value: player.mental_rating || 0 },
   ];
   if (radarData.some(d => d.value > 0)) {
-    h.addY(10);
+    h.addY(6);
     h.checkPage(90, darkMode);
     doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
     doc.setLineWidth(0.3);
@@ -754,7 +793,7 @@ export async function exportPlayerPdf(
     h.addY(70);
   }
 
-  // ── Skill Ratings (Progress Bars) ──
+  // ── Skill Ratings (Structured Table Layout — PFSA style) ──
   const ratings = [
     { label: labels.technical || 'Teknik', value: player.technical_rating || 0 },
     { label: labels.tactical || 'Taktiksel', value: player.tactical_rating || 0 },
@@ -779,36 +818,66 @@ export async function exportPlayerPdf(
     h.setFont('bold');
     doc.setTextColor(...textColor);
     doc.text(labels.skillRatings || (locale === 'tr' ? 'Yetenek Puanları' : 'Skill Ratings'), h.margin, h.getY());
-    h.addY(12);
+    h.addY(14);
 
-    const barW = h.cw - labelColW - 30;
-    const barH = 5;
+    // Table header
+    const tblX = h.margin;
+    const tblLabelW = 70;
+    const tblScoreW = 25;
+    const tblBarW = h.cw - tblLabelW - tblScoreW - 4;
+    const tblRowH = 12;
 
-    for (const rating of ratings) {
+    // Header row
+    doc.setFillColor(...GREEN);
+    doc.rect(tblX, h.getY() - 5, h.cw, tblRowH, 'F');
+    doc.setFontSize(8);
+    h.setFont('bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text(locale === 'tr' ? 'KATEGORİ' : 'CATEGORY', tblX + 4, h.getY() + 1);
+    doc.text(locale === 'tr' ? 'PUAN' : 'SCORE', tblX + tblLabelW + 4, h.getY() + 1);
+    doc.text(locale === 'tr' ? 'SEVİYE' : 'LEVEL', tblX + tblLabelW + tblScoreW + 8, h.getY() + 1);
+    h.addY(tblRowH + 2);
+
+    for (let ri = 0; ri < ratings.length; ri++) {
+      const rating = ratings[ri];
       if (rating.value === 0) continue;
-      h.checkPage(18, darkMode);
-      doc.setFontSize(10);
-      h.setFont('bold');
-      doc.setTextColor(...mutedColor);
-      doc.text(rating.label + ':', h.margin + 4, h.getY());
+      h.checkPage(tblRowH + 4, darkMode);
 
+      if (ri % 2 === 0) {
+        doc.setFillColor(...bgAlt);
+        doc.rect(tblX, h.getY() - 5, h.cw, tblRowH, 'F');
+      }
+
+      doc.setFontSize(9);
       h.setFont('bold');
       doc.setTextColor(...textColor);
-      doc.text(`${rating.value}/10`, h.pw - h.margin - 10, h.getY());
+      doc.text(rating.label, tblX + 4, h.getY() + 1);
 
-      const barX = h.margin + labelColW + 10;
-      const barY = h.getY() - 3.5;
+      // Score
+      h.setFont('bold');
+      doc.setTextColor(...GREEN);
+      doc.text(`${rating.value}/10`, tblX + tblLabelW + 4, h.getY() + 1);
+
+      // Bar
+      const barX = tblX + tblLabelW + tblScoreW + 8;
+      const barY = h.getY() - 2;
+      const barH = 5;
       doc.setFillColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [230, 230, 230] as [number, number, number]));
-      doc.roundedRect(barX, barY, barW, barH, 1.5, 1.5, 'F');
-
-      const fillW = (rating.value / 10) * barW;
+      doc.roundedRect(barX, barY, tblBarW, barH, 1.5, 1.5, 'F');
+      const fillW = (rating.value / 10) * tblBarW;
       if (fillW > 0) {
         doc.setFillColor(...GREEN);
         doc.roundedRect(barX, barY, fillW, barH, 1.5, 1.5, 'F');
       }
 
-      h.addY(14);
+      doc.setTextColor(...textColor);
+      h.addY(tblRowH);
     }
+
+    // Table border
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.3);
+    doc.line(tblX, h.getY() - 3, tblX + h.cw, h.getY() - 3);
   }
 
   // ── Squad Fit ──
@@ -887,7 +956,7 @@ export async function exportPlayerPdf(
     }
   }
 
-  // ── Scout Note ──
+  // ── Scout Note (Final Opinion) ──
   if (player.scout_note) {
     h.addY(8);
     h.checkPage(30, darkMode);
@@ -910,6 +979,35 @@ export async function exportPlayerPdf(
       h.checkPage(8, darkMode);
       doc.text(line, h.margin + 4, h.getY());
       h.addY(6);
+    }
+  }
+
+  // ── Scout Notes (Bullet Points) ──
+  const scoutNotesBullets = (player.scout_notes || []).filter(s => s.trim());
+  if (scoutNotesBullets.length > 0) {
+    h.addY(8);
+    h.checkPage(30, darkMode);
+    doc.setDrawColor(...(darkMode ? [60, 60, 60] as [number, number, number] : [200, 200, 200] as [number, number, number]));
+    doc.setLineWidth(0.3);
+    doc.line(h.margin, h.getY(), h.pw - h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(12);
+    h.setFont('bold');
+    doc.setTextColor(...textColor);
+    doc.text(labels.scoutNotes || (locale === 'tr' ? 'Scout Notları' : 'Scout Notes'), h.margin, h.getY());
+    h.addY(10);
+
+    doc.setFontSize(10);
+    h.setFont('normal');
+    for (const note of scoutNotesBullets) {
+      h.checkPage(12, darkMode);
+      doc.setFillColor(...GREEN);
+      doc.circle(h.margin + 6, h.getY() - 1.5, 1.2, 'F');
+      doc.setTextColor(...(darkMode ? DARK_MUTED : DARK_GRAY));
+      const lines: string[] = doc.splitTextToSize(cleanVal(note), h.cw - 18);
+      doc.text(lines, h.margin + 12, h.getY());
+      h.addY(lines.length * 6 + 3);
     }
   }
 

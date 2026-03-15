@@ -104,6 +104,7 @@ export type Database = {
           created_at: string
           current_ability: number | null
           current_team: string | null
+          final_grade: number | null
           id: string
           injury_history: string | null
           key_traits: string[] | null
@@ -118,6 +119,7 @@ export type Database = {
           primary_position: string | null
           resale_potential: number | null
           scout_note: string | null
+          scout_notes: string[] | null
           secondary_position: string | null
           squad_fit_notes: string | null
           squad_fit_percentage: number | null
@@ -128,6 +130,7 @@ export type Database = {
           updated_at: string
           user_id: string
           video_link: string | null
+          watched_match: string | null
         }
         Insert: {
           birth_date?: string | null
@@ -135,6 +138,7 @@ export type Database = {
           created_at?: string
           current_ability?: number | null
           current_team?: string | null
+          final_grade?: number | null
           id?: string
           injury_history?: string | null
           key_traits?: string[] | null
@@ -149,6 +153,7 @@ export type Database = {
           primary_position?: string | null
           resale_potential?: number | null
           scout_note?: string | null
+          scout_notes?: string[] | null
           secondary_position?: string | null
           squad_fit_notes?: string | null
           squad_fit_percentage?: number | null
@@ -159,6 +164,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           video_link?: string | null
+          watched_match?: string | null
         }
         Update: {
           birth_date?: string | null
@@ -166,6 +172,7 @@ export type Database = {
           created_at?: string
           current_ability?: number | null
           current_team?: string | null
+          final_grade?: number | null
           id?: string
           injury_history?: string | null
           key_traits?: string[] | null
@@ -180,6 +187,7 @@ export type Database = {
           primary_position?: string | null
           resale_potential?: number | null
           scout_note?: string | null
+          scout_notes?: string[] | null
           secondary_position?: string | null
           squad_fit_notes?: string | null
           squad_fit_percentage?: number | null
@@ -190,6 +198,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           video_link?: string | null
+          watched_match?: string | null
         }
         Relationships: []
       }
