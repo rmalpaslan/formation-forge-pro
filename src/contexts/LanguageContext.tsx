@@ -367,6 +367,15 @@ const translations = {
     darkModePdf: 'Dark Mode PDF',
     lightPdf: 'Light PDF',
     pdfStyle: 'PDF Style',
+    watchedMatch: 'Watched Match',
+    watchedMatchPlaceholder: 'E.g. Beşiktaş vs Eyüpspor',
+    finalGrade: 'Final Grade',
+    scoutNotes: 'Scout Notes',
+    scoutNotesPlaceholder: 'Write your observations as bullet points...',
+    overallAverage: 'Overall Average',
+    clearFilters: 'Clear Filters',
+    minCurrentAbility: 'Min. Current Ability',
+    maxCurrentAbility: 'Max. Current Ability',
   },
 } as const;
 
