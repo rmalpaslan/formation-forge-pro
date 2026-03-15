@@ -15,7 +15,7 @@ import { Slider } from '@/components/ui/slider';
 import { PlayerRadarChart } from '@/components/RadarChart';
 import { ExportModal } from '@/components/ExportModal';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle, Filter, ChevronDown } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, ExternalLink, FileDown, Video, AlertTriangle, Filter, ChevronDown, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { exportPlayerPdf } from '@/lib/pdfExport';
 import { countries, getCountryLabel, getCountryFlag } from '@/data/countries';
@@ -44,6 +44,11 @@ function formatDateDDMMYYYY(dateStr: string): string {
   } catch { return dateStr; }
 }
 
+function calcAverage(p: any): string {
+  const sum = (p.technical_rating || 0) + (p.tactical_rating || 0) + (p.physical_rating || 0) + (p.mental_rating || 0) + (p.tactical_iq_rating || 0);
+  return (sum / 5).toFixed(1);
+}
+
 const PlayerList = () => {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
@@ -57,6 +62,8 @@ const PlayerList = () => {
   const [filterNationality, setFilterNationality] = useState('all');
   const [filterTraits, setFilterTraits] = useState<string[]>([]);
   const [filterMinPotential, setFilterMinPotential] = useState(0);
+  const [filterMinCurrent, setFilterMinCurrent] = useState(0);
+  const [filterMaxCurrent, setFilterMaxCurrent] = useState(10);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [analystName, setAnalystName] = useState('');
   const [exportPlayer, setExportPlayer] = useState<any>(null);
@@ -118,6 +125,10 @@ const PlayerList = () => {
       financialInfo: t('financialInfo' as any),
       radarChart: t('radarChart' as any),
       nationality: lang === 'tr' ? 'Milliyet' : 'Nationality',
+      watchedMatch: t('watchedMatch' as any),
+      finalGrade: t('finalGrade' as any),
+      scoutNotes: t('scoutNotes' as any),
+      overallAverage: t('overallAverage' as any),
     }, lang, analystName || undefined, dark);
     toast.success(t('exportPdf'));
   };
@@ -152,6 +163,12 @@ const PlayerList = () => {
     );
   };
 
+  const clearAllFilters = () => {
+    setFilterLeague('all'); setFilterTeam('all'); setFilterYear('all');
+    setFilterNationality('all'); setFilterTraits([]); setFilterMinPotential(0);
+    setFilterMinCurrent(0); setFilterMaxCurrent(10);
+  };
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filterLeague !== 'all') count++;
@@ -160,8 +177,14 @@ const PlayerList = () => {
     if (filterNationality !== 'all') count++;
     if (filterTraits.length > 0) count++;
     if (filterMinPotential > 0) count++;
+    if (filterMinCurrent > 0 || filterMaxCurrent < 10) count++;
     return count;
-  }, [filterLeague, filterTeam, filterYear, filterNationality, filterTraits, filterMinPotential]);
+  }, [filterLeague, filterTeam, filterYear, filterNationality, filterTraits, filterMinPotential, filterMinCurrent, filterMaxCurrent]);
+
+  // Sort traits alphabetically by localized label
+  const sortedTraitKeys = useMemo(() => {
+    return [...TRAIT_KEYS].sort((a, b) => t(a as any).localeCompare(t(b as any), lang));
+  }, [lang]);
 
   const filtered = useMemo(() => {
     return players.filter((p) => {
@@ -175,9 +198,11 @@ const PlayerList = () => {
         if (!filterTraits.every(ft => playerTraits.includes(ft))) return false;
       }
       if (filterMinPotential > 0 && ((p as any).contract_status || 0) < filterMinPotential) return false;
+      const ca = (p as any).current_ability || 0;
+      if (ca < filterMinCurrent || ca > filterMaxCurrent) return false;
       return true;
     });
-  }, [players, search, filterLeague, filterTeam, filterYear, filterNationality, filterTraits, filterMinPotential]);
+  }, [players, search, filterLeague, filterTeam, filterYear, filterNationality, filterTraits, filterMinPotential, filterMinCurrent, filterMaxCurrent]);
 
   const traitLabel = (trait: string) => {
     try { return t(trait as any); } catch { return trait; }
@@ -270,20 +295,36 @@ const PlayerList = () => {
               )}
             </div>
 
-            {/* Potential Rating Slider */}
-            <div className="space-y-2 max-w-xs">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground font-medium">{lang === 'tr' ? 'Min. Potansiyel Yetenek' : 'Min. Potential Rating'}</span>
-                <span className="font-bold text-primary">{filterMinPotential > 0 ? `${filterMinPotential}+` : lang === 'tr' ? 'Tümü' : 'All'}</span>
+            {/* Rating Range Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground font-medium">{t('minCurrentAbility' as any)}</span>
+                  <span className="font-bold text-primary">{filterMinCurrent}</span>
+                </div>
+                <Slider min={0} max={10} step={1} value={[filterMinCurrent]} onValueChange={([v]) => setFilterMinCurrent(v)} />
               </div>
-              <Slider min={0} max={10} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground font-medium">{t('maxCurrentAbility' as any)}</span>
+                  <span className="font-bold text-primary">{filterMaxCurrent}</span>
+                </div>
+                <Slider min={0} max={10} step={1} value={[filterMaxCurrent]} onValueChange={([v]) => setFilterMaxCurrent(v)} />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground font-medium">{lang === 'tr' ? 'Min. Potansiyel Yetenek' : 'Min. Potential Rating'}</span>
+                  <span className="font-bold text-primary">{filterMinPotential > 0 ? `${filterMinPotential}+` : lang === 'tr' ? 'Tümü' : 'All'}</span>
+                </div>
+                <Slider min={0} max={10} step={1} value={[filterMinPotential]} onValueChange={([v]) => setFilterMinPotential(v)} />
+              </div>
             </div>
 
-            {/* Key Traits Multi-Select */}
+            {/* Key Traits Multi-Select — Sorted A-Z */}
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground font-medium">{t('keyTraits' as any)}</label>
               <div className="flex flex-wrap gap-1.5">
-                {TRAIT_KEYS.map(trait => (
+                {sortedTraitKeys.map(trait => (
                   <Badge
                     key={trait}
                     variant={filterTraits.includes(trait) ? 'default' : 'outline'}
@@ -297,11 +338,9 @@ const PlayerList = () => {
             </div>
 
             {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => {
-                setFilterLeague('all'); setFilterTeam('all'); setFilterYear('all');
-                setFilterNationality('all'); setFilterTraits([]); setFilterMinPotential(0);
-              }}>
-                {lang === 'tr' ? 'Filtreleri Temizle' : 'Clear Filters'}
+              <Button variant="ghost" size="sm" className="gap-2" onClick={clearAllFilters}>
+                <X className="h-3 w-3" />
+                {t('clearFilters' as any)}
               </Button>
             )}
           </div>
@@ -316,6 +355,9 @@ const PlayerList = () => {
                 <div className="font-bold text-base truncate">
                   {(p as any).nationality && <span className="mr-1.5">{getCountryFlag((p as any).nationality)}</span>}
                   {p.name}
+                  {(p as any).final_grade > 0 && (
+                    <span className="ml-2 text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{(p as any).final_grade}/10</span>
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground truncate">
                   {p.current_team} · {localizePosition(p.primary_position, lang)} · {localizeFoot(p.preferred_foot, lang)}
@@ -361,6 +403,15 @@ const PlayerList = () => {
           </DialogHeader>
           {viewPlayer && (
             <div className="rounded-lg bg-background border border-border mx-2 mb-2 p-8">
+              {/* Final Grade — prominent */}
+              {(viewPlayer as any).final_grade > 0 && (
+                <div className="flex items-center gap-3 mb-4 p-3 rounded-lg border-2 border-primary/30 bg-primary/5">
+                  <span className="text-sm font-bold text-muted-foreground">{t('finalGrade' as any)}</span>
+                  <span className="text-3xl font-black text-primary">{(viewPlayer as any).final_grade}/10</span>
+                  <span className="ml-auto text-sm text-muted-foreground">{t('overallAverage' as any)}: <strong className="text-foreground">{calcAverage(viewPlayer)}</strong></span>
+                </div>
+              )}
+
               {/* Key Traits Badges */}
               {(viewPlayer as any).key_traits?.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-5">
@@ -382,6 +433,7 @@ const PlayerList = () => {
                 <InfoRow label={t('secondaryPosition')} value={viewPlayer.secondary_position ? localizePosition(viewPlayer.secondary_position, lang) : t('none')} />
                 <InfoRow label={t('preferredFoot')} value={localizeFoot(viewPlayer.preferred_foot, lang)} />
                 <InfoRow label={t('birthDate')} value={viewPlayer.birth_date ? formatDateDDMMYYYY(viewPlayer.birth_date) : '—'} />
+                {(viewPlayer as any).watched_match && <InfoRow label={t('watchedMatch' as any)} value={(viewPlayer as any).watched_match} />}
                 {(viewPlayer as any).market_value && <InfoRow label={t('marketValue' as any)} value={(viewPlayer as any).market_value} />}
               </div>
 
@@ -407,7 +459,10 @@ const PlayerList = () => {
                 if (!hasAny) return null;
                 return (
                   <div className="mt-5 space-y-3">
-                    <h4 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h4>
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h4>
+                      <span className="text-xs text-muted-foreground">{t('overallAverage' as any)}: <strong className="text-primary">{calcAverage(viewPlayer)}/10</strong></span>
+                    </div>
                     {allRatings.filter(r => r.value > 0).map(r => (
                       <RatingBar key={r.label} label={r.label} value={r.value} />
                     ))}
@@ -450,6 +505,21 @@ const PlayerList = () => {
                 <div className="mt-5 space-y-2">
                   <h4 className="text-sm font-bold text-foreground">{t('scoutNote' as any)}</h4>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap">{(viewPlayer as any).scout_note}</p>
+                </div>
+              )}
+
+              {/* Scout Notes (Bullet Points) */}
+              {(viewPlayer as any).scout_notes?.length > 0 && (viewPlayer as any).scout_notes.some((s: string) => s.trim()) && (
+                <div className="mt-5 space-y-2">
+                  <h4 className="text-sm font-bold text-foreground">{t('scoutNotes' as any)}</h4>
+                  <ul className="space-y-1 ml-1">
+                    {(viewPlayer as any).scout_notes.filter((s: string) => s.trim()).map((note: string, i: number) => (
+                      <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                        <span className="text-primary shrink-0">•</span>
+                        <span>{note}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

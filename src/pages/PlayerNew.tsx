@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { positionMapTR } from '@/lib/positionMap';
 import { getRolesForPosition } from '@/lib/positionRoles';
 import { CurrencyInput } from '@/components/CurrencyInput';
 import { NationalitySelector } from '@/components/NationalitySelector';
+import { BulletInput } from '@/components/BulletInput';
 
 // CF and ST both map to 'Santrfor' — keep only ST to avoid duplicates
 const positions = ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'ST'];
@@ -60,6 +61,9 @@ const PlayerNew = () => {
   const [resalePotential, setResalePotential] = useState(0);
   const [injuryHistory, setInjuryHistory] = useState('');
   const [nationality, setNationality] = useState('');
+  const [watchedMatch, setWatchedMatch] = useState('');
+  const [finalGrade, setFinalGrade] = useState(0);
+  const [scoutNotes, setScoutNotes] = useState<string[]>(['']);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -67,6 +71,12 @@ const PlayerNew = () => {
 
   const staticLeagues = leagues.map(l => l.name);
   const availableRoles = getRolesForPosition(primaryPosition, lang);
+
+  // Auto-calculated average of 5 core ratings
+  const overallAverage = useMemo(() => {
+    const sum = technicalRating + tacticalRating + physicalRating + mentalRating + tacticalIQRating;
+    return (sum / 5).toFixed(1);
+  }, [technicalRating, tacticalRating, physicalRating, mentalRating, tacticalIQRating]);
 
   useEffect(() => {
     if (isEdit) {
@@ -97,6 +107,10 @@ const PlayerNew = () => {
           setResalePotential((data as any).resale_potential || 0);
           setInjuryHistory((data as any).injury_history || '');
           setNationality((data as any).nationality || '');
+          setWatchedMatch((data as any).watched_match || '');
+          setFinalGrade((data as any).final_grade || 0);
+          const sn = (data as any).scout_notes;
+          setScoutNotes(sn && sn.length > 0 ? sn : ['']);
         }
       });
     }
@@ -139,6 +153,9 @@ const PlayerNew = () => {
       resale_potential: resalePotential,
       injury_history: injuryHistory || null,
       nationality: nationality || null,
+      watched_match: watchedMatch || null,
+      final_grade: finalGrade,
+      scout_notes: scoutNotes.filter(s => s.trim() !== ''),
       user_id: user!.id,
     };
     const { error } = isEdit
@@ -181,10 +198,16 @@ const PlayerNew = () => {
         <CardContent className="space-y-4">
           <Input placeholder={t('playerName')} value={name} onChange={(e) => setName(e.target.value)} />
 
-          {/* Nationality — Upper info section */}
+          {/* Nationality */}
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">{lang === 'tr' ? 'Milliyet' : 'Nationality'}</label>
             <NationalitySelector value={nationality} onChange={setNationality} />
+          </div>
+
+          {/* Watched Match */}
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">{t('watchedMatch' as any)}</label>
+            <Input placeholder={t('watchedMatchPlaceholder' as any)} value={watchedMatch} onChange={(e) => setWatchedMatch(e.target.value)} />
           </div>
 
           <div className="space-y-1">
@@ -242,7 +265,13 @@ const PlayerNew = () => {
 
           {/* Skill Ratings — 1-10 scale */}
           <div className="space-y-3 rounded-lg border border-border p-4">
-            <h3 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-foreground">{t('skillRatings' as any)}</h3>
+              <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
+                <span className="text-xs text-muted-foreground">{t('overallAverage' as any)}</span>
+                <span className="text-sm font-bold text-primary">{overallAverage}/10</span>
+              </div>
+            </div>
             {ratingRows.map(([label, val, setter]) => (
               <div key={label} className="space-y-1">
                 <div className="flex justify-between text-sm">
@@ -254,11 +283,20 @@ const PlayerNew = () => {
             ))}
           </div>
 
+          {/* Final Grade — prominent */}
+          <div className="space-y-2 rounded-lg border-2 border-primary/30 bg-primary/5 p-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-foreground">{t('finalGrade' as any)}</h3>
+              <span className="text-2xl font-black text-primary">{finalGrade}/10</span>
+            </div>
+            <Slider min={0} max={10} step={1} value={[finalGrade]} onValueChange={([v]) => setFinalGrade(v)} className="w-full" />
+          </div>
+
           {/* Key Traits */}
           <div className="space-y-2 rounded-lg border border-border p-4">
             <h3 className="text-sm font-bold text-foreground">{t('keyTraits' as any)} <span className="font-normal text-muted-foreground">({keyTraits.length}/6)</span></h3>
             <div className="flex flex-wrap gap-2">
-              {TRAIT_KEYS.map(trait => (
+              {[...TRAIT_KEYS].sort((a, b) => t(a as any).localeCompare(t(b as any), lang)).map(trait => (
                 <Badge
                   key={trait}
                   variant={keyTraits.includes(trait) ? 'default' : 'outline'}
@@ -316,7 +354,7 @@ const PlayerNew = () => {
             />
           </div>
 
-          {/* Scout Note */}
+          {/* Scout Note (Final Opinion) */}
           <div className="space-y-1">
             <label className="text-sm font-bold text-foreground">{t('scoutNote' as any)}</label>
             <Textarea
@@ -326,6 +364,14 @@ const PlayerNew = () => {
               className="min-h-[120px]"
             />
           </div>
+
+          {/* Scout Notes — Bullet Points */}
+          <BulletInput
+            label={t('scoutNotes' as any)}
+            value={scoutNotes}
+            onChange={setScoutNotes}
+            placeholder={t('scoutNotesPlaceholder' as any)}
+          />
 
           {/* Video Link */}
           <div className="space-y-1">
